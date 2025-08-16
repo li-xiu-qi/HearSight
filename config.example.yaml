@@ -1,0 +1,20 @@
+# SmartAudio 
+bilibili:
+  #          SESSDATA  ;  ,  ;     ,  ""
+  sessdata: ""
+
+server:
+  #  Vite
+  frontend_port: 5173
+  #  (  PORT  main.py)
+  backend_port: 8000
+
+audio2text:
+  #  (FunASR )
+  model: "iic/SenseVoiceSmall"
+
+chat_server:
+  openai:
+    api_key: ""
+    base_url: ""
+    chat_model: ""
