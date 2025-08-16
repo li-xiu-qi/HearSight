@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.build/
+.dist/
+.env
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE/Editor
+.vscode/
+.idea/
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+
+# Project secrets / local config
+config.yaml
+
+# Logs
+*.log
+
+# Media outputs / Test results
+*.m4a
+*.wav
+*.mp4
+
+backend/tests/results/
+results/
