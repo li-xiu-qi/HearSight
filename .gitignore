@@ -36,3 +36,5 @@ config.yaml
 
 backend/tests/results/
 results/
+
+.github

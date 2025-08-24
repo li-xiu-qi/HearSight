@@ -24,7 +24,7 @@ if _PROJECT_ROOT not in sys.path:
 
 from backend.audio2text.audio2text import audio_to_text
 from backend.segmentation.topic_segmenter import segment_text_to_file
-from backend.cache_manager import audio_key, get_text, set_text
+from backend.cache.cache_manager import audio_key, get_text, set_text
 
 
 # 测试音频文件路径（请确保该文件存在）

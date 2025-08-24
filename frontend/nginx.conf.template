@@ -1,0 +1,16 @@
+server {
+    listen       ${PORT};
+    server_name  localhost;
+
+    root   /usr/share/nginx/html;
+    index  index.html index.htm;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 反向代理到后端示例（如需启用，取消注释并设置合适的后端主机端口）
+    # location /api/ {
+    #     proxy_pass http://backend:8000/;
+    # }
+}

@@ -1,0 +1,15 @@
+__pycache__
+*.pyc
+.venv
+venv
+env
+node_modules
+frontend/node_modules
+dist
+app_datas/downloads
+results
+tests
+.git
+.gitignore
+*.sqlite3
+.github

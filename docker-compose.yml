@@ -1,0 +1,37 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: smartmedia-backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT}:8000"
+    volumes:
+      - ./app_datas:/app/app_datas
+      - ./:/app:ro
+    env_file:
+      - .env
+    environment:
+      - PORT=${BACKEND_PORT}
+    deploy: {}
+    gpus: all
+    depends_on: []
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: smartmedia-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT}:80"
+    env_file:
+      - .env
+    environment:
+      - PORT=80
+    volumes: []
+
+# 说明：
+# - 后端使用宿主机的 ./app_datas 目录持久化下载的视频和 sqlite 数据库
+# - 前端在容器内由静态服务器提供静态文件，映射到本地 FRONTEND_PORT 端口

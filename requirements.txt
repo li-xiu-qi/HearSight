@@ -6,3 +6,7 @@ modelscope
 # 用于OpenAI tiktoken分词
 tiktoken
 # pytorch安装请去https://pytorch.org/get-started/locally/查询
+
+fastapi
+uvicorn
+PyYAML
