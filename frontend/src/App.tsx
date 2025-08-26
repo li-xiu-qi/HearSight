@@ -15,7 +15,7 @@ import {
   message,
   Tabs,
 } from 'antd'
-import { PlayCircleOutlined, ReloadOutlined, SearchOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
+import { PlayCircleOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons'
 
 const { Header, Footer } = Layout
 const { Title, Text } = Typography
@@ -86,9 +86,7 @@ function App() {
   const [submitting, setSubmitting] = useState(false)
   const prevActiveRef = useRef<number | null>(null)
 
-  // 手动控制左右侧栏折叠
-  const [leftCollapsed, setLeftCollapsed] = useState(false)
-  const [rightCollapsed, setRightCollapsed] = useState(false)
+  // 侧边栏固定显示（已移除折叠逻辑）
 
   const parseBilibiliUrl = (input: string) => {
     const trimmed = input.trim()
@@ -280,12 +278,9 @@ function App() {
           <Title level={2} style={{ margin: '8px 0' }}>HearSight</Title>
         </div>
       </Header>
-      <div className={`three-col ${leftCollapsed ? 'left-collapsed' : ''} ${rightCollapsed ? 'right-collapsed' : ''}`}>
+  <div className={`three-col`}>
         {/* 左侧列 */}
-        <div className="three-col__left">
-          <button className="collapse-btn collapse-btn--left" onClick={() => setLeftCollapsed(!leftCollapsed)}>
-            {leftCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          </button>
+  <div className="three-col__left">
           <div className="sider-inner">
             <Card size="small" title="解析链接" style={{ marginBottom: 12 }} bodyStyle={{ overflowX: 'hidden' }}>
               <Form layout="vertical" size="middle" onFinish={handleSubmit}>
@@ -399,10 +394,7 @@ function App() {
         </div>
 
         {/* 右侧列 */}
-        <div className="three-col__right">
-          <button className="collapse-btn collapse-btn--right" onClick={() => setRightCollapsed(!rightCollapsed)}>
-            {rightCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          </button>
+  <div className="three-col__right">
           <div className="sider-inner">
             <Card size="small" title="分句（点击跳转）" bodyStyle={{ padding: 8, overflowX: 'hidden' }}>
               <div className="segments-scroll" ref={segScrollRef}>
