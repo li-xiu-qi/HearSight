@@ -10,3 +10,4 @@ tiktoken
 fastapi
 uvicorn
 PyYAML
+psycopg2-binary

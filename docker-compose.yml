@@ -5,18 +5,26 @@ services:
       dockerfile: Dockerfile.backend
     container_name: smartmedia-backend
     restart: unless-stopped
-    ports:
-      - "${BACKEND_PORT}:8000"
+    # 生产环境使用命名卷持久化数据（由 Docker 管理）
     volumes:
       - ./app_datas:/app/app_datas
-      - ./:/app:ro
-    env_file:
-      - .env
+      # 注意：将整仓库绑定到容器根目录（./:/app:ro）会导致在只读 bind-mount 上创建子挂载点失败
+      # 如果你需要在开发时热加载代码，可把下面这一行取消注释并调整为非只读（/:/app:rw），或改为把代码挂到其它路径
+      # - ./:/app:ro
+    ports:
+      - "${BACKEND_PORT:-9999}:8000"
     environment:
-      - PORT=${BACKEND_PORT}
+      - PORT=8000
+      # 模型/缓存持久化到宿主（避免每次容器重建重新下载模型）
+      - MS_MODEL_CACHE=/app/app_datas/model_cache
+      - TORCH_HOME=/app/app_datas/torch_cache
+      - HF_HOME=/app/app_datas/transformers_cache
+      - XDG_CACHE_HOME=/app/app_datas/xdg_cache
+      - BACKEND_PORT=${BACKEND_PORT:-9999}
+      - FRONTEND_HOST=${FRONTEND_HOST:-localhost}
+      - FRONTEND_PORT=${FRONTEND_PORT:-10000}
     deploy: {}
     gpus: all
-    depends_on: []
 
   frontend:
     build:
@@ -25,13 +33,45 @@ services:
     container_name: smartmedia-frontend
     restart: unless-stopped
     ports:
-      - "${FRONTEND_PORT}:80"
-    env_file:
-      - .env
+      - "${FRONTEND_PORT:-10000}:80"
     environment:
       - PORT=80
-    volumes: []
+      - BACKEND_HOST=${BACKEND_HOST:-backend}
+      - BACKEND_PORT=${BACKEND_PORT:-8000}
+      - USE_DOCKER=1
 
-# 说明：
-# - 后端使用宿主机的 ./app_datas 目录持久化下载的视频和 sqlite 数据库
-# - 前端在容器内由静态服务器提供静态文件，映射到本地 FRONTEND_PORT 端口
+  minio:
+    image: minio/minio:latest
+    container_name: smartmedia-minio
+    restart: unless-stopped
+    ports:
+      - "${MINIO_PORT:-9000}:9000"       # S3 API
+      - "${MINIO_CONSOLE_PORT:-9001}:9001" # MinIO Console
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - ./app_datas/minio:/data
+    command: server /data --console-address ":9001"
+
+  postgres:
+    image: postgres:17
+    container_name: smartmedia-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-smartmedia}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-smartmedia_pass}
+      - POSTGRES_DB=${POSTGRES_DB:-smartmedia}
+    volumes:
+      - ./app_datas/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-smartmedia}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+
+

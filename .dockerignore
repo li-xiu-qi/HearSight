@@ -6,7 +6,16 @@ env
 node_modules
 frontend/node_modules
 dist
-app_datas/downloads
+# 忽略下载的大媒体文件目录（修正目录名）
+app_datas/download_videos
+
+# 忽略常见的媒体临时/大文件（按需可精简）
+app_datas/*.temp.mp4
+app_datas/*.mp4
+app_datas/*.m4a
+
+# 忽略 sqlite 数据库文件（项目内全局规则保留）
+app_datas/db/*.sqlite3
 results
 tests
 .git
