@@ -37,7 +37,7 @@ db_url = os.environ.get("POSTGRES_DSN") or os.environ.get("DATABASE_URL") or Non
 init_db(db_url)
 
 # 创建应用
-app = FastAPI(title="HearSight API")
+app = FastAPI(title="smartmedia API")
 
 # CORS（开发阶段放开）
 # 支持通过环境变量在 docker 部署时显式设置允许来源，例如 FRONTEND_HOST/FRONTEND_PORT 或 ALLOW_ORIGINS

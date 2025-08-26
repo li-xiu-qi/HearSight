@@ -16,6 +16,7 @@ import {
   Tabs,
 } from 'antd'
 import { PlayCircleOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons'
+import ReactMarkdown from 'react-markdown'
 
 const { Header, Footer } = Layout
 const { Title, Text } = Typography
@@ -77,6 +78,9 @@ function App() {
   }
 
   const [segments, setSegments] = useState<Array<Segment>>([])
+  const [summaries, setSummaries] = useState<Array<any>>([])
+  const [summariesLoading, setSummariesLoading] = useState(false)
+  const [summariesError, setSummariesError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [transcripts, setTranscripts] = useState<Array<TranscriptMeta>>([])
   const [jobs, setJobs] = useState<Array<JobItem>>([])
@@ -275,7 +279,7 @@ function App() {
     <Layout style={{ minHeight: '100vh' }}>
       <Header style={{ background: 'transparent', padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: '100%', maxWidth: 1440 }}>
-          <Title level={2} style={{ margin: '8px 0' }}>HearSight</Title>
+          <Title level={2} style={{ margin: '8px 0' }}>smartmedia</Title>
         </div>
       </Header>
   <div className={`three-col`}>
@@ -396,46 +400,156 @@ function App() {
         {/* 右侧列 */}
   <div className="three-col__right">
           <div className="sider-inner">
-            <Card size="small" title="分句（点击跳转）" bodyStyle={{ padding: 8, overflowX: 'hidden' }}>
-              <div className="segments-scroll" ref={segScrollRef}>
-                {segments.length === 0 ? (
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无分句" />
-                ) : (
-                    <List
-                    split={false}
-                    dataSource={segments}
-                    renderItem={(s: Segment) => {
-                      const isActive = activeSegIndex === s.index
-                      return (
-                        <List.Item className="segment-item" style={{ paddingLeft: 0, paddingRight: 0 }} data-seg-index={s.index}>
-                          <div
-                            role="button"
-                            tabIndex={0}
-                            className={`segment-btn is-div ${isActive ? 'active' : ''}`}
-                            onClick={() => { setActiveSegIndex(s.index); seekTo(s.start_time) }}
-                            title={`跳转到 ${fmtTime(s.start_time)} (${Math.floor(Number(s.start_time) || 0)} ms)`}
-                          >
-                            <span className="segment-icon"><PlayCircleOutlined /></span>
-                            <div className="seg-card">
-                              <div className="seg-head">
-                                <span className="seg-time">{fmtTime(s.start_time)}<span className="segment-time-sep">~</span>{fmtTime(s.end_time)}</span>
-                                {s.spk_id && <span className="seg-spk">SPK {s.spk_id}</span>}
+            <Card size="small" bodyStyle={{ padding: 0 }}>
+              <Tabs size="small" defaultActiveKey="segments">
+                <Tabs.TabPane tab="分句（点击跳转）" key="segments">
+                  <div style={{ padding: 8 }}>
+                    <div className="segments-scroll" ref={segScrollRef}>
+                      {segments.length === 0 ? (
+                        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无分句" />
+                      ) : (
+                        <List
+                          split={false}
+                          dataSource={segments}
+                          renderItem={(s: Segment) => {
+                            const isActive = activeSegIndex === s.index
+                            return (
+                              <List.Item className="segment-item" style={{ paddingLeft: 0, paddingRight: 0 }} data-seg-index={s.index}>
+                                <div
+                                  role="button"
+                                  tabIndex={0}
+                                  className={`segment-btn is-div ${isActive ? 'active' : ''}`}
+                                  onClick={() => { setActiveSegIndex(s.index); seekTo(s.start_time) }}
+                                  title={`跳转到 ${fmtTime(s.start_time)} (${Math.floor(Number(s.start_time) || 0)} ms)`}
+                                >
+                                  <span className="segment-icon"><PlayCircleOutlined /></span>
+                                  <div className="seg-card">
+                                    <div className="seg-head">
+                                      <span className="seg-time">{fmtTime(s.start_time)}<span className="segment-time-sep">~</span>{fmtTime(s.end_time)}</span>
+                                      {s.spk_id && <span className="seg-spk">SPK {s.spk_id}</span>}
+                                    </div>
+                                    <div className="seg-body">{s.sentence || '(空)'}</div>
+                                  </div>
+                                </div>
+                              </List.Item>
+                            )
+                          }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </Tabs.TabPane>
+                <Tabs.TabPane tab="总结" key="summaries">
+                  <div style={{ padding: 8 }}>
+                    <Button
+                      size="small"
+                      type="primary"
+                      onClick={async () => {
+                        setSummariesError(null)
+                        setSummaries([])
+                        if (!segments || segments.length === 0) {
+                          setSummariesError('没有可用的分句，请先打开某个转写记录')
+                          return
+                        }
+                        setSummariesLoading(true)
+                        try {
+                          const resp = await fetch('/api/summarize', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ segments })
+                          })
+                          if (!resp.ok) throw new Error(`summarize failed: ${resp.status}`)
+                          const data = await resp.json()
+                          // 后端可能返回两种格式：直接的数组或 { summaries: [...] }
+                          let items: any[] = []
+                          if (Array.isArray(data)) items = data
+                          else if (Array.isArray(data.summaries)) items = data.summaries
+
+                          // 规范化每条 summary：若 summary 字段本身包含 code fence JSON 或是 JSON 字符串，解析并替换为真实 summary 字符串
+                          const normalize = (it: any) => {
+                            const res = { ...it }
+                            let s = String(res.summary || '')
+                            // 如果是代码块包裹（```json\n{...}```），提取内部并尝试解析 JSON
+                            const codeFenceMatch = s.match(/```(?:json)?\s*\n([\s\S]*)\n```/i)
+                            if (codeFenceMatch) {
+                              const inner = codeFenceMatch[1].trim()
+                              try {
+                                const obj = JSON.parse(inner)
+                                if (obj && typeof obj.summary === 'string') {
+                                  res.summary = obj.summary
+                                  if (!res.topic && obj.topic) res.topic = obj.topic
+                                  return res
+                                }
+                                // 如果 obj 本身是字符串或其他，则回退为 inner
+                                res.summary = inner
+                                return res
+                              } catch (e) {
+                                // 解析失败则使用 inner 文本
+                                res.summary = inner
+                                return res
+                              }
+                            }
+
+                            // 如果 summary 看起来像一个 JSON 字符串（以 { 开头），尝试解析
+                            if (s.trim().startsWith('{')) {
+                              try {
+                                const obj = JSON.parse(s)
+                                if (obj && typeof obj.summary === 'string') {
+                                  res.summary = obj.summary
+                                  if (!res.topic && obj.topic) res.topic = obj.topic
+                                } else {
+                                  // 如果不是期望结构，则转为漂亮的 JSON 文本
+                                  res.summary = JSON.stringify(obj, null, 2)
+                                }
+                              } catch (e) {
+                                // ignore
+                              }
+                            }
+                            return res
+                          }
+
+                          setSummaries(items.map(normalize))
+                        } catch (err: any) {
+                          setSummariesError(err?.message || '调用总结接口失败')
+                        } finally {
+                          setSummariesLoading(false)
+                        }
+                      }}
+                    >生成总结</Button>
+
+                    <div style={{ marginTop: 8 }}>
+                      {summariesLoading && <Text>生成中，请稍候…</Text>}
+                      {summariesError && <Alert type="error" message={summariesError} showIcon />}
+                      {!summariesLoading && !summariesError && summaries.length === 0 && (
+                        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无总结，点击上方按钮生成" />
+                      )}
+                      {!summariesLoading && summaries.length > 0 && (
+                        <List
+                          itemLayout="vertical"
+                          dataSource={summaries}
+                          renderItem={(it: any) => (
+                            <List.Item>
+                              <List.Item.Meta
+                                title={it.topic || '(无主题)'}
+                                description={`时间: ${fmtTime((it.start_time || 0))} ~ ${fmtTime((it.end_time || 0))}`}
+                              />
+                              <div style={{ whiteSpace: 'pre-wrap' }}>
+                                <ReactMarkdown>{it.summary || ''}</ReactMarkdown>
                               </div>
-                              <div className="seg-body">{s.sentence || '(空)'}</div>
-                            </div>
-                          </div>
-                        </List.Item>
-                      )
-                    }}
-                  />
-                )}
-              </div>
+                            </List.Item>
+                          )}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </Tabs.TabPane>
+              </Tabs>
             </Card>
           </div>
         </div>
       </div>
       <Footer style={{ textAlign: 'center' }}>
-  HearSight
+  smartmedia
       </Footer>
     </Layout>
   )

@@ -8,7 +8,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from audio2text.paraformer_a2t import paraformer_audio_to_text
 
 # 使用与现有测试一致的数据路径（可按需修改为你的绝对路径）
-audio_path = r"C:\Users\ke\Documents\projects\python_projects\HearSight\backend\tests\datas\大语言模型进化论：从“听懂指令”到“学会思考”，AI如何与人类对齐？.m4a"
+audio_path = r"C:\Users\ke\Documents\projects\python_projects\smartmedia\backend\tests\datas\大语言模型进化论：从“听懂指令”到“学会思考”，AI如何与人类对齐？.m4a"
 
 # 直接转写，拿到文本、段级时间戳与按秒聚合
 res = paraformer_audio_to_text(audio_path, return_segments=True)
