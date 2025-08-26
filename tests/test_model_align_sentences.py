@@ -18,7 +18,7 @@ import torch
 from funasr import AutoModel
 
 # ===== 配置 =====
-AUDIO_PATH = r"C:\Users\ke\Documents\projects\python_projects\HearSight\backend\tests\datas\大语言模型进化论：从“听懂指令”到“学会思考”，AI如何与人类对齐？.m4a"
+AUDIO_PATH = r"C:\Users\ke\Documents\projects\python_projects\HearSight\app_datas\download_videos\【大模型面试宝典】2025高效吃透AI大模型面试高频的所有考点！88问挑战一周打卡面试上岸，让你面试不再走弯路，轻松拿下高薪Offer！！！ p01 怎么解决大模型幻觉问题.mp4"
 BASE_DIR = os.path.dirname(__file__)
 RESULT_DIR = os.path.join(BASE_DIR, "results", "model_align")
 CLIPS_DIR = os.path.join(RESULT_DIR, "clips")
