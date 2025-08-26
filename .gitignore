@@ -38,4 +38,9 @@ backend/tests/results/
 results/
 
 .github
-app_datas
+# data dir created by services (don't track DB files or caches)
+app_datas/
+
+# Keep docker configuration files tracked in the repo; do not commit secrets or
+# plaintext credentials. Use `docker-compose.example.yml` and a `.env` file for
+# real secrets.
