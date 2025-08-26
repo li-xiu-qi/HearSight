@@ -49,7 +49,6 @@ services:
       - USE_DOCKER=1
 
 
-
   postgres:
     image: postgres:17
     container_name: smartmedia-postgres
