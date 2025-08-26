@@ -294,7 +294,7 @@ function App() {
     <Layout style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Header style={{ background: 'transparent', padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: '100%', maxWidth: 1440 }}>
-          <Title level={2} style={{ margin: '8px 0' }}>smartmedia</Title>
+          <Title level={2} style={{ margin: '8px 0' }}>HearSight</Title>
         </div>
       </Header>
   <div className={`three-col`}>
@@ -600,7 +600,7 @@ function App() {
         </div>
       </div>
       <Footer style={{ textAlign: 'center' }}>
-  smartmedia
+  HearSight
       </Footer>
     </Layout>
   )

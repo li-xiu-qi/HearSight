@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    container_name: smartmedia-backend
+    container_name: hearsight-backend
     restart: unless-stopped
     depends_on:
       - postgres
@@ -21,9 +21,9 @@ services:
       - PORT=8000
       - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
       - POSTGRES_PORT=${POSTGRES_PORT:-5432}
-      - POSTGRES_USER=${POSTGRES_USER:-smartmedia}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-smartmedia_pass}
-      - POSTGRES_DB=${POSTGRES_DB:-smartmedia}
+      - POSTGRES_USER=${POSTGRES_USER:-hearsight}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-hearsight_pass}
+      - POSTGRES_DB=${POSTGRES_DB:-hearsight}
       - MS_MODEL_CACHE=/app/app_datas/model_cache
       - TORCH_HOME=/app/app_datas/torch_cache
       - HF_HOME=/app/app_datas/transformers_cache
@@ -38,7 +38,7 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
-    container_name: smartmedia-frontend
+    container_name: hearsight-frontend
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-10000}:80"
@@ -51,14 +51,14 @@ services:
 
   postgres:
     image: postgres:17
-    container_name: smartmedia-postgres
+    container_name: hearsight-postgres
     restart: unless-stopped
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-smartmedia}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-smartmedia_pass}
-      - POSTGRES_DB=${POSTGRES_DB:-smartmedia}
+      - POSTGRES_USER=${POSTGRES_USER:-hearsight}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-hearsight_pass}
+      - POSTGRES_DB=${POSTGRES_DB:-hearsight}
     volumes:
       - ./app_datas/postgres:/var/lib/postgresql/data
 
