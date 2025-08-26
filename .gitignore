@@ -37,5 +37,5 @@ config.yaml
 backend/tests/results/
 results/
 
-.githubapp_datas/postgres/ 
-app_datas/minio/ 
+.github
+app_datas
