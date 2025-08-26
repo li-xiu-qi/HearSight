@@ -3,6 +3,7 @@
 ![HearSight logo](https://oss-liuchengtu.hudunsoft.com/userimg/33/3374fce0ebc0d82f093c6c7361b84fcc.png)
 
 HearSight 是一个基于 AI 的视频辅助阅读工具，目标是让视频内容的获取、定位与理解变得更简单。🎯
+地址：<https://github.com/li-xiu-qi/HearSight>
 
 ### ✨ 主要特性
 
@@ -24,6 +25,12 @@ FastAPI + PostgreSQL（后端）、React + Ant Design（前端），支持使用
 ![](https://oss-liuchengtu.hudunsoft.com/userimg/21/217272740919c8740e84c970699e50b3.png)
 
 ## 🚀 快速开始
+
+### 🔥拉取项目
+
+```bash
+git clone https://github.com/li-xiu-qi/HearSight
+```
 
 ### ⚙️ 配置环境变量
 
@@ -94,3 +101,5 @@ npm run dev
 ```
 
 🌐 使用手动启动方式，前端默认在 5173 端口启动，访问 <http://localhost:5173>
+
+后续我还会继续开发HearSight项目，也欢迎大家来提交pr改进项目，有问题可以到issue。
