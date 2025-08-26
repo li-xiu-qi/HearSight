@@ -1,24 +1,51 @@
-__pycache__
-*.pyc
-.venv
-venv
-env
-node_modules
-frontend/node_modules
-dist
-# 忽略下载的大媒体文件目录（修正目录名）
-app_datas/download_videos
+# Docker build context ignore file
+# Exclude large runtime data, caches and sensitive files from build context.
 
-# 忽略常见的媒体临时/大文件（按需可精简）
-app_datas/*.temp.mp4
+# Runtime data / large media / model caches
+app_datas/
+app_datas/download_videos/
 app_datas/*.mp4
 app_datas/*.m4a
+app_datas/*.temp.mp4
+model_cache/
+torch_cache/
+transformers_cache/
 
-# 忽略 sqlite 数据库文件（项目内全局规则保留）
-app_datas/db/*.sqlite3
-results
-tests
+# Databases and cache files
+*.sqlite3
+backend/cache/cache.db
+
+# Environment / secrets
+.env
+.env.*
+
+# Node / Python dependencies and build artifacts
+node_modules/
+frontend/node_modules/
+dist/
+build/
+frontend/dist/
+
+# Virtualenvs and python cache
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs, OS and git metadata
+*.log
+.DS_Store
+Thumbs.db
 .git
 .gitignore
-*.sqlite3
 .github
+
+# Test outputs and temporary results
+results/
+backend/tests/results/
+tests/
+
+# Note: keep lockfiles (package-lock.json / requirements.txt) and Dockerfile in context
+# so builds are reproducible. Do NOT add them to this file.

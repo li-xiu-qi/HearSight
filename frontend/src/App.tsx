@@ -277,7 +277,7 @@ function App() {
     <Layout style={{ minHeight: '100vh' }}>
       <Header style={{ background: 'transparent', padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: '100%', maxWidth: 1440 }}>
-          <Title level={2} style={{ margin: '8px 0' }}>SmartMedia</Title>
+          <Title level={2} style={{ margin: '8px 0' }}>HearSight</Title>
         </div>
       </Header>
       <div className={`three-col ${leftCollapsed ? 'left-collapsed' : ''} ${rightCollapsed ? 'right-collapsed' : ''}`}>
@@ -443,7 +443,7 @@ function App() {
         </div>
       </div>
       <Footer style={{ textAlign: 'center' }}>
-        SmartMedia
+  HearSight
       </Footer>
     </Layout>
   )

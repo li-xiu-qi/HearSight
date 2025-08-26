@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 
-# 将项目根目录加入 sys.path（tests -> backend -> SmartMedia）
+# 将项目根目录加入 sys.path（tests -> backend -> HearSight）
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))

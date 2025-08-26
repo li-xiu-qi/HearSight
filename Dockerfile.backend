@@ -37,7 +37,11 @@ RUN python3 -m pip install --upgrade pip \
 COPY . /app
 
 # 确保持久化目录存在
-RUN mkdir -p /app/app_datas/download_videos /app/app_datas/db
+RUN mkdir -p /app/app_datas/download_videos \
+    /app/app_datas/model_cache \
+    /app/app_datas/torch_cache \
+    /app/app_datas/transformers_cache \
+    /app/app_datas/xdg_cache
 
 EXPOSE 8000
 

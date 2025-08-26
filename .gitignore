@@ -94,3 +94,8 @@ backend/tests/results/
 
 # 前端依赖锁文件（可选）
 frontend/package-lock.json
+
+tests/downloads
+tests/results
+tests/datas
+

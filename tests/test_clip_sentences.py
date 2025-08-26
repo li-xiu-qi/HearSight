@@ -9,7 +9,7 @@ import torch
 from funasr import AutoModel
 
 # ===== 配置 =====
-AUDIO_PATH = r"C:\Users\ke\Documents\projects\python_projects\SmartMedia\backend\tests\datas\大语言模型进化论：从“听懂指令”到“学会思考”，AI如何与人类对齐？.m4a"
+AUDIO_PATH = r"C:\Users\ke\Documents\projects\python_projects\HearSight\backend\tests\datas\大语言模型进化论：从“听懂指令”到“学会思考”，AI如何与人类对齐？.m4a"
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "results")
 CLIPS_DIR = os.path.join(OUTPUT_DIR, "clips")
 MAX_SENTENCES = 10  # 仅截取前 N 句，避免过多文件

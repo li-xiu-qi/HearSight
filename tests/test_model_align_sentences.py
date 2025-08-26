@@ -18,7 +18,7 @@ import torch
 from funasr import AutoModel
 
 # ===== 配置 =====
-AUDIO_PATH = r"C:\Users\ke\Documents\projects\python_projects\SmartMedia\backend\tests\datas\大语言模型进化论：从“听懂指令”到“学会思考”，AI如何与人类对齐？.m4a"
+AUDIO_PATH = r"C:\Users\ke\Documents\projects\python_projects\HearSight\backend\tests\datas\大语言模型进化论：从“听懂指令”到“学会思考”，AI如何与人类对齐？.m4a"
 BASE_DIR = os.path.dirname(__file__)
 RESULT_DIR = os.path.join(BASE_DIR, "results", "model_align")
 CLIPS_DIR = os.path.join(RESULT_DIR, "clips")
