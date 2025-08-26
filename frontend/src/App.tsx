@@ -15,7 +15,7 @@ import {
   message,
   Tabs,
 } from 'antd'
-import { PlayCircleOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons'
+import { PlayCircleOutlined, ReloadOutlined, SearchOutlined, UpOutlined, DownOutlined, SyncOutlined } from '@ant-design/icons'
 import ReactMarkdown from 'react-markdown'
 
 const { Header, Footer } = Layout
@@ -86,7 +86,10 @@ function App() {
   const [jobs, setJobs] = useState<Array<JobItem>>([])
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const segScrollRef = useRef<HTMLDivElement | null>(null)
+  const histScrollRef = useRef<HTMLDivElement | null>(null)
   const [activeSegIndex, setActiveSegIndex] = useState<number | null>(null)
+  const [activeTranscriptId, setActiveTranscriptId] = useState<number | null>(null)
+  const [autoScroll, setAutoScroll] = useState<boolean>(false)
   const [submitting, setSubmitting] = useState(false)
   const prevActiveRef = useRef<number | null>(null)
 
@@ -177,12 +180,23 @@ function App() {
       const basename = data.media_path?.split('\\').pop()?.split('/').pop()
       if (basename) setVideoSrc(`/static/${basename}`)
       setSegments(Array.isArray(data.segments) ? data.segments : [])
+      // mark this transcript as active in the history list
+      setActiveTranscriptId(id)
     } catch (err: any) {
       setError(err?.message || '获取详情出错')
     } finally {
       setLoading(false)
     }
   }
+
+  // 当 activeTranscriptId 改变时，让历史列表滚动到该项
+  useEffect(() => {
+    if (activeTranscriptId == null) return
+    const el = histScrollRef.current?.querySelector(`[data-transcript-id="${activeTranscriptId}"]`) as HTMLElement | null
+    if (el) {
+      try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }) } catch { el.scrollIntoView() }
+    }
+  }, [activeTranscriptId])
 
   // fmtTime: 接受毫秒为输入，返回 mm:ss 格式
   const fmtTime = (ms: number) => {
@@ -256,7 +270,8 @@ function App() {
       if (prevActiveRef.current !== newIndex) {
         prevActiveRef.current = newIndex
         setActiveSegIndex(newIndex)
-        if (newIndex != null && segScrollRef.current) {
+        // 仅在开启自动滚动时让分句滚动到可见区域
+        if (autoScroll && newIndex != null && segScrollRef.current) {
           const el = segScrollRef.current.querySelector(`[data-seg-index="${newIndex}"]`) as HTMLElement | null
           if (el) {
             try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }) } catch {}
@@ -267,7 +282,7 @@ function App() {
 
     v.addEventListener('timeupdate', onTimeUpdate)
     return () => v.removeEventListener('timeupdate', onTimeUpdate)
-  }, [segments, videoRef.current])
+  }, [segments, videoRef.current, autoScroll])
 
   useEffect(() => {
     void fetchJobs()
@@ -276,7 +291,7 @@ function App() {
   }, [])
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Header style={{ background: 'transparent', padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: '100%', maxWidth: 1440 }}>
           <Title level={2} style={{ margin: '8px 0' }}>smartmedia</Title>
@@ -311,14 +326,14 @@ function App() {
               </Form>
             </Card>
 
-            <Card size="small" style={{ marginBottom: 12 }} bodyStyle={{ padding: 0 }}>
+            <Card size="small" style={{ marginBottom: 12 }} className="left-grow-card" bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
               <Tabs defaultActiveKey="processed" size="small" centered>
-                <Tabs.TabPane tab="已处理" key="processed">
-                  <div style={{ padding: 8 }}>
+                <Tabs.TabPane tab="已处理" key="processed" forceRender>
+                  <div style={{ padding: 8, display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
                     {transcripts.length === 0 ? (
                       <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无记录" />
                     ) : (
-                      <div className="hist-scroll">
+                      <div className="hist-scroll" ref={histScrollRef}>
                         <List
                           split={false}
                           size="small"
@@ -326,8 +341,8 @@ function App() {
                           renderItem={(it: TranscriptMeta) => {
                             const basename = it.media_path.split('\\').pop()?.split('/').pop() || it.media_path
                             return (
-                              <List.Item className="hist-item">
-                                <div className="hist-main">
+                              <List.Item className={`hist-item ${activeTranscriptId === it.id ? 'hist-item-active' : ''}`} data-transcript-id={it.id}>
+                                <div className={`hist-main ${activeTranscriptId === it.id ? 'hist-main-active' : ''}`}>
                                   <div className="hist-row">
                                     <div className="hist-title" title={basename}>{basename}</div>
                                     <Button className="hist-open" size="small" type="link" onClick={() => loadTranscriptDetail(it.id)}>打开</Button>
@@ -342,7 +357,7 @@ function App() {
                     )}
                   </div>
                 </Tabs.TabPane>
-                <Tabs.TabPane tab="任务队列" key="tasks">
+                <Tabs.TabPane tab="任务队列" key="tasks" forceRender>
                   <div style={{ padding: 8 }}>
                     {jobs.length === 0 ? (
                       <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无任务" />
@@ -400,10 +415,46 @@ function App() {
         {/* 右侧列 */}
   <div className="three-col__right">
           <div className="sider-inner">
-            <Card size="small" bodyStyle={{ padding: 0 }}>
-              <Tabs size="small" defaultActiveKey="segments">
-                <Tabs.TabPane tab="分句（点击跳转）" key="segments">
-                  <div style={{ padding: 8 }}>
+            <Card size="small" className="right-grow-card" bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+              <Tabs
+                size="small"
+                defaultActiveKey="segments"
+                style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+                tabBarStyle={{ position: 'relative', zIndex: 60 }}
+                onChange={(_key) => {
+                  // ensure tab content gets a chance to layout; useful when TabPane was lazily rendered
+                  setTimeout(() => {
+                    try {
+                      if (segScrollRef.current) segScrollRef.current.scrollTop = segScrollRef.current.scrollTop
+                      if (histScrollRef.current) histScrollRef.current.scrollTop = histScrollRef.current.scrollTop
+                    } catch {}
+                  }, 30)
+                }}
+              >
+                <Tabs.TabPane tab="分句（点击跳转）" key="segments" forceRender>
+                  <div style={{ padding: 8, display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <Button size="small" icon={<UpOutlined />} onClick={() => {
+                        // 手动向上滚动
+                        if (!segScrollRef.current) return
+                        segScrollRef.current.scrollBy({ top: -160, left: 0, behavior: 'smooth' })
+                      }} />
+                      <Button size="small" icon={<DownOutlined />} onClick={() => {
+                        if (!segScrollRef.current) return
+                        segScrollRef.current.scrollBy({ top: 160, left: 0, behavior: 'smooth' })
+                      }} />
+                      <Button size="small" icon={<SyncOutlined />} onClick={() => {
+                        // 手动将当前 activeSegIndex 居中
+                        if (!segScrollRef.current || activeSegIndex == null) return
+                        const el = segScrollRef.current.querySelector(`[data-seg-index="${activeSegIndex}"]`) as HTMLElement | null
+                        if (el) try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }) } catch {}
+                      }}>定位</Button>
+                      <div style={{ flex: 1 }} />
+                      <Space>
+                        <span style={{ color: '#8c8c8c', fontSize: 12 }}>自动滚动</span>
+                        <Button size="small" type={autoScroll ? 'primary' : 'default'} onClick={() => setAutoScroll(!autoScroll)}>{autoScroll ? '开' : '关'}</Button>
+                      </Space>
+                    </div>
                     <div className="segments-scroll" ref={segScrollRef}>
                       {segments.length === 0 ? (
                         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无分句" />
@@ -439,8 +490,8 @@ function App() {
                     </div>
                   </div>
                 </Tabs.TabPane>
-                <Tabs.TabPane tab="总结" key="summaries">
-                  <div style={{ padding: 8 }}>
+                <Tabs.TabPane tab="总结" key="summaries" forceRender>
+                  <div style={{ padding: 8, display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
                     <Button
                       size="small"
                       type="primary"
