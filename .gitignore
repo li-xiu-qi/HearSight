@@ -44,4 +44,53 @@ app_datas/
 # Keep docker configuration files tracked in the repo; do not commit secrets or
 # plaintext credentials. Use `docker-compose.example.yml` and a `.env` file for
 # real secrets.
-docker-compose.yml
+# 其他缓存和模型目录
+model_cache/
+torch_cache/
+transformers_cache/
+
+# 数据库相关
+postgres/
+
+# 前端环境变量
+frontend/.env
+
+# 临时文件
+*.tmp
+*.bak
+
+# 数据与缓存
+app_datas/
+*.sqlite3
+ 
+# Local data, caches and generated media
+app_datas/
+*.sqlite3
+ 
+# Backend local DB
+backend/cache/cache.db
+ 
+# Test data/results
+backend/tests/datas/
+backend/tests/downloads/
+backend/tests/results/
+ 
+# Environment files
+.env
+ 
+# Frontend lockfile (optional; remove if you want to track it)
+frontend/package-lock.json
+
+# 后端数据库
+backend/cache/cache.db
+
+# 测试数据与结果
+backend/tests/datas/
+backend/tests/downloads/
+backend/tests/results/
+
+# 环境变量
+.env
+
+# 前端依赖锁文件（可选）
+frontend/package-lock.json
