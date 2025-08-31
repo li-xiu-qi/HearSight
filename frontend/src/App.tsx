@@ -15,7 +15,7 @@ import {
   message,
   Tabs,
 } from 'antd'
-import { PlayCircleOutlined, ReloadOutlined, SearchOutlined, UpOutlined, DownOutlined, SyncOutlined } from '@ant-design/icons'
+import { PlayCircleOutlined, ReloadOutlined, SearchOutlined, UpOutlined, DownOutlined, SyncOutlined, UploadOutlined } from '@ant-design/icons'
 import ReactMarkdown from 'react-markdown'
 
 const { Header, Footer } = Layout

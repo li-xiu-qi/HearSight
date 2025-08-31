@@ -13,9 +13,7 @@ from backend.db.pg_store import init_db, claim_next_pending_job, finish_job_succ
 from backend.utils.vedio_utils.download_video.download_bilibili import download_bilibili
 from backend.audio2text.asr_sentence_segments import process as asr_process
 from backend.routers.media import router as media_router
-from backend.api.http.routes_asr import router as asr_router
-from backend.api.http.routes_text import router as text_router
-from backend.api.http.routes_chat import router as chat_router
+
 
 
 APP_DIR = Path(__file__).parent.resolve()
@@ -69,9 +67,7 @@ app.state.db_url = db_url
 
 # 注册路由
 app.include_router(media_router)
-app.include_router(asr_router)
-app.include_router(text_router)
-app.include_router(chat_router)
+
 
 # 启动后台worker：简单串行处理下载+ASR，避免阻塞请求线程
 def _job_worker(app: FastAPI) -> None:
