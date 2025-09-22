@@ -15,8 +15,8 @@ import {
   message,
   Tabs,
 } from 'antd'
-import { PlayCircleOutlined, ReloadOutlined, SearchOutlined, UpOutlined, DownOutlined, SyncOutlined, UploadOutlined } from '@ant-design/icons'
-import ReactMarkdown from 'react-markdown'
+import { PlayCircleOutlined, ReloadOutlined, SearchOutlined, UpOutlined, DownOutlined, SyncOutlined } from '@ant-design/icons'
+import SimpleMarkdown from './components/SimpleMarkdown'
 
 const { Header, Footer } = Layout
 const { Title, Text } = Typography
@@ -585,7 +585,7 @@ function App() {
                                 description={`时间: ${fmtTime((it.start_time || 0))} ~ ${fmtTime((it.end_time || 0))}`}
                               />
                               <div style={{ whiteSpace: 'pre-wrap' }}>
-                                <ReactMarkdown>{it.summary || ''}</ReactMarkdown>
+                                <SimpleMarkdown>{it.summary || ''}</SimpleMarkdown>
                               </div>
                             </List.Item>
                           )}
