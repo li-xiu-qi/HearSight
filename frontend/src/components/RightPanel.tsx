@@ -121,7 +121,8 @@ const RightPanel = forwardRef<HTMLDivElement, RightPanelProps>(
 
     const scrollUp = () => {
       if (!ref || typeof ref === 'function') return
-      const scrollContainer = ref.current?.querySelector('.segments-scroll') as HTMLElement
+      // ref 现在直接指向 segments-scroll 容器
+      const scrollContainer = ref.current
       if (scrollContainer) {
         scrollContainer.scrollBy({ top: -160, left: 0, behavior: 'smooth' })
       }
@@ -129,7 +130,8 @@ const RightPanel = forwardRef<HTMLDivElement, RightPanelProps>(
 
     const scrollDown = () => {
       if (!ref || typeof ref === 'function') return
-      const scrollContainer = ref.current?.querySelector('.segments-scroll') as HTMLElement
+      // ref 现在直接指向 segments-scroll 容器
+      const scrollContainer = ref.current
       if (scrollContainer) {
         scrollContainer.scrollBy({ top: 160, left: 0, behavior: 'smooth' })
       }
@@ -137,7 +139,8 @@ const RightPanel = forwardRef<HTMLDivElement, RightPanelProps>(
 
     const centerActiveSegment = () => {
       if (!ref || typeof ref === 'function' || activeSegIndex == null) return
-      const scrollContainer = ref.current?.querySelector('.segments-scroll') as HTMLElement
+      // ref 现在直接指向 segments-scroll 容器
+      const scrollContainer = ref.current
       if (scrollContainer) {
         const el = scrollContainer.querySelector(`[data-seg-index="${activeSegIndex}"]`) as HTMLElement | null
         if (el) {
@@ -167,7 +170,8 @@ const RightPanel = forwardRef<HTMLDivElement, RightPanelProps>(
               setTimeout(() => {
                 try {
                   if (ref && typeof ref !== 'function' && ref.current) {
-                    const segmentsScroll = ref.current.querySelector('.segments-scroll') as HTMLElement
+                    // ref 现在直接指向 segments-scroll 容器
+                    const segmentsScroll = ref.current
                     if (segmentsScroll) {
                       segmentsScroll.scrollTop = segmentsScroll.scrollTop
                     }

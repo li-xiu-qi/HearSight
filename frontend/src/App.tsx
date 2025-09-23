@@ -150,7 +150,8 @@ function App() {
         setActiveSegIndex(newIndex)
         // 仅在开启自动滚动时让分句滚动到可见区域
         if (autoScroll && newIndex != null && segScrollRef.current) {
-          const scrollContainer = segScrollRef.current.querySelector('.segments-scroll') as HTMLElement | null
+          // segScrollRef.current 现在直接指向 .segments-scroll 容器
+          const scrollContainer = segScrollRef.current
           if (scrollContainer) {
             const el = scrollContainer.querySelector(`[data-seg-index="${newIndex}"]`) as HTMLElement | null
             if (el) {

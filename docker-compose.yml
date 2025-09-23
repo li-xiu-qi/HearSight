@@ -30,6 +30,13 @@ services:
       - BACKEND_PORT=${BACKEND_PORT:-9999}
       - FRONTEND_HOST=${FRONTEND_HOST:-localhost}
       - FRONTEND_PORT=${FRONTEND_PORT:-10000}
+      # OpenAI / Chat API 配置
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.siliconflow.cn/v1}
+      - OPENAI_CHAT_MODEL=${OPENAI_CHAT_MODEL:-deepseek-ai/DeepSeek-V3}
+      - CHAT_MAX_WINDOWS=${CHAT_MAX_WINDOWS:-1000000}
+      # Bilibili 配置
+      - BILIBILI_SESSDATA=${BILIBILI_SESSDATA}
     deploy: {}
     gpus: all
 
