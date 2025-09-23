@@ -40,25 +40,24 @@ git clone https://github.com/li-xiu-qi/HearSight
 
 ```bash
 # Local environment variables (do NOT commit this file)
-# MinIO - change these in production
-MINIO_ROOT_USER=minioadmin
-MINIO_ROOT_PASSWORD=minioadmin
-MINIO_PORT=9000
-MINIO_CONSOLE_PORT=9001
+
 # Postgres - change this password for production
 POSTGRES_USER=hearsight
 POSTGRES_PASSWORD=hearsight_pass
 POSTGRES_DB=hearsight
 POSTGRES_PORT=5432
+
 # Backend / Frontend ports (optional)
 BACKEND_PORT=9999
 FRONTEND_PORT=10000
+
 # OpenAI / Chat Server
 # Set OPENAI_API_KEY in your local .env or export in your shell
 OPENAI_API_KEY= # 必须要配置
 OPENAI_BASE_URL=https://api.siliconflow.cn/v1
 OPENAI_CHAT_MODEL=deepseek-ai/DeepSeek-V3 # THUDM/GLM-4-9B-0414
 CHAT_MAX_WINDOWS=1000000
+
 # Bilibili
 BILIBILI_SESSDATA= # 可以不配置，也可以配置，可以去哔哩哔哩官网获取。
 ```
@@ -68,7 +67,7 @@ BILIBILI_SESSDATA= # 可以不配置，也可以配置，可以去哔哩哔哩�
 ### 🐳 方案一：使用 Docker（推荐，免去依赖安装问题）
 
 ```bash
-docker compose -d --build
+docker compose up -d --build
 ```
 
 🌐 使用 Docker 启动项目后，访问 <http://localhost:10000>
