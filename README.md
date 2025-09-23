@@ -21,8 +21,12 @@ FastAPI + PostgreSQL（后端）、React + Ant Design（前端），支持使用
 
 ## 📸 效果展示
 
-![](https://oss-liuchengtu.hudunsoft.com/userimg/b4/b425ba2061f11b8a16a063c39824151e.png)
-![](https://oss-liuchengtu.hudunsoft.com/userimg/21/217272740919c8740e84c970699e50b3.png)
+![](https://oss-liuchengtu.hudunsoft.com/userimg/b8/b87b5287450f1d747bfc32c72f3a7acd.png)
+![](https://oss-liuchengtu.hudunsoft.com/userimg/26/2640815c1c2a81206040f8271f37e0f2.png)
+
+![](https://oss-liuchengtu.hudunsoft.com/userimg/56/56ebfee708490e8094b045ad83e6b4a7.png)
+
+![](https://oss-liuchengtu.hudunsoft.com/userimg/8a/8a84f398c61ea93e8449a0ab0da624bc.png)
 
 ## 🚀 快速开始
 
