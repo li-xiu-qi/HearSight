@@ -69,14 +69,31 @@ button:focus-visible {
   }
 }
 
-/* ===== 合并自 App.css 开始 ===== */
-/* 已处理历史列表样式 */
 .hist-item { padding: 6px 0 !important; }
 .hist-main { display: flex; flex-direction: column; gap: 4px; width: 100%; min-width: 0; }
-.hist-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.hist-title { font-weight: 600; color: #262626; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 28px; }
+.hist-title { 
+  font-weight: 600; 
+  color: #262626; 
+  font-size: 13px; 
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis;
+  flex: 1 1 auto;
+  min-width: 0;
+}
 .hist-meta { font-size: 12px; color: #8c8c8c; }
-.hist-open { padding: 0; }
+.hist-open { padding: 0; min-width: 32px; }
+
+/* 确保右侧操作区域宽度一致 */
+.hist-action-area {
+  flex: 0 0 auto;
+  min-width: 40px;  /* 减少宽度，因为只有一个三点按钮 */
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;  /* 按钮间间距 */
+}
 
 /* active history item */
 .hist-item-active {
@@ -185,97 +202,253 @@ button:focus-visible {
   color: #888;
 }
 
-/* ===== Stable 3-column layout ===== */
-.three-col {
-  width: 100%;
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 0 16px 16px;
-  display: grid;
-  grid-template-columns: 240px minmax(720px, 1fr) 280px;
-  gap: 16px;
-  box-sizing: border-box;
-  /* 让三列区域在 header/footer 之间伸展，高度由外层 Layout 的 flex 决定 */
-  align-items: stretch;
-  overflow-x: hidden; /* 防止横向滚动 */
-  overflow-y: hidden; /* 禁止 three-col 自身产生纵向滚动，滚动应由列内区域承担 */
-  /* 重要：使 three-col 成为一个在垂直方向可伸缩的容器 */
-  flex: 1 1 auto;
-  display: grid;
-  min-height: 0; /* 关键：允许子元素使用 overflow 并不引起页面滚动 */
+/* ===== 全屏布局样式 ===== */
+
+/* 全屏布局主容器 */
+.fullscreen-layout {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.three-col__left,
-.three-col__right,
-.three-col__center {
+/* 顶部工具栏 */
+.fullscreen-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.header-left {
+  flex: 0 0 auto;
+}
+
+.header-center {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.header-right {
+  flex: 0 0 auto;
+}
+
+/* URL解析结果提示栏 */
+.url-result-bar {
+  padding: 8px 16px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #d9d9d9;
+}
+
+/* 主内容区域 */
+.fullscreen-content {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  /* 允许列内部伸展以填满可用高度 */
-  min-height: 0; /* 允许子项使用 overflow */
 }
 
-/* 明确保证左右两列内容不会溢出到外层，滚动条在各自列内 */
-.three-col__left { overflow: hidden; }
-.three-col__right { overflow: hidden; }
-.three-col__center { overflow: visible; }
-
-.sider-inner {
-  /* 侧栏内部使用弹性布局，外层 Card 填充高度，内部滚动区域使用 flex:1 */
+/* 主视频区域 */
+.fullscreen-main {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  height: 100%;
+  background: #000;
+  position: relative;
+  transition: margin 0.3s ease;
 }
 
-/* 让特定 Card 填满父容器并将 body 作为弹性容器，以便内部的 .hist-scroll/.segments-scroll 能够伸展 */
-.left-grow-card,
-.right-grow-card {
+.fullscreen-main.with-left {
+  margin-left: 0;
+}
+
+.fullscreen-main.with-right {
+  margin-right: 0;
+}
+
+/* 左侧面板宽度约束 */
+.fullscreen-left-panel {
+  width: 320px;
+  min-width: 320px;
+  max-width: 320px;
+  background: white;
+  border-right: 1px solid #d9d9d9;
   display: flex;
   flex-direction: column;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.fullscreen-right-panel {
+  width: 320px;
+  min-width: 320px;
+  max-width: 320px;
+  background: white;
+  border-left: 1px solid #d9d9d9;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+/* 面板头部 */
+.panel-header {
+  padding: 12px 16px;
+  background: #fafafa;
+  border-bottom: 1px solid #d9d9d9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  color: #262626;
+}
+
+/* 面板内容 */
+.panel-content {
   flex: 1 1 auto;
   min-height: 0;
+  overflow: hidden;
 }
-.left-grow-card > .ant-card-body,
-.right-grow-card > .ant-card-body {
+
+/* 底部状态栏 */
+.fullscreen-footer {
+  background: #f5f5f5;
+  padding: 8px 24px;
+  border-top: 1px solid #d9d9d9;
+  height: auto;
+  line-height: 1;
+}
+
+.footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 适配全屏视频播放器 */
+.fullscreen-video-card {
+  height: 100%;
+  border: none;
+  border-radius: 0;
+}
+
+.fullscreen-video-card .ant-card-body {
+  height: calc(100% - 57px); /* 减去卡片头部高度 */
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* 关键：允许子元素使用 overflow */
-  padding: 8px; /* 使 Card body 与内部滚动区间衔接更自然 */
-  background: transparent; /* 避免卡片内部出现突兀白底 */
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
-
-/* collapse states: keep a thin rail for the button */
-.three-col.left-collapsed { grid-template-columns: 16px minmax(720px, 1fr) 280px; }
-.three-col.right-collapsed { grid-template-columns: 240px minmax(720px, 1fr) 16px; }
-.three-col.left-collapsed.right-collapsed { grid-template-columns: 16px minmax(720px, 1fr) 16px; }
-
-/* hide inner when collapsed */
-.left-collapsed .three-col__left .sider-inner { display: none; }
-.right-collapsed .three-col__right .sider-inner { display: none; }
-
-/* collapse buttons pinned to outer edges */
-.collapse-btn {
-  position: absolute;
-  top: 8px;
-  width: 24px;
-  height: 24px;
+.video-container {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: none;
-  background: transparent;
-  cursor: pointer;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
 }
-.collapse-btn--left { right: 0; }
-.collapse-btn--right { left: 0; }
 
-/* 给两侧栏一点内边距，避免按钮遮挡内容 */
-.three-col__left { padding-right: 8px; }
-.three-col__right { padding-left: 0; }
+.fullscreen-video {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  background: #000;
+}
 
-/* right segments list scroll area */
+.video-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.loading-overlay {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+/* 全屏面板内容样式 */
+.fullscreen-left-panel-content,
+.fullscreen-right-panel-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+}
+
+.fullscreen-left-panel-content .left-grow-card,
+.fullscreen-right-panel-content .right-grow-card {
+  height: 100%;
+  border: none;
+  width: 100%;
+  overflow: hidden;
+}
+
+.fullscreen-left-panel-content .ant-card-body,
+.fullscreen-right-panel-content .ant-card-body {
+  height: 100%;
+  padding: 8px;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* 确保Tabs容器不会溢出 */
+.fullscreen-left-panel-content .ant-tabs,
+.fullscreen-right-panel-content .ant-tabs {
+  width: 100%;
+  overflow: hidden;
+}
+
+/* 修复标签页宽度不一致问题 */
+.fullscreen-left-panel-content .ant-tabs-tabpane,
+.fullscreen-right-panel-content .ant-tabs-tabpane {
+  width: 100%;
+  overflow: hidden;
+}
+
+/* 在全屏模式下隐藏原有的三列布局 */
+.three-col {
+  display: none;
+}
+
+/* 让面板内的组件适应全屏布局 */
+.panel-content .sider-inner {
+  height: 100%;
+  padding: 0;
+}
+
+.panel-content .ant-card {
+  border: none;
+  height: 100%;
+}
+
+/* 保持原有的滚动区域样式 */
+
+/* 在全屏模式下保持历史记录和分句列表的滚动样式 */
 
 .segments-scroll {
   /* 填满父容器剩余空间，由父级 Card / sider-inner 控制高度 */

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build:
@@ -8,7 +6,8 @@ services:
     container_name: hearsight-backend
     restart: unless-stopped
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     # 生产环境使用命名卷持久化数据（由 Docker 管理）
     volumes:
       - ./app_datas:/app/app_datas
@@ -61,6 +60,11 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-hearsight}
     volumes:
       - ./app_datas/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hearsight} -d ${POSTGRES_DB:-hearsight}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 
 

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -42,11 +43,33 @@ def _ensure_conn_params(db_url: Optional[str] = None) -> Dict[str, Any]:
 def init_db(db_url: Optional[str] = None) -> None:
     """初始化 Postgres 中需要的表和索引。"""
     conn_params = _ensure_conn_params(db_url)
-    # 当使用 dsn 键时，psycopg2.connect 接受 dsn 关键字参数
-    if "dsn" in conn_params:
-        conn = psycopg2.connect(conn_params["dsn"])  # type: ignore[arg-type]
-    else:
-        conn = psycopg2.connect(**conn_params)
+    max_retries = 30  # 最多重试30次
+    retry_delay = 2   # 每次重试间隔2秒
+    
+    conn = None
+    for attempt in range(max_retries):
+        try:
+            # 当使用 dsn 键时，psycopg2.connect 接受 dsn 关键字参数
+            if "dsn" in conn_params:
+                conn = psycopg2.connect(conn_params["dsn"])  # type: ignore[arg-type]
+            else:
+                conn = psycopg2.connect(**conn_params)
+            break  # 连接成功，跳出重试循环
+        except psycopg2.OperationalError as e:
+            if "the database system is starting up" in str(e) or "Connection refused" in str(e):
+                if attempt < max_retries - 1:
+                    print(f"数据库尚未就绪，等待 {retry_delay} 秒后重试... (第 {attempt + 1}/{max_retries} 次)")
+                    time.sleep(retry_delay)
+                    continue
+                else:
+                    print(f"数据库连接失败，已重试 {max_retries} 次")
+                    raise
+            else:
+                # 其他类型的连接错误，直接抛出
+                raise
+    
+    if conn is None:
+        raise RuntimeError("无法建立数据库连接")
 
     try:
         with conn:
@@ -105,7 +128,10 @@ def save_transcript(db_url: Optional[str], media_path: str, segments: List[Dict[
                     "INSERT INTO transcripts (media_path, segments_json) VALUES (%s, %s) RETURNING id",
                     (media_path, data),
                 )
-                rid = cur.fetchone()[0]
+                row = cur.fetchone()
+                if not row:
+                    raise RuntimeError("Failed to insert transcript")
+                rid = row[0]
                 return int(rid)
     finally:
         conn.close()
@@ -250,7 +276,10 @@ def create_job(db_url: Optional[str], url: str) -> int:
                     "INSERT INTO jobs (url, status) VALUES (%s, %s) RETURNING id",
                     (url, 'pending'),
                 )
-                rid = cur.fetchone()[0]
+                row = cur.fetchone()
+                if not row:
+                    raise RuntimeError("Failed to insert job")
+                rid = row[0]
                 return int(rid)
     finally:
         conn.close()
@@ -414,6 +443,27 @@ def finish_job_failed(db_url: Optional[str], job_id: int, error: str) -> None:
         conn.close()
 
 
+def delete_transcript(db_url: Optional[str], transcript_id: int) -> bool:
+    """删除指定的转写记录。
+    返回: True 如果删除成功，False 如果记录不存在
+    """
+    conn_params = _ensure_conn_params(db_url)
+    if "dsn" in conn_params:
+        conn = psycopg2.connect(conn_params["dsn"])  # type: ignore[arg-type]
+    else:
+        conn = psycopg2.connect(**conn_params)
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM transcripts WHERE id = %s",
+                    (int(transcript_id),),
+                )
+                return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
 def update_job_result(db_url: Optional[str], job_id: int, patch: Dict[str, Any], status: Optional[str] = None) -> None:
     """合并写入 jobs.result_json，可选同时更新 status。
     - 若现有 result_json 不存在或非 JSON，则以 patch 作为新值。
@@ -433,12 +483,16 @@ def update_job_result(db_url: Optional[str], job_id: int, patch: Dict[str, Any],
                 )
                 row = cur.fetchone()
                 current: Dict[str, Any]
-                if row and row.get("result_json"):
-                    try:
-                        current = json.loads(row.get("result_json"))
-                        if not isinstance(current, dict):
+                if row:
+                    result_json = row.get("result_json")
+                    if result_json and result_json.strip():
+                        try:
+                            current = json.loads(result_json)
+                            if not isinstance(current, dict):
+                                current = {}
+                        except Exception:
                             current = {}
-                    except Exception:
+                    else:
                         current = {}
                 else:
                     current = {}

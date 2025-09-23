@@ -5,6 +5,7 @@ from typing import Any, Dict, List
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
+import logging
 
 from backend.audio2text.asr_sentence_segments import process as asr_process
 from backend.db.pg_store import (
@@ -12,6 +13,7 @@ from backend.db.pg_store import (
     list_transcripts_meta,
     count_transcripts,
     get_transcript_by_id,
+    delete_transcript,
     create_job,
     get_job,
     list_jobs,
@@ -40,7 +42,7 @@ def api_download(payload: Dict[str, Any], request: Request) -> Dict[str, Any]:
     files = download_bilibili(
         url=url,
         out_dir=out_dir,
-        sessdata=sessdata,
+        sessdata=str(sessdata) if sessdata else "",
         playlist=playlist,
         quality=quality,
         workers=workers,
@@ -104,13 +106,16 @@ def api_summarize(payload: Dict[str, Any], request: Request) -> Dict[str, Any]:
 
     # 从配置或环境读取 CHAT_MAX_WINDOWS（优先级：config -> 环境变量 -> 默认 1000000）
     chat_max = None
-    if getattr(cfg, 'CHAT_MAX_WINDOWS', None):
+    if hasattr(cfg, 'CHAT_MAX_WINDOWS') and cfg.CHAT_MAX_WINDOWS:
         try:
             chat_max = int(cfg.CHAT_MAX_WINDOWS)
         except Exception:
             chat_max = None
     if chat_max is None:
-        chat_max = int(os.environ.get('CHAT_MAX_WINDOWS') or os.environ.get('CHAT_MAX_WINDOWS'.upper()) or 1000000)
+        try:
+            chat_max = int(os.environ.get('CHAT_MAX_WINDOWS') or os.environ.get('CHAT_MAX_WINDOWS'.upper()) or '1000000')
+        except Exception:
+            chat_max = 1000000
 
 
     try:
@@ -129,7 +134,7 @@ def api_summarize(payload: Dict[str, Any], request: Request) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"summarization failed: {e}")
 
     # 返回直接的 list[SummaryItem] 以简化前端处理
-    return summaries
+    return {"summaries": summaries}
 
 
 @router.get("/transcripts")
@@ -183,3 +188,92 @@ def api_list_jobs(request: Request, status: str | None = None, limit: int = 50, 
     db_url = request.app.state.db_url
     items = list_jobs(db_url, status=status, limit=limit, offset=offset)
     return {"items": items}
+
+
+@router.delete("/transcripts/{transcript_id}")
+def api_delete_transcript_complete(transcript_id: int, request: Request) -> Dict[str, Any]:
+    """删除指定的转写记录及其对应的视频文件。
+    该操作会同时删除视频文件和数据库记录，不可恢复。
+    """
+    logging.info(f"开始删除操作 - transcript_id: {transcript_id}")
+    
+    db_url = request.app.state.db_url
+    static_dir: Path = request.app.state.static_dir
+    
+    logging.info(f"数据库连接: {db_url}")
+    logging.info(f"静态目录: {static_dir}")
+    
+    # 检查转写记录是否存在
+    transcript = get_transcript_by_id(db_url, transcript_id)
+    if not transcript:
+        logging.error(f"转写记录不存在: {transcript_id}")
+        raise HTTPException(status_code=404, detail=f"transcript not found: {transcript_id}")
+    
+    logging.info(f"找到转写记录: {transcript}")
+    
+    deleted_files = []
+    errors = []
+    
+    try:
+        # 第一步：删除视频文件
+        media_path = transcript.get("media_path")
+        if media_path:
+            try:
+                # 解析文件路径
+                file_path = Path(media_path)
+                
+                # 安全检查：确保文件在静态目录内，防止路径遍历攻击
+                try:
+                    file_path.resolve().relative_to(static_dir.resolve())
+                except ValueError:
+                    # 如果文件不在静态目录内，尝试通过文件名在静态目录中查找
+                    basename = file_path.name
+                    file_path = static_dir / basename
+                
+                # 检查文件是否存在并删除
+                if file_path.exists() and file_path.is_file():
+                    file_path.unlink()  # 删除文件
+                    deleted_files.append(str(file_path))
+                    logging.info(f"已删除视频文件: {file_path}")
+                else:
+                    logging.warning(f"视频文件不存在: {file_path}")
+                    
+            except Exception as e:
+                error_msg = f"删除视频文件失败: {str(e)}"
+                errors.append(error_msg)
+                logging.error(error_msg)
+        
+        # 第二步：删除转写记录
+        logging.info(f"开始删除数据库记录: {transcript_id}")
+        success = delete_transcript(db_url, transcript_id)
+        logging.info(f"数据库删除结果: {success}")
+        
+        if not success:
+            logging.error(f"数据库删除失败: {transcript_id}")
+            raise HTTPException(status_code=404, detail="转写记录不存在或已被删除")
+        
+        logging.info(f"已删除转写记录: {transcript_id}")
+        
+        # 返回结果
+        message_parts = []
+        if deleted_files:
+            message_parts.append(f"已删除 {len(deleted_files)} 个视频文件")
+        message_parts.append("转写记录删除成功")
+        
+        if errors:
+            message_parts.append(f"但有 {len(errors)} 个错误")
+        
+        return {
+            "success": True,
+            "message": "，".join(message_parts),
+            "transcript_id": transcript_id,
+            "deleted_files": deleted_files,
+            "errors": errors if errors else None
+        }
+        
+    except HTTPException:
+        # 重新抛出 HTTP 异常
+        raise
+    except Exception as e:
+        logging.error(f"删除操作失败: {e}")
+        raise HTTPException(status_code=500, detail=f"删除操作失败: {str(e)}")
