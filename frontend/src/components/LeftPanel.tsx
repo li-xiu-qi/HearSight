@@ -15,6 +15,7 @@ import type { MenuProps } from 'antd'
 import type { TranscriptMeta, JobItem } from '../types'
 import { extractFilename } from '../utils'
 import { deleteTranscriptComplete } from '../services/api'
+import './RightPanelComponents/styles/HistoryView.css'
 
 const { Text } = Typography
 

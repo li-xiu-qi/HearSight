@@ -14,7 +14,7 @@ interface SegmentsViewProps {
 const SegmentsView = forwardRef<HTMLDivElement, SegmentsViewProps>(
   ({ segments, activeSegIndex, onSegmentClick }, ref: ForwardedRef<HTMLDivElement>) => {
     return (
-      <div className="segments-scroll" ref={ref}>
+      <div className="segments-scroll" ref={ref} style={{ height: '100%', minHeight: 0 }}>
         {segments.length === 0 ? (
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无分句" />
         ) : (

@@ -29,6 +29,7 @@ import {
   TranscriptToolbar 
 } from './RightPanelComponents'
 import type { ChatMessage } from './RightPanelComponents/ChatView'
+import './RightPanelComponents/styles/RightPanelComponents.css' // 添加导入CSS文件
 
 interface RightPanelProps {
   segments: Segment[]
@@ -352,26 +353,30 @@ const RightPanel = forwardRef<HTMLDivElement, RightPanelProps>(
             )}
             
             {activeTab === 'summaries' && (
-              <SummaryView
-                summaries={summaries}
-                summariesLoading={summariesLoading}
-                summariesError={summariesError}
-                segments={segments}
-                onGenerateSummary={handleGenerateSummary}
-                onSeekTo={onSeekTo} // 添加跳转到时间的回调函数
-              />
+              <div className="summaries-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 8 }}>
+                <SummaryView
+                  summaries={summaries}
+                  summariesLoading={summariesLoading}
+                  summariesError={summariesError}
+                  segments={segments}
+                  onGenerateSummary={handleGenerateSummary}
+                  onSeekTo={onSeekTo} // 添加跳转到时间的回调函数
+                />
+              </div>
             )}
             
             {activeTab === 'chat' && (  // 添加聊天Tab内容
-              <ChatView
-                segments={segments}
-                messages={chatMessages}
-                loading={chatLoading}
-                error={chatError}
-                onMessagesChange={setChatMessages}
-                onLoadingChange={setChatLoading}
-                onErrorChange={setChatError}
-              />
+              <div className="chat-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                <ChatView
+                  segments={segments}
+                  messages={chatMessages}
+                  loading={chatLoading}
+                  error={chatError}
+                  onMessagesChange={setChatMessages}
+                  onLoadingChange={setChatLoading}
+                  onErrorChange={setChatError}
+                />
+              </div>
             )}
           </div>
         </Card>

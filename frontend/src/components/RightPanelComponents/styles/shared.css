@@ -19,7 +19,7 @@
   padding: 0 8px 8px 8px;
 }
 
-/* Ensure Ant Design Tabs inside grow-cards fill the card body so inner scroll areas get constrained height */
+/* 确保 Ant Design Tabs 在卡片内正确填充，使内部滚动区域获得受限高度 */
 .left-grow-card .ant-tabs,
 .right-grow-card .ant-tabs {
   display: flex;
@@ -40,4 +40,14 @@
   flex-direction: column;
   min-height: 0;
   height: 100%;
+}
+
+/* 固定工具栏容器样式 */
+.fixed-toolbar-container {
+  flex: 0 0 auto;
+  position: sticky;
+  top: 46px;
+  z-index: 115;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }

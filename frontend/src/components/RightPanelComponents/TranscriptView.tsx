@@ -13,7 +13,7 @@ interface TranscriptViewProps {
 const TranscriptView = forwardRef<HTMLDivElement, TranscriptViewProps>(
   ({ segments, activeSegIndex, onSegmentClick }, ref: ForwardedRef<HTMLDivElement>) => {
     return (
-      <div className="transcript-scroll" ref={ref}>
+      <div className="transcript-scroll" ref={ref} style={{ height: '100%', minHeight: 0 }}>
         {segments.length === 0 ? (
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无内容" />
         ) : (

@@ -31,7 +31,7 @@ const SummaryView: React.FC<SummaryViewProps> = ({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%' }}>
       <div style={{ padding: '8px 8px 12px 8px', borderBottom: '1px solid #f0f0f0' }}>
         <Button
           size="small"

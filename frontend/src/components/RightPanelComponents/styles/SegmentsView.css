@@ -128,6 +128,62 @@
   color: #bfbfbf; 
 }
 
+/* 分句卡片样式 */
+.seg-card { flex: 1 1 auto; min-width: 0; }
+.seg-head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* 时间与右侧内容在同一行左起对齐 */
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+/* 时间样式：固定列宽、等宽数字、右对齐，颜色更淡以降低视觉重量 */
+.seg-time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: #8c8c8c;
+  white-space: nowrap;
+  min-width: 96px; /* 与整体两列设计保持一致 */
+  text-align: right;
+  font-size: 12px;
+}
+.seg-spk { font-size: 11px; color: #8c8c8c; background: #fafafa; border-radius: 10px; padding: 1px 6px; }
+.seg-body { color: #434343; line-height: 1.6; font-size: 13px; word-break: break-word; overflow-wrap: anywhere; }
+
+/* 分句内联样式 */
+.segment-inline {
+  display: block;
+}
+.segment-inline .segment-time {
+  display: inline-block;
+  margin-right: 8px;
+  white-space: nowrap;
+}
+.segment-inline .segment-text-inline {
+  display: inline;
+  white-space: normal !important; /* 强制换行 */
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+.segment-spk-row { display: block; margin-top: 4px; }
+
+/* 分句按钮样式 */
+.segment-btn .ant-btn-icon + span,
+.segment-btn > span:not(.segment-icon) {
+  /* 让按钮文字容器占满并可换行 */
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  white-space: normal !important; /* 覆盖 antd 默认 nowrap */
+  overflow: visible;
+  width: 100%;
+}
+
+.segment-btn .ant-btn-icon { margin-top: 2px; }
+
 /* 更友好的滚动条 */
 .segments-scroll::-webkit-scrollbar { 
   width: 8px; 

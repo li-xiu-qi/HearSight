@@ -1,0 +1,82 @@
+/* 固定Tabs容器样式 */
+.fixed-tabs-container {
+  flex: 0 0 auto;
+  position: sticky;
+  top: 0;
+  z-index: 120;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  height: 46px;
+}
+
+/* 固定工具栏容器样式 */
+.fixed-toolbar-container {
+  flex: 0 0 auto;
+  position: sticky;
+  top: 46px;
+  z-index: 115;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* 可滚动内容容器样式 */
+.scrollable-content-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 8px 8px 8px;
+}
+
+/* 确保Ant Design Tabs在卡片内正确填充 */
+.right-grow-card .ant-tabs {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.right-grow-card .ant-tabs .ant-tabs-content {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.right-grow-card .ant-tabs .ant-tabs-tabpane.ant-tabs-tabpane-active {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+/* 分句视图滚动区域 */
+.segments-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* 文稿视图滚动区域 */
+.transcript-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* 总结视图滚动区域 */
+.summaries-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* 聊天视图滚动区域 */
+.chat-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  position: relative;
+}
