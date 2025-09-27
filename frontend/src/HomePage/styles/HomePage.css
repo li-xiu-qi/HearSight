@@ -24,89 +24,117 @@
   padding: 0;
 }
 
+/* 首屏区域样式 */
 .hero-section {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 80px 24px;
+  padding: 50px 24px;
   text-align: center;
 }
 
 .hero-title {
   color: white !important;
-  font-size: 3rem;
-  margin-bottom: 16px;
+  font-size: 2.5rem;
+  margin-bottom: 12px;
 }
 
 .hero-subtitle {
   color: rgba(255, 255, 255, 0.85) !important;
-  font-size: 1.5rem;
-  margin-bottom: 24px;
+  font-size: 1.3rem;
+  margin-bottom: 20px;
 }
 
 .hero-description {
   color: rgba(255, 255, 255, 0.85);
-  font-size: 1.1rem;
+  font-size: 1rem;
   max-width: 800px;
-  margin: 0 auto 40px;
+  margin: 0 auto 30px;
 }
 
 .url-input-form {
   max-width: 600px;
-  margin: 0 auto 32px;
+  margin: 0 auto 24px;
   display: flex;
-  gap: 16px;
+  gap: 12px;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .cta-section {
-  margin-top: 32px;
+  margin-top: 24px;
 }
 
+/* 核心功能区域样式 */
 .features-section {
-  padding: 80px 24px;
+  padding: 40px 24px;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.features-section .ant-divider-horizontal.ant-divider-with-text {
+  margin: 20px 0;
 }
 
 .feature-card {
   text-align: center;
   height: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 .feature-icon {
-  font-size: 3rem;
-  padding: 24px;
+  font-size: 2.5rem;
+  padding: 20px;
   background: #f0f2f5;
   border-radius: 8px;
-  margin: 16px;
+  margin: 12px auto;
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* 使用场景区域样式 */
 .use-cases-section {
-  padding: 40px 24px 80px;
+  padding: 40px 24px;
   background: #f9f9f9;
-  max-width: 1200px;
-  margin: 0 auto;
+}
+
+.use-cases-section .ant-divider-horizontal.ant-divider-with-text {
+  margin: 20px 0;
 }
 
 .use-case-card {
   height: 100%;
   text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* 常见问题区域样式 */
 .faq-section {
-  padding: 80px 24px;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.faq-section .ant-divider-horizontal.ant-divider-with-text {
+  margin: 20px 0;
 }
 
 .faq-section .ant-card {
   height: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* 底部信息样式 */
 .homepage-footer {
   background: #001529;
   color: rgba(255, 255, 255, 0.85);
   text-align: center;
+  padding: 20px 0;
 }
 
 .footer-content {
@@ -114,13 +142,18 @@
   margin: 0 auto;
 }
 
+/* 响应式设计 */
 @media (max-width: 768px) {
+  .hero-section {
+    padding: 40px 24px;
+  }
+  
   .hero-title {
     font-size: 2rem;
   }
   
   .hero-subtitle {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
   }
   
   .url-input-form {
@@ -131,5 +164,16 @@
   .url-input-form .ant-form-item {
     width: 100%;
     max-width: 400px;
+  }
+  
+  .features-section,
+  .use-cases-section,
+  .faq-section {
+    padding: 30px 24px;
+  }
+  
+  .feature-icon {
+    font-size: 2rem;
+    padding: 16px;
   }
 }

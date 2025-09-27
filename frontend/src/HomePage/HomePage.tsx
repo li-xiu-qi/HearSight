@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Layout, Typography, Button, Form, Input, Space, Card, Row, Col, Divider } from 'antd'
-import { SearchOutlined, PlayCircleOutlined, FileTextOutlined, BarChartOutlined } from '@ant-design/icons'
+import { SearchOutlined, PlayCircleOutlined, FileTextOutlined, BarChartOutlined, CommentOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import './styles/HomePage.css'
 
@@ -35,14 +35,15 @@ function HomePage() {
         </div>
       </Header>
 
-      {/* 主要内容区域 */}
+      {/* 主要内容区域 - 采用上下线性布局 */}
       <Content className="homepage-content">
-        <div className="hero-section">
+        {/* 首屏区域 */}
+        <section className="hero-section">
           <Title level={1} className="hero-title">HearSight</Title>
           <Title level={3} className="hero-subtitle">智能视频内容分析与理解平台</Title>
           <Paragraph className="hero-description">
             HearSight 是一个强大的视频内容分析工具，能够自动识别视频中的语音内容，
-            将其转换为文本，并提供智能分句和总结功能，帮助您快速理解和分析视频内容。
+            将其转换为文本，并提供智能分句、内容总结和智能问答功能，帮助您快速理解和分析视频内容。
           </Paragraph>
           
           <Form 
@@ -85,12 +86,12 @@ function HomePage() {
               直接进入应用
             </Button>
           </div>
-        </div>
+        </section>
 
-        {/* 功能特性展示 */}
-        <div className="features-section">
+        {/* 核心功能区域 */}
+        <section className="features-section">
           <Divider>核心功能</Divider>
-          <Row gutter={[24, 24]} justify="center">
+          <Row gutter={[16, 16]} justify="center">
             <Col xs={24} sm={12} lg={8}>
               <Card 
                 className="feature-card"
@@ -116,21 +117,21 @@ function HomePage() {
             <Col xs={24} sm={12} lg={8}>
               <Card 
                 className="feature-card"
-                cover={<div className="feature-icon"><PlayCircleOutlined /></div>}
+                cover={<div className="feature-icon"><CommentOutlined /></div>}
               >
                 <Card.Meta
-                  title="内容总结"
-                  description="基于AI技术自动生成视频内容摘要，快速掌握核心要点"
+                  title="智能问答"
+                  description="基于AI技术的智能问答系统，可针对视频内容进行提问和交互"
                 />
               </Card>
             </Col>
           </Row>
-        </div>
+        </section>
 
-        {/* 使用场景 */}
-        <div className="use-cases-section">
+        {/* 使用场景区域 */}
+        <section className="use-cases-section">
           <Divider>适用场景</Divider>
-          <Row gutter={[24, 24]} justify="center">
+          <Row gutter={[16, 16]} justify="center">
             <Col xs={24} md={12} lg={8}>
               <Card className="use-case-card">
                 <Title level={4}>学习研究</Title>
@@ -156,12 +157,12 @@ function HomePage() {
               </Card>
             </Col>
           </Row>
-        </div>
+        </section>
 
-        {/* 常见问题 */}
-        <div className="faq-section">
+        {/* 常见问题区域 */}
+        <section className="faq-section">
           <Divider>常见问题</Divider>
-          <Row gutter={[24, 24]} justify="center">
+          <Row gutter={[16, 16]} justify="center">
             <Col xs={24} lg={12}>
               <Card title="HearSight支持哪些视频平台？">
                 <Paragraph>
@@ -192,7 +193,7 @@ function HomePage() {
               </Card>
             </Col>
           </Row>
-        </div>
+        </section>
       </Content>
 
       {/* 底部信息 */}
