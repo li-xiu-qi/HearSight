@@ -30,16 +30,23 @@ export const parseBilibiliUrl = (input: string): ParseResult => {
 }
 
 /**
- * 格式化时间：接受毫秒为输入，返回 mm:ss 格式
+ * 格式化时间：接受毫秒为输入，返回 hh:mm:ss 或 mm:ss 格式
  */
 export const formatTime = (ms: number): string => {
   // 统一将传入值视为毫秒（ms）并转换为秒用于显示
   const msec = Math.max(0, Math.floor(Number(ms) || 0))
   const totalSec = Math.floor(msec / 1000)
-  const m2 = Math.floor(totalSec / 60)
-  const s2 = Math.floor(totalSec % 60)
-  const mm = String(m2).padStart(2, '0')
-  const ss = String(s2).padStart(2, '0')
+  const h = Math.floor(totalSec / 3600)
+  const m = Math.floor((totalSec % 3600) / 60)
+  const s = Math.floor(totalSec % 60)
+  
+  const mm = String(m).padStart(2, '0')
+  const ss = String(s).padStart(2, '0')
+  
+  if (h > 0) {
+    const hh = String(h).padStart(2, '0')
+    return `${hh}:${mm}:${ss}`
+  }
   return `${mm}:${ss}`
 }
 

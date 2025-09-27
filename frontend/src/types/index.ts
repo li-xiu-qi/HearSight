@@ -34,7 +34,7 @@ export type ParseResult =
 
 // 总结数据类型
 export interface Summary {
-  topic?: string
+  topic: string
   summary: string
   start_time?: number
   end_time?: number
@@ -60,4 +60,9 @@ export interface TranscriptDetailResponse {
 
 export interface SummarizeResponse {
   summaries?: Summary[]
+}
+
+// 添加ChatResponse类型
+export interface ChatResponse {
+  answer: string
 }

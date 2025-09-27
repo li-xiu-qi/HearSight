@@ -23,11 +23,12 @@ import { generateSummary } from '../services/api'
 import MarkdownRenderer from './MarkdownRenderer'
 import { 
   SummaryView, 
+  ChatView,  // 添加ChatView导入
   SearchModal, 
   SegmentsToolbar, 
   TranscriptToolbar 
 } from './RightPanelComponents'
-import './RightPanelComponents/styles/RightPanelComponents.css'
+import type { ChatMessage } from './RightPanelComponents/ChatView'
 
 interface RightPanelProps {
   segments: Segment[]
@@ -55,6 +56,29 @@ const RightPanel = forwardRef<HTMLDivElement, RightPanelProps>(
     const [searchResults, setSearchResults] = useState<Segment[]>([])
   const [activeTab, setActiveTab] = useState<string>('segments')
   const transcriptScrollRef = useRef<HTMLDivElement | null>(null)
+  
+  // 添加ChatView的状态
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [chatLoading, setChatLoading] = useState(false)
+  const [chatError, setChatError] = useState<string | null>(null)
+
+  // 添加事件监听器处理时间跳转
+  useEffect(() => {
+    const handleSeekToTime = (event: CustomEvent) => {
+      const timeMs = event.detail;
+      if (onSeekTo) {
+        onSeekTo(timeMs);
+      }
+    };
+
+    // 添加事件监听器
+    window.addEventListener('seekToTime', handleSeekToTime as EventListener);
+    
+    // 清理事件监听器
+    return () => {
+      window.removeEventListener('seekToTime', handleSeekToTime as EventListener);
+    };
+  }, [onSeekTo]);
 
     const handleGenerateSummary = async () => {
       setSummariesError(null)
@@ -69,59 +93,19 @@ const RightPanel = forwardRef<HTMLDivElement, RightPanelProps>(
       try {
         const data = await generateSummary(segments)
         
-        // 后端可能返回两种格式：直接的数组或 { summaries: [...] }
-        let items: any[] = []
-        if (Array.isArray(data)) {
-          items = data
-        } else if (Array.isArray(data.summaries)) {
-          items = data.summaries
+        // 后端返回的是 { summaries: [...] } 格式
+        let items: Summary[] = []
+        if (data && Array.isArray(data.summaries)) {
+          // 确保每个项目都有必要的字段
+          items = data.summaries.map(item => ({
+            topic: item.topic || '',
+            summary: item.summary || '',
+            start_time: item.start_time,
+            end_time: item.end_time
+          }))
         }
 
-        // 规范化每条 summary：若 summary 字段本身包含 code fence JSON 或是 JSON 字符串，解析并替换为真实 summary 字符串
-        const normalize = (item: any) => {
-          const result = { ...item }
-          let s = String(result.summary || '')
-          
-          // 如果是代码块包裹（```json\n{...}```），提取内部并尝试解析 JSON
-          const codeFenceMatch = s.match(/```(?:json)?\s*\n([\s\S]*)\n```/i)
-          if (codeFenceMatch) {
-            const inner = codeFenceMatch[1].trim()
-            try {
-              const obj = JSON.parse(inner)
-              if (obj && typeof obj.summary === 'string') {
-                result.summary = obj.summary
-                if (!result.topic && obj.topic) result.topic = obj.topic
-                return result
-              }
-              // 如果 obj 本身是字符串或其他，则回退为 inner
-              result.summary = inner
-              return result
-            } catch (e) {
-              // 解析失败则使用 inner 文本
-              result.summary = inner
-              return result
-            }
-          }
-
-          // 如果 summary 看起来像一个 JSON 字符串（以 { 开头），尝试解析
-          if (s.trim().startsWith('{')) {
-            try {
-              const obj = JSON.parse(s)
-              if (obj && typeof obj.summary === 'string') {
-                result.summary = obj.summary
-                if (!result.topic && obj.topic) result.topic = obj.topic
-              } else {
-                // 如果不是期望结构，则转为漂亮的 JSON 文本
-                result.summary = JSON.stringify(obj, null, 2)
-              }
-            } catch (e) {
-              // ignore
-            }
-          }
-          return result
-        }
-
-        setSummaries(items.map(normalize))
+        setSummaries(items)
       } catch (err: any) {
         setSummariesError(err?.message || '调用总结接口失败')
       } finally {
@@ -265,6 +249,7 @@ const RightPanel = forwardRef<HTMLDivElement, RightPanelProps>(
               <Tabs.TabPane tab="字幕分句" key="segments" forceRender />
               <Tabs.TabPane tab="文稿" key="transcript" forceRender />
               <Tabs.TabPane tab="总结" key="summaries" forceRender />
+              <Tabs.TabPane tab="问答" key="chat" forceRender />  // 添加聊天Tab
             </Tabs>
           </div>
           
@@ -373,6 +358,19 @@ const RightPanel = forwardRef<HTMLDivElement, RightPanelProps>(
                 summariesError={summariesError}
                 segments={segments}
                 onGenerateSummary={handleGenerateSummary}
+                onSeekTo={onSeekTo} // 添加跳转到时间的回调函数
+              />
+            )}
+            
+            {activeTab === 'chat' && (  // 添加聊天Tab内容
+              <ChatView
+                segments={segments}
+                messages={chatMessages}
+                loading={chatLoading}
+                error={chatError}
+                onMessagesChange={setChatMessages}
+                onLoadingChange={setChatLoading}
+                onErrorChange={setChatError}
               />
             )}
           </div>

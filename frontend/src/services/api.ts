@@ -136,3 +136,24 @@ export const deleteTranscriptComplete = async (transcriptId: number): Promise<{ 
   console.log('删除响应结果:', result)
   return result
 }
+
+/**
+ * 与视频内容聊天
+ */
+export interface ChatResponse {
+  answer: string
+}
+
+export const chatWithSegments = async (segments: Segment[], question: string): Promise<ChatResponse> => {
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ segments, question })
+  })
+  
+  if (!response.ok) {
+    throw new Error(`chat failed: ${response.status}`)
+  }
+  
+  return response.json()
+}

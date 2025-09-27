@@ -242,7 +242,7 @@ function App() {
               icon={<RightOutlined />}
               onClick={() => setRightPanelVisible(!rightPanelVisible)}
             >
-              分句总结
+              AI智能问答
             </Button>
           </Space>
         </div>
@@ -326,7 +326,7 @@ function App() {
         {rightPanelVisible && (
           <div className="fullscreen-right-panel">
             <div className="panel-header">
-              <span>分句与总结</span>
+              <span>AI</span>
               <Button 
                 type="text" 
                 icon={<CloseOutlined />} 

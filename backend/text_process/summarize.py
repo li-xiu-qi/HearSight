@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from typing import List
+from typing import List, Dict
 import json
 
 import tiktoken
 
 from backend.chat_utils.chat_client import chat_text
 from backend.utils.typing_defs import Segment, SummaryItem
-
 
 
 def _count_tokens_for_segments(segments: List[Segment], encoding_name: str = "cl100k_base") -> int:
@@ -27,12 +26,21 @@ def _build_prompt(segments: List[Segment]) -> str:
 
     header = """
 你是一个专业的内容总结助手。请：
-1) 提炼对话/内容的主题（topic），并输出一段简明中文总结（summary），准确涵盖主要信息点，避免流水账与冗余重复。
-2) 严格只输出一个 JSON 对象，不要包含任何额外说明、前后文本、Markdown、代码块或非 JSON 内容。JSON 格式如下：
+1) 仔细分析下面的对话/内容，从中提炼出多个清晰的主题（topic）。
+2) 为每个主题生成一段简明中文总结（summary），准确涵盖该主题的主要信息点，避免流水账与冗余重复。
+3) 为每个主题指定对应的时间范围，使用该主题相关句子的起始和结束时间戳。
+4) 严格按以下格式输出，使用Python代码块语法包围输出结果：
 
-{"topic": "<主题短句>", "summary": "<中文总结，允许换行，但不要包含额外的元信息或标签>"}
+```python
+[
+    {"topic": "<主题短句>", "summary": "<中文总结，允许换行，但不要包含额外的元信息或标签>", "start_time": <起始时间戳>, "end_time": <结束时间戳>},
+    {"topic": "<另一个主题短句>", "summary": "<另一个中文总结>", "start_time": <起始时间戳>, "end_time": <结束时间戳>}
+]
+```
 
-3) 输出时不要在字符串中再包含“Topic:”或“Summary:”等标签，也不要使用粗体/标题语法。
+5) 请根据内容的复杂度和信息量，合理确定主题数量，通常在2-5个之间。
+6) 不要包含任何额外说明、前后文本或其他格式。
+
 下面是带时间戳的句子片段：
 """.strip()
 
@@ -41,14 +49,57 @@ def _build_prompt(segments: List[Segment]) -> str:
         st = s.get("start_time", 0.0)
         ed = s.get("end_time", st)
         sent = s.get("sentence", "").strip()
-        body_lines.append(f"[{st:.2f}, {ed:.2f}] {sent}")
+        # 优化时间戳格式，使用更清晰的分隔符
+        body_lines.append(f"[{st:.2f}-{ed:.2f}] {sent}")
 
     footer = """
 
-请先给出主题 topic，再给出中文总结 summary。
+请仔细分析内容，按指定格式输出，确保每个主题的时间范围准确反映其对应的句子时间。
 """.strip("\n")
 
     return "\n".join([header, *body_lines, "", footer])
+
+
+def _extract_python_summaries(response_text: str) -> List[Dict[str, str]]:
+    """
+    从模型响应中提取Python代码块格式的总结数据。
+    
+    参数:
+    - response_text: 模型返回的原始文本
+    
+    返回:
+    - 包含主题和总结的字典列表
+    """
+    summaries = []
+    
+    # 只处理```python代码块格式
+    try:
+        if '```python' in response_text:
+            parts = response_text.split('```python')
+            if len(parts) > 1:
+                # 获取第一个Python代码块
+                block = parts[1].split('```')[0].strip()
+                if block:
+                    # 使用eval安全地执行Python代码（仅限列表和字典）
+                    parsed_summaries = eval(block, {"__builtins__": {}}, {})
+                    if isinstance(parsed_summaries, list):
+                        for item in parsed_summaries:
+                            if isinstance(item, dict) and 'topic' in item and 'summary' in item:
+                                # 提取主题、总结和时间戳信息
+                                summary_item = {
+                                    'topic': str(item['topic']).strip(),
+                                    'summary': str(item['summary']).strip()
+                                }
+                                # 尝试提取时间戳信息
+                                if 'start_time' in item:
+                                    summary_item['start_time'] = str(float(item['start_time']))
+                                if 'end_time' in item:
+                                    summary_item['end_time'] = str(float(item['end_time']))
+                                summaries.append(summary_item)
+    except Exception:
+        pass  # 解析失败
+
+    return summaries
 
 
 def summarize_segments(
@@ -58,15 +109,15 @@ def summarize_segments(
     model: str,
     chat_max_windows: int = 1_000_000,
 ) -> List[SummaryItem]:
-    """一次性生成总结。
+    """一次性生成多个主题的总结。
 
     参数：
-    - segments：句级片段（无 spk_id）
+    - segments：句级片段
     - api_key/base_url/model：复用 chat_client 统一配置
     - chat_max_windows：用于限制输入的近似 token 上限（项目内称为 CHAT_MAX_WINDOWS）
 
     返回：list[SummaryItem]
-    - 仅生成一条汇总，时间范围取整体最小/最大时间戳
+    - 生成多个主题的总结，每个总结有独立的时间范围
     """
     if not segments:
         return []
@@ -85,69 +136,34 @@ def summarize_segments(
         model=model,
     ).strip()
 
-    # 可能的模型返回形式多样：优先尝试直接解析为 JSON；若失败，再尝试从代码块中提取 JSON（例如 ```json\n{...}```）；最后回退为整体文本
-    parsed = False
-    try:
-        obj = json.loads(topic_and_summary)
-        if isinstance(obj, dict):
-            topic = str(obj.get('topic') or '').strip()
-            summary = str(obj.get('summary') or '').strip()
-            parsed = True
-    except Exception:
-        parsed = False
+    # 初始化返回值
+    summaries = []
+    overall_start_time = min(s.get("start_time", 0.0) for s in segments)
+    overall_end_time = max(s.get("end_time", overall_start_time) for s in segments)
 
-    if not parsed:
-        try:
-            # 提取第一个 code fence 内的内容（若有），优先查找包含 JSON 的块
-            if '```' in topic_and_summary:
-                parts = topic_and_summary.split('```')
-                # code fence 在奇数索引处
-                for i in range(1, len(parts), 2):
-                    block = parts[i].strip()
-                    # 支持开头带 json 标记的情况
-                    if block.lower().startswith('json'):
-                        # 去掉首行的 json 标记
-                        block = block.split('\n', 1)[1] if '\n' in block else ''
-                    block = block.strip()
-                    if not block:
-                        continue
-                    try:
-                        obj = json.loads(block)
-                        if isinstance(obj, dict):
-                            topic = str(obj.get('topic') or '').strip()
-                            summary = str(obj.get('summary') or '').strip()
-                            parsed = True
-                            break
-                    except Exception:
-                        continue
-        except Exception:
-            parsed = False
+    # 使用新函数提取Python代码块总结
+    extracted_summaries = _extract_python_summaries(topic_and_summary)
+    
+    # 为每个提取到的主题创建SummaryItem
+    for item in extracted_summaries:
+        # 如果模型提供了时间戳信息，则使用模型提供的时间戳，否则使用整体时间范围
+        start_time = float(item.get('start_time', overall_start_time))
+        end_time = float(item.get('end_time', overall_end_time))
+        
+        summaries.append(SummaryItem(
+            topic=item['topic'],
+            summary=item['summary'],
+            start_time=start_time,
+            end_time=end_time,
+        ))
 
-    start_time = min(s.get("start_time", 0.0) for s in segments)
-    end_time = max(s.get("end_time", start_time) for s in segments)
+    # 如果解析失败或没有解析到任何内容，回退为将整个响应作为单个总结
+    if not summaries:
+        summaries.append(SummaryItem(
+            topic="",
+            summary=topic_and_summary,
+            start_time=float(overall_start_time),
+            end_time=float(overall_end_time),
+        ))
 
-    # 输出一条结果，topic 与 summary 由模型生成文本中解析的简单策略：
-    # 约定：模型按“topic: ...\nsummary: ...”返回（提示词已引导先 topic 再 summary），
-    # 若未严格遵循，则整体放入 summary，topic 为空。
-    topic = ""
-    summary = topic_and_summary
-
-    # 优先尝试解析为 JSON（因为提示词要求严格返回 JSON），解析失败则回退为把完整文本作为 summary
-    try:
-        obj = json.loads(topic_and_summary)
-        if isinstance(obj, dict):
-            topic = str(obj.get('topic') or '').strip()
-            summary = str(obj.get('summary') or '').strip()
-    except Exception:
-        # 解析失败则保持 topic = "" 且 summary 为原始文本
-        topic = ""
-        summary = topic_and_summary
-
-    return [
-        SummaryItem(
-            topic=topic,
-            summary=summary,
-            start_time=float(start_time),
-            end_time=float(end_time),
-        )
-    ]
+    return summaries

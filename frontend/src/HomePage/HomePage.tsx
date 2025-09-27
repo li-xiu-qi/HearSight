@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Layout, Typography, Button, Form, Input, Space, Card, Row, Col, Divider } from 'antd'
 import { SearchOutlined, PlayCircleOutlined, FileTextOutlined, BarChartOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import './HomePage.css'
+import './styles/HomePage.css'
 
 const { Header, Content, Footer } = Layout
 const { Title, Paragraph } = Typography
