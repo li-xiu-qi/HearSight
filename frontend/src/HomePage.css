@@ -1,0 +1,135 @@
+.homepage-layout {
+  min-height: 100vh;
+}
+
+.homepage-header {
+  background: #001529;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  height: 64px;
+}
+
+.homepage-content {
+  flex: 1;
+  padding: 0;
+}
+
+.hero-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 80px 24px;
+  text-align: center;
+}
+
+.hero-title {
+  color: white !important;
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.hero-subtitle {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-size: 1.5rem;
+  margin-bottom: 24px;
+}
+
+.hero-description {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.1rem;
+  max-width: 800px;
+  margin: 0 auto 40px;
+}
+
+.url-input-form {
+  max-width: 600px;
+  margin: 0 auto 32px;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.cta-section {
+  margin-top: 32px;
+}
+
+.features-section {
+  padding: 80px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.feature-card {
+  text-align: center;
+  height: 100%;
+}
+
+.feature-icon {
+  font-size: 3rem;
+  padding: 24px;
+  background: #f0f2f5;
+  border-radius: 8px;
+  margin: 16px;
+}
+
+.use-cases-section {
+  padding: 40px 24px 80px;
+  background: #f9f9f9;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.use-case-card {
+  height: 100%;
+  text-align: center;
+}
+
+.faq-section {
+  padding: 80px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.faq-section .ant-card {
+  height: 100%;
+}
+
+.homepage-footer {
+  background: #001529;
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.2rem;
+  }
+  
+  .url-input-form {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .url-input-form .ant-form-item {
+    width: 100%;
+    max-width: 400px;
+  }
+}

@@ -254,6 +254,45 @@ button:focus-visible {
   position: relative;
 }
 
+/* 展开/收起按钮 */
+.panel-toggle-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 60px;
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 101;
+  transition: all 0.3s ease;
+  opacity: 0.5;
+}
+
+.panel-toggle-btn:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.panel-toggle-btn.right {
+  right: -24px;
+  border-radius: 0 4px 4px 0;
+}
+
+.panel-toggle-btn.left {
+  left: -24px;
+  border-radius: 4px 0 0 4px;
+}
+
+.panel-toggle-btn svg {
+  color: white;
+  font-size: 16px;
+}
+
 /* 主视频区域 */
 .fullscreen-main {
   flex: 1 1 auto;
@@ -450,24 +489,6 @@ button:focus-visible {
 
 /* 在全屏模式下保持历史记录和分句列表的滚动样式 */
 
-.segments-scroll {
-  /* 填满父容器剩余空间，由父级 Card / sider-inner 控制高度 */
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  position: relative;
-  box-sizing: border-box;
-  padding-right: 6px; /* 给滚动条留出内边距，避免覆盖右侧内容 */
-  padding-left: 2px;
-  scrollbar-gutter: stable both-edges;
-}
-
-/* 回退：如果父容器高度没有正确传递，使用视口高度计算一个合理的最大高度，保证出现滚动条 */
-.segments-scroll {
-  max-height: calc(100vh - 220px) !important;
-}
-
 /* left history list scroll area */
 .hist-scroll {
   flex: 1 1 auto;
@@ -483,88 +504,6 @@ button:focus-visible {
 .hist-scroll {
   max-height: calc(100vh - 220px) !important;
 }
-
-/* --- Segments list item styles --- */
-.segment-item { padding: 4px 0 !important; }
-
-.segment-btn { 
-  text-align: left;
-  white-space: normal;
-  padding: 8px 8px; /* 收紧左右内边距，减少左侧空白 */
-  /* 与 Card 背景保持一致，消除强烈白底造成的割裂感 */
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.03);
-  border-radius: 6px;
-  display: flex;
-  align-items: flex-start;
-  gap: 6px; /* 缩小图标与内容间距 */
-  width: 100%;
-  height: auto; /* 允许多行 */
-}
-.segment-btn.is-div { cursor: pointer; user-select: none; }
-.segment-btn.is-div:focus { outline: none; box-shadow: 0 0 0 2px rgba(22,119,255,.2); }
-.segment-icon { flex: 0 0 auto; display: inline-flex; width: 18px; justify-content: center; margin-top: 2px; color: #8c8c8c; line-height: 1; }
-.segment-btn.is-div:hover .segment-icon { color: #1677ff; }
-.segment-btn.ant-btn-sm { height: auto; padding-top: 8px; padding-bottom: 8px; }
-.segment-btn > span { line-height: 1.5; }
-.segment-btn .ant-btn-icon { margin-top: 2px; line-height: 1; flex: 0 0 auto; }
-.segment-btn:hover {
-  border-color: rgba(100,111,255,0.18);
-  background: rgba(100,111,255,0.03);
-}
-.segment-btn.active {
-  border-color: rgba(100,111,255,0.36);
-  box-shadow: 0 0 0 1px rgba(100,111,255,0.12) inset;
-  background: rgba(100,111,255,0.06);
-}
-.segment-line {
-  display: none; /* 用新的两列布局替代 */
-}
-.segment-time {
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  font-size: 12px;
-  color: #262626;
-}
-.segment-spk {
-  font-size: 11px;
-  color: #8c8c8c;
-  background: #fafafa;
-  border-radius: 10px;
-  padding: 1px 6px;
-}
-.segment-text {
-  color: #434343;
-  line-height: 1.5;
-  font-size: 13px;
-  /* 自动换行并尽量保持自然换行 */
-  word-break: break-word;      /* 优先在单词边界换行 */
-  overflow-wrap: anywhere;     /* 过长时任何位置都可断行 */
-}
-
-/* 新的两列布局 */
-.segment-grid {
-  display: grid;
-  grid-template-columns: 96px 1fr; /* 左列定宽，右列自适应 */
-  gap: 10px;
-  width: 100%;
-}
-.segment-left {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 96px;
-  align-items: flex-end; /* 右对齐时间文本 */
-  padding-right: 6px; /* 与右侧正文保持小间距 */
-}
-.segment-right { min-width: 0; }
-
-.segment-time-sep { margin: 0 3px; color: #bfbfbf; }
-
-/* 更友好的滚动条 */
-.segments-scroll::-webkit-scrollbar { width: 8px; }
-.segments-scroll::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 4px; }
-.segments-scroll::-webkit-scrollbar-thumb:hover { background: #bfbfbf; }
 
 /* 统一滚动条风格到历史列表 */
 .hist-scroll::-webkit-scrollbar { width: 8px; }
@@ -620,9 +559,7 @@ button:focus-visible {
   min-height: 0;
 }
 
-.three-col__right .segments-scroll {
-  height: 100%;
-}
+
 
 /* Ensure the right-side Tabs header is not blocked by any overlay; make it sit on top and receive pointer events */
 .three-col__right .ant-tabs .ant-tabs-nav {

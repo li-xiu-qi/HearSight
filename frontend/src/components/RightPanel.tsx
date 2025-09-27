@@ -1,4 +1,4 @@
-import React, { useState, forwardRef, type ForwardedRef } from 'react'
+import React, { useState, forwardRef, type ForwardedRef, useCallback, useRef, useEffect } from 'react'
 import {
   Card,
   Tabs,
@@ -7,17 +7,27 @@ import {
   Empty,
   List,
   Alert,
+  Modal,
+  Input,
 } from 'antd'
 import { 
   UpOutlined, 
   DownOutlined, 
   SyncOutlined, 
-  PlayCircleOutlined 
+  PlayCircleOutlined,
+  SearchOutlined
 } from '@ant-design/icons'
 import type { Segment, Summary } from '../types'
 import { formatTime } from '../utils'
 import { generateSummary } from '../services/api'
 import MarkdownRenderer from './MarkdownRenderer'
+import { 
+  SummaryView, 
+  SearchModal, 
+  SegmentsToolbar, 
+  TranscriptToolbar 
+} from './RightPanelComponents'
+import './RightPanelComponents/styles/RightPanelComponents.css'
 
 interface RightPanelProps {
   segments: Segment[]
@@ -37,9 +47,14 @@ const RightPanel = forwardRef<HTMLDivElement, RightPanelProps>(
     onActiveSegmentChange, 
     onAutoScrollChange 
   }, ref: ForwardedRef<HTMLDivElement>) => {
-    const [summaries, setSummaries] = useState<Summary[]>([])
+  const [summaries, setSummaries] = useState<Summary[]>([])
     const [summariesLoading, setSummariesLoading] = useState(false)
     const [summariesError, setSummariesError] = useState<string | null>(null)
+    const [searchModalVisible, setSearchModalVisible] = useState(false)
+    const [searchTerm, setSearchTerm] = useState('')
+    const [searchResults, setSearchResults] = useState<Segment[]>([])
+  const [activeTab, setActiveTab] = useState<string>('segments')
+  const transcriptScrollRef = useRef<HTMLDivElement | null>(null)
 
     const handleGenerateSummary = async () => {
       setSummariesError(null)
@@ -120,37 +135,101 @@ const RightPanel = forwardRef<HTMLDivElement, RightPanelProps>(
     }
 
     const scrollUp = () => {
-      if (!ref || typeof ref === 'function') return
-      // ref 现在直接指向 segments-scroll 容器
-      const scrollContainer = ref.current
-      if (scrollContainer) {
-        scrollContainer.scrollBy({ top: -160, left: 0, behavior: 'smooth' })
+      // 分句视图
+      if (activeTab === 'segments') {
+        if (!ref || typeof ref === 'function') return
+        const scrollContainer = ref.current
+        scrollContainer?.scrollBy({ top: -160, left: 0, behavior: 'smooth' })
+        return
+      }
+      // 文稿视图
+      if (activeTab === 'transcript') {
+        const c = transcriptScrollRef.current
+        c?.scrollBy({ top: -160, left: 0, behavior: 'smooth' })
       }
     }
 
     const scrollDown = () => {
-      if (!ref || typeof ref === 'function') return
-      // ref 现在直接指向 segments-scroll 容器
-      const scrollContainer = ref.current
-      if (scrollContainer) {
-        scrollContainer.scrollBy({ top: 160, left: 0, behavior: 'smooth' })
+      if (activeTab === 'segments') {
+        if (!ref || typeof ref === 'function') return
+        const scrollContainer = ref.current
+        scrollContainer?.scrollBy({ top: 160, left: 0, behavior: 'smooth' })
+        return
+      }
+      if (activeTab === 'transcript') {
+        const c = transcriptScrollRef.current
+        c?.scrollBy({ top: 160, left: 0, behavior: 'smooth' })
       }
     }
 
     const centerActiveSegment = () => {
-      if (!ref || typeof ref === 'function' || activeSegIndex == null) return
-      // ref 现在直接指向 segments-scroll 容器
-      const scrollContainer = ref.current
-      if (scrollContainer) {
-        const el = scrollContainer.querySelector(`[data-seg-index="${activeSegIndex}"]`) as HTMLElement | null
-        if (el) {
-          try { 
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' }) 
-          } catch {
-            // fallback for older browsers
+      if (activeSegIndex == null) return
+      // 根据当前 tab 选择滚动容器
+      if (activeTab === 'segments') {
+        if (!ref || typeof ref === 'function') return
+        const scrollContainer = ref.current
+        if (scrollContainer) {
+          const el = scrollContainer.querySelector(`[data-seg-index="${activeSegIndex}"]`) as HTMLElement | null
+          if (el) {
+            try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }) } catch {}
+          }
+        }
+      } else if (activeTab === 'transcript') {
+        const scrollContainer = transcriptScrollRef.current
+        if (scrollContainer) {
+          const el = scrollContainer.querySelector(`[data-seg-index="${activeSegIndex}"]`) as HTMLElement | null
+          if (el) {
+            try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }) } catch {}
           }
         }
       }
+    }
+
+    // 当 activeSegIndex 或 tab / autoScroll 改变时，自动滚动文稿视图
+    useEffect(() => {
+      if (!autoScroll || activeSegIndex == null) return
+      if (activeTab !== 'transcript') return
+      const scrollContainer = transcriptScrollRef.current
+      if (!scrollContainer) return
+      const el = scrollContainer.querySelector(`[data-seg-index="${activeSegIndex}"]`) as HTMLElement | null
+      if (el) {
+        try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }) } catch {}
+      }
+    }, [activeSegIndex, autoScroll, activeTab])
+
+    // 打开搜索模态框
+    const openSearchModal = () => {
+      setSearchModalVisible(true)
+      setSearchTerm('')
+      setSearchResults([])
+    }
+
+    // 关闭搜索模态框
+    const closeSearchModal = () => {
+      setSearchModalVisible(false)
+      setSearchTerm('')
+      setSearchResults([])
+    }
+
+    // 执行搜索
+    const performSearch = useCallback(() => {
+      if (!searchTerm.trim()) {
+        setSearchResults([])
+        return
+      }
+
+      const term = searchTerm.toLowerCase().trim()
+      const results = segments.filter(segment => 
+        segment.sentence && segment.sentence.toLowerCase().includes(term)
+      )
+
+      setSearchResults(results)
+    }, [searchTerm, segments])
+
+    // 跳转到搜索结果
+    const jumpToSearchResult = (segment: Segment) => {
+      closeSearchModal()
+      handleSegmentClick(segment)
     }
 
     return (
@@ -160,132 +239,154 @@ const RightPanel = forwardRef<HTMLDivElement, RightPanelProps>(
           className="right-grow-card" 
           bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}
         >
-          <Tabs
-            size="small"
-            defaultActiveKey="segments"
-            style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
-            tabBarStyle={{ position: 'relative', zIndex: 60 }}
-            onChange={(_key) => {
-              // ensure tab content gets a chance to layout; useful when TabPane was lazily rendered
-              setTimeout(() => {
-                try {
-                  if (ref && typeof ref !== 'function' && ref.current) {
-                    // ref 现在直接指向 segments-scroll 容器
-                    const segmentsScroll = ref.current
-                    if (segmentsScroll) {
-                      segmentsScroll.scrollTop = segmentsScroll.scrollTop
+          {/* 固定的Tabs导航栏 */}
+          <div className="fixed-tabs-container">
+            <Tabs
+              size="small"
+              activeKey={activeTab}
+              style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+              tabBarStyle={{ margin: 0 }}
+              onChange={(key) => {
+                setActiveTab(key)
+                // ensure tab content gets a chance to layout; useful when TabPane was lazily rendered
+                setTimeout(() => {
+                  try {
+                    if (ref && typeof ref !== 'function' && ref.current) {
+                      // ref 现在直接指向 segments-scroll 容器
+                      const segmentsScroll = ref.current
+                      if (segmentsScroll) {
+                        segmentsScroll.scrollTop = segmentsScroll.scrollTop
+                      }
                     }
-                  }
-                } catch {}
-              }, 30)
-            }}
-          >
-              <Tabs.TabPane tab="分句（点击跳转）" key="segments" forceRender>
-                <div style={{ padding: 8, display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                    <Button size="small" icon={<UpOutlined />} onClick={scrollUp} />
-                    <Button size="small" icon={<DownOutlined />} onClick={scrollDown} />
-                    <Button size="small" icon={<SyncOutlined />} onClick={centerActiveSegment}>
-                      定位
-                    </Button>
-                    <div style={{ flex: 1 }} />
-                    <Space>
-                      <span style={{ color: '#8c8c8c', fontSize: 12 }}>自动滚动</span>
-                      <Button 
-                        size="small" 
-                        type={autoScroll ? 'primary' : 'default'} 
-                        onClick={() => onAutoScrollChange(!autoScroll)}
-                      >
-                        {autoScroll ? '开' : '关'}
-                      </Button>
-                    </Space>
-                  </div>
-                  <div className="segments-scroll" ref={ref}>
-                    {segments.length === 0 ? (
-                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无分句" />
-                    ) : (
-                      <List
-                        split={false}
-                        dataSource={segments}
-                        renderItem={(segment: Segment) => {
-                          const isActive = activeSegIndex === segment.index
-                          return (
-                            <List.Item 
-                              className="segment-item" 
-                              style={{ paddingLeft: 0, paddingRight: 0 }} 
-                              data-seg-index={segment.index}
-                            >
-                              <div
-                                role="button"
-                                tabIndex={0}
-                                className={`segment-btn is-div ${isActive ? 'active' : ''}`}
-                                onClick={() => handleSegmentClick(segment)}
-                                title={`跳转到 ${formatTime(segment.start_time)} (${Math.floor(Number(segment.start_time) || 0)} ms)`}
-                              >
-                                <span className="segment-icon">
-                                  <PlayCircleOutlined />
+                  } catch {}
+                }, 30)
+              }}
+            >
+              <Tabs.TabPane tab="字幕分句" key="segments" forceRender />
+              <Tabs.TabPane tab="文稿" key="transcript" forceRender />
+              <Tabs.TabPane tab="总结" key="summaries" forceRender />
+            </Tabs>
+          </div>
+          
+          {/* 固定的工具栏 */}
+          <div className="fixed-toolbar-container">
+            {activeTab === 'segments' && (
+              <SegmentsToolbar
+                onScrollUp={scrollUp}
+                onScrollDown={scrollDown}
+                onCenterActive={centerActiveSegment}
+                onOpenSearch={openSearchModal}
+                autoScroll={autoScroll}
+                onAutoScrollChange={onAutoScrollChange}
+              />
+            )}
+            {activeTab === 'transcript' && (
+              <TranscriptToolbar
+                onScrollUp={scrollUp}
+                onScrollDown={scrollDown}
+                onCenterActive={centerActiveSegment}
+                onOpenSearch={openSearchModal}
+                autoScroll={autoScroll}
+                onAutoScrollChange={onAutoScrollChange}
+              />
+            )}
+          </div>
+          
+          {/* 可滚动的内容区域 */}
+          <div className="scrollable-content-container">
+            {activeTab === 'segments' && (
+              <div ref={ref} className="segments-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                {segments.length === 0 ? (
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无分句" />
+                ) : (
+                  <List
+                    split={false}
+                    dataSource={segments}
+                    renderItem={(segment: Segment) => {
+                      const isActive = activeSegIndex === segment.index
+                      return (
+                        <List.Item 
+                          className="segment-item" 
+                          style={{ paddingLeft: 0, paddingRight: 0 }} 
+                          data-seg-index={segment.index}
+                        >
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            className={`segment-btn is-div ${isActive ? 'active' : ''}`}
+                            onClick={() => handleSegmentClick(segment)}
+                            title={`跳转到 ${formatTime(segment.start_time)} (${Math.floor(Number(segment.start_time) || 0)} ms)`}
+                          >
+                            <span className="segment-icon">
+                              <PlayCircleOutlined />
+                            </span>
+                            <div className="seg-card">
+                              <div className="seg-head">
+                                <span className="seg-time">
+                                  {formatTime(segment.start_time)}
+                                  <span className="segment-time-sep">~</span>
+                                  {formatTime(segment.end_time)}
                                 </span>
-                                <div className="seg-card">
-                                  <div className="seg-head">
-                                    <span className="seg-time">
-                                      {formatTime(segment.start_time)}
-                                      <span className="segment-time-sep">~</span>
-                                      {formatTime(segment.end_time)}
-                                    </span>
-                                    {segment.spk_id && (
-                                      <span className="seg-spk">SPK {segment.spk_id}</span>
-                                    )}
-                                  </div>
-                                  <div className="seg-body">{segment.sentence || '(空)'}</div>
-                                </div>
+                                {segment.spk_id && (
+                                  <span className="seg-spk">SPK {segment.spk_id}</span>
+                                )}
                               </div>
-                            </List.Item>
-                          )
-                        }}
-                      />
-                    )}
-                  </div>
-                </div>
-              </Tabs.TabPane>
-              <Tabs.TabPane tab="总结" key="summaries" forceRender>
-                <div style={{ padding: 8, display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
-                  <Button
-                    size="small"
-                    type="primary"
-                    onClick={handleGenerateSummary}
-                    loading={summariesLoading}
-                  >
-                    生成总结
-                  </Button>
-
-                  <div style={{ marginTop: 8 }}>
-                    {summariesLoading && <div>生成中，请稍候…</div>}
-                    {summariesError && <Alert type="error" message={summariesError} showIcon />}
-                    {!summariesLoading && !summariesError && summaries.length === 0 && (
-                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无总结，点击上方按钮生成" />
-                    )}
-                    {!summariesLoading && summaries.length > 0 && (
-                      <List
-                        itemLayout="vertical"
-                        dataSource={summaries}
-                        renderItem={(item: Summary) => (
-                          <List.Item>
-                            <List.Item.Meta
-                              title={item.topic || '(无主题)'}
-                              description={`时间: ${formatTime(item.start_time || 0)} ~ ${formatTime(item.end_time || 0)}`}
-                            />
-                            <div style={{ whiteSpace: 'pre-wrap' }}>
-                              <MarkdownRenderer>{item.summary || ''}</MarkdownRenderer>
+                              <div className="seg-body">{segment.sentence || '(空)'}</div>
                             </div>
-                          </List.Item>
-                        )}
-                      />
-                    )}
+                          </div>
+                        </List.Item>
+                      )
+                    }}
+                  />
+                )}
+              </div>
+            )}
+            
+            {activeTab === 'transcript' && (
+              <div ref={transcriptScrollRef} className="transcript-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                {segments.length === 0 ? (
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无内容" />
+                ) : (
+                  <div className="transcript-body">
+                    {segments.map(seg => {
+                      const isActive = activeSegIndex === seg.index
+                      return (
+                        <span
+                          key={seg.index}
+                          data-seg-index={seg.index}
+                          onClick={() => handleSegmentClick(seg)}
+                          className={`transcript-seg ${isActive ? 'active' : ''}`}
+                        >
+                          <span className="transcript-text">{seg.sentence || '(空)'}</span>
+                        </span>
+                      )
+                    })}
                   </div>
-                </div>
-              </Tabs.TabPane>
-          </Tabs>
+                )}
+              </div>
+            )}
+            
+            {activeTab === 'summaries' && (
+              <SummaryView
+                summaries={summaries}
+                summariesLoading={summariesLoading}
+                summariesError={summariesError}
+                segments={segments}
+                onGenerateSummary={handleGenerateSummary}
+              />
+            )}
+          </div>
         </Card>
+
+        <SearchModal
+          visible={searchModalVisible}
+          searchTerm={searchTerm}
+          searchResults={searchResults}
+          onSearchTermChange={setSearchTerm}
+          onSearch={performSearch}
+          onClose={closeSearchModal}
+          onJumpToResult={jumpToSearchResult}
+        />
       </div>
     )
   }

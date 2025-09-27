@@ -1,0 +1,29 @@
+/* 文稿工具栏吸顶（在 Tabs 下方） */
+.transcript-toolbar {
+  position: relative;
+  background: linear-gradient(#fff,#fff);
+  padding: 8px 8px 12px 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.transcript-toolbar-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-label { 
+  color: #8c8c8c; 
+  font-size: 12px; 
+}
+
+.auto-scroll-group { 
+  display: flex; 
+  align-items: center; 
+  gap: 6px; 
+  white-space: nowrap; 
+}
+
+.auto-scroll-group .toolbar-label { 
+  margin-right: 0; 
+}

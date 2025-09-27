@@ -16,7 +16,8 @@
     "markdown-it": "^14.1.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-markdown": "^9.0.0"
+    "react-markdown": "^9.0.0",
+    "react-router-dom": "^7.9.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",

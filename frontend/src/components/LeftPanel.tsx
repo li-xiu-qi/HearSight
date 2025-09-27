@@ -64,134 +64,149 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
       <Card 
         size="small" 
         className="left-grow-card" 
-        bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+        styles={{ body: { padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0 } }}
       >
-        <Tabs defaultActiveKey="processed" size="small" centered>
-          <Tabs.TabPane tab="已处理" key="processed" forceRender>
-            <div style={{ padding: 8, display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
-              {transcripts.length === 0 ? (
-                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无记录" />
-              ) : (
-                <div className="hist-scroll">
-                  <List
-                    split={false}
-                    size="small"
-                    dataSource={transcripts}
-                    renderItem={(item: TranscriptMeta) => {
-                      const basename = extractFilename(item.media_path)
-                      const isActive = activeTranscriptId === item.id
-                      
-                      // 下拉菜单项
-                      const handleMenuClick = (key: string) => {
-                        console.log('菜单点击事件触发:', key, { transcriptId: item.id, basename })
-                        
-                        if (key === 'deleteTranscript') {
-                          console.log('准备执行删除操作')
-                          handleDeleteTranscript(item.id, basename)
-                        }
-                      }
-                      
-                      const menuItems: MenuProps['items'] = [
-                        {
-                          key: 'deleteTranscript',
-                          label: '删除记录',
-                          danger: true,
-                        },
-                      ]
-                      
-                      return (
-                        <List.Item 
-                          className={`hist-item ${isActive ? 'hist-item-active' : ''}`} 
-                          data-transcript-id={item.id}
-                        >
-                          <div className={`hist-main ${isActive ? 'hist-main-active' : ''}`}>
-                            <div className="hist-row">
-                              <div 
-                                className="hist-title" 
-                                title={basename}
-                                style={{ cursor: 'pointer' }}
-                                onClick={() => onLoadTranscript(item.id)}
-                              >
-                                {basename}
+        <Tabs 
+          defaultActiveKey="processed" 
+          size="small" 
+          centered
+          items={[
+            {
+              key: 'processed',
+              label: '已处理',
+              forceRender: true,
+              children: (
+                <div style={{ padding: 8, display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
+                  {transcripts.length === 0 ? (
+                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无记录" />
+                  ) : (
+                    <div className="hist-scroll">
+                      <List
+                        split={false}
+                        size="small"
+                        dataSource={transcripts}
+                        renderItem={(item: TranscriptMeta) => {
+                          const basename = extractFilename(item.media_path)
+                          const isActive = activeTranscriptId === item.id
+                          
+                          // 下拉菜单项
+                          const handleMenuClick = (key: string) => {
+                            console.log('菜单点击事件触发:', key, { transcriptId: item.id, basename })
+                            
+                            if (key === 'deleteTranscript') {
+                              console.log('准备执行删除操作')
+                              handleDeleteTranscript(item.id, basename)
+                            }
+                          }
+                          
+                          const menuItems: MenuProps['items'] = [
+                            {
+                              key: 'deleteTranscript',
+                              label: '删除记录',
+                              danger: true,
+                            },
+                          ]
+                          
+                          return (
+                            <List.Item 
+                              className={`hist-item ${isActive ? 'hist-item-active' : ''}`} 
+                              data-transcript-id={item.id}
+                            >
+                              <div className={`hist-main ${isActive ? 'hist-main-active' : ''}`}>
+                                <div className="hist-row">
+                                  <div 
+                                    className="hist-title" 
+                                    title={basename}
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() => onLoadTranscript(item.id)}
+                                  >
+                                    {basename}
+                                  </div>
+                                  <div className="hist-action-area">
+                                    <Dropdown 
+                                      menu={{ 
+                                        items: menuItems,
+                                        onClick: ({ key }) => {
+                                          console.log('Dropdown onClick 触发:', key)
+                                          handleMenuClick(key)
+                                        }
+                                      }}
+                                      trigger={['click']}
+                                      placement="bottomRight"
+                                    >
+                                      <Button 
+                                        type="text" 
+                                        size="small" 
+                                        icon={<MoreOutlined />}
+                                        onClick={(e) => {
+                                          console.log('更多按钮被点击')
+                                          e.stopPropagation()
+                                          e.preventDefault()
+                                        }}
+                                      />
+                                    </Dropdown>
+                                  </div>
+                                </div>
+                                <div className="hist-meta">
+                                  ID {item.id} · {item.segment_count} 段 · {item.created_at}
+                                </div>
                               </div>
-                              <div className="hist-action-area">
-                                <Dropdown 
-                                  menu={{ 
-                                    items: menuItems,
-                                    onClick: ({ key }) => {
-                                      console.log('Dropdown onClick 触发:', key)
-                                      handleMenuClick(key)
-                                    }
-                                  }}
-                                  trigger={['click']}
-                                  placement="bottomRight"
-                                >
-                                  <Button 
-                                    type="text" 
-                                    size="small" 
-                                    icon={<MoreOutlined />}
-                                    onClick={(e) => {
-                                      console.log('更多按钮被点击')
-                                      e.stopPropagation()
-                                      e.preventDefault()
-                                    }}
-                                  />
-                                </Dropdown>
-                              </div>
-                            </div>
-                            <div className="hist-meta">
-                              ID {item.id} · {item.segment_count} 段 · {item.created_at}
-                            </div>
-                          </div>
-                        </List.Item>
-                      )
-                    }}
-                  />
+                            </List.Item>
+                          )
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="任务队列" key="tasks" forceRender>
-            <div style={{ padding: 8 }}>
-              {jobs.length === 0 ? (
-                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无任务" />
-              ) : (
-                <div className="hist-scroll">
-                  <List
-                    split={false}
-                    size="small"
-                    dataSource={jobs}
-                    renderItem={(item: JobItem) => {
-                      const shortUrl = (item.url || '').replace(/^https?:\/\//, '')
-                      const color = item.status === 'running' 
-                        ? 'blue' 
-                        : (item.status === 'pending' 
-                          ? 'default' 
-                          : (item.status === 'failed' ? 'red' : 'green'))
-                      return (
-                        <List.Item className="hist-item">
-                          <div className="hist-main">
-                            <div className="hist-row">
-                              <div className="hist-title" title={item.url}>
-                                {shortUrl}
+              )
+            },
+            {
+              key: 'tasks',
+              label: '处理情况',
+              forceRender: true,
+              children: (
+                <div style={{ padding: 8 }}>
+                  {jobs.length === 0 ? (
+                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无任务" />
+                  ) : (
+                    <div className="hist-scroll">
+                      <List
+                        split={false}
+                        size="small"
+                        dataSource={jobs}
+                        renderItem={(item: JobItem) => {
+                          const shortUrl = (item.url || '').replace(/^https?:\/\//, '')
+                          const color = item.status === 'running' 
+                            ? 'blue' 
+                            : (item.status === 'pending' 
+                              ? 'default' 
+                              : (item.status === 'failed' ? 'red' : 'green'))
+                          return (
+                            <List.Item className="hist-item">
+                              <div className="hist-main">
+                                <div className="hist-row">
+                                  <div className="hist-title" title={item.url}>
+                                    {shortUrl}
+                                  </div>
+                                  <div className="hist-action-area">
+                                    <Tag color={color}>{item.status}</Tag>
+                                  </div>
+                                </div>
+                                <div className="hist-meta">
+                                  # {item.id} · {item.created_at || item.started_at || ''}
+                                </div>
                               </div>
-                              <div className="hist-action-area">
-                                <Tag color={color}>{item.status}</Tag>
-                              </div>
-                            </div>
-                            <div className="hist-meta">
-                              # {item.id} · {item.created_at || item.started_at || ''}
-                            </div>
-                          </div>
-                        </List.Item>
-                      )
-                    }}
-                  />
+                            </List.Item>
+                          )
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </Tabs.TabPane>
-        </Tabs>
+              )
+            }
+          ]}
+        />
       </Card>
     </div>
   )

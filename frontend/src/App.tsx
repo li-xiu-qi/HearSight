@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import './index.css'
 import { Layout, Typography, Button, Form, Input, Space, Alert, Tag, message } from 'antd'
 import { MenuOutlined, CloseOutlined, SearchOutlined, ReloadOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
@@ -13,6 +14,7 @@ const { Header, Footer } = Layout
 const { Title } = Typography
 
 function App() {
+  const location = useLocation()
   const [segments, setSegments] = useState<Array<Segment>>([])
   const [loading, setLoading] = useState(false)
   const [transcripts, setTranscripts] = useState<Array<TranscriptMeta>>([])
@@ -24,7 +26,7 @@ function App() {
   
   // 全屏布局状态
   const [leftPanelVisible, setLeftPanelVisible] = useState(true) // 默认显示历史记录面板
-  const [rightPanelVisible, setRightPanelVisible] = useState(false)
+  const [rightPanelVisible, setRightPanelVisible] = useState(true) // 默认显示右侧面板
   const [url, setUrl] = useState('')
   const [urlError, setUrlError] = useState<string | null>(null)
   const [urlResult, setUrlResult] = useState<ParseResult | null>(null)
@@ -183,6 +185,17 @@ function App() {
     return () => clearInterval(timer)
   }, [])
 
+  // 检查URL参数，如果有的话自动加载视频
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search)
+    const videoUrl = searchParams.get('url')
+    if (videoUrl) {
+      setUrl(videoUrl)
+      // 可以在这里自动提交URL
+      // handleUrlSubmit()
+    }
+  }, [location])
+
   return (
     <Layout className="fullscreen-layout">
       {/* 顶部工具栏 */}
@@ -278,6 +291,17 @@ function App() {
           </div>
         )}
         
+        {/* 左侧面板展开按钮 */}
+        {!leftPanelVisible && (
+          <button 
+            className="panel-toggle-btn left"
+            onClick={() => setLeftPanelVisible(true)}
+            title="展开左侧面板"
+          >
+            <RightOutlined />
+          </button>
+        )}
+        
         {/* 主视频区域 */}
         <div className={`fullscreen-main ${leftPanelVisible ? 'with-left' : ''} ${rightPanelVisible ? 'with-right' : ''}`}>
           <VideoPlayer
@@ -286,6 +310,17 @@ function App() {
             loading={loading}
           />
         </div>
+        
+        {/* 右侧面板展开按钮 */}
+        {!rightPanelVisible && (
+          <button 
+            className="panel-toggle-btn right"
+            onClick={() => setRightPanelVisible(true)}
+            title="展开右侧面板"
+          >
+            <LeftOutlined />
+          </button>
+        )}
         
         {/* 右侧面板 */}
         {rightPanelVisible && (

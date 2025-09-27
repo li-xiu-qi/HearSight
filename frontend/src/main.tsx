@@ -3,7 +3,8 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import 'antd/dist/reset.css'
 import { ConfigProvider, theme } from 'antd'
-import App from './App.tsx'
+import { RouterProvider } from 'react-router-dom'
+import router from './routes'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -12,7 +13,7 @@ createRoot(document.getElementById('root')!).render(
         algorithm: theme.defaultAlgorithm,
       }}
     >
-      <App />
+      <RouterProvider router={router} />
     </ConfigProvider>
   </StrictMode>,
 )
