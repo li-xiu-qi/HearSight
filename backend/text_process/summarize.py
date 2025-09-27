@@ -1,25 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-基于句级段落列表生成一次性总结：
-- 输入：list[Segment]（无 spk_id）
-- 流程：计算 token（tiktoken），若不超过 max_tokens（默认 100_000）则一次性汇总
-- 输出：list[SummaryItem]，形如：
-  [
-    {
-      "topic": str,
-      "summary": str,
-      "start_time": float,
-      "end_time": float,
-    }
-  ]
 
-依赖：
-- tiktoken（requirements.txt 已包含）
-- backend.chat_utils.chat_client.chat_text（使用已有的统一聊天调用）
-
-注意：
-- 遵循项目偏好：TypedDict 作类型定义；避免过度 try/except；直接调用而非 argparse。
-"""
 from __future__ import annotations
 
 from typing import List
@@ -31,9 +11,10 @@ from backend.chat_utils.chat_client import chat_text
 from backend.utils.typing_defs import Segment, SummaryItem
 
 
- 
+
 def _count_tokens_for_segments(segments: List[Segment], encoding_name: str = "cl100k_base") -> int:
-    """最小实现：仅按文本字段统计 token 数。
+    """
+    最小实现：仅按文本字段统计 token 数。
     说明：不同模型的编码可能不同，这里采用通用的 cl100k_base 以近似估计。
     """
     enc = tiktoken.get_encoding(encoding_name)
@@ -43,12 +24,7 @@ def _count_tokens_for_segments(segments: List[Segment], encoding_name: str = "cl
 
 
 def _build_prompt(segments: List[Segment]) -> str:
-    """构造一次性总结提示词。包含：
-    - 任务：抽取主题 topic，并给出 concise summary
-    - 约束：使用中文、简洁准确，不要重复原文
-    - 上下文：提供带时间戳的句子列表
-    - 输出风格：不必再包裹 JSON，由上层封装
-    """
+
     header = """
 你是一个专业的内容总结助手。请：
 1) 提炼对话/内容的主题（topic），并输出一段简明中文总结（summary），准确涵盖主要信息点，避免流水账与冗余重复。

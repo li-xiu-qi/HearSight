@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
--
-"""
+
 from __future__ import annotations
 
 from backend.chat_utils.chat_client import chat_text
