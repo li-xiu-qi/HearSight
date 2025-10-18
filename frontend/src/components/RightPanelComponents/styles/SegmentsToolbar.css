@@ -12,27 +12,6 @@
   gap: 8px;
 }
 
-.auto-scroll-group { 
-  display: flex; 
-  align-items: center; 
-  gap: 6px; 
-  white-space: nowrap; 
-}
-
 .auto-scroll-group .toolbar-label { 
   margin-right: 0; 
-}
-
-.toolbar-label { 
-  color: #8c8c8c; 
-  font-size: 12px; 
-}
-
-/* 固定工具栏容器样式 */
-.fixed-toolbar-container {
-  flex: 0 0 auto;
-  position: sticky;
-  top: 46px;
-  z-index: 125;
-  background: white;
 }

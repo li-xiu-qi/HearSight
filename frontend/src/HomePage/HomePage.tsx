@@ -4,6 +4,9 @@ import { SearchOutlined, PlayCircleOutlined, FileTextOutlined, BarChartOutlined,
 import { useNavigate } from 'react-router-dom'
 import './styles/HomePage.css'
 
+// 导入设置待处理URL的函数
+const { setPendingUrl } = await import('../App');
+
 const { Header, Content, Footer } = Layout
 const { Title, Paragraph } = Typography
 
@@ -12,8 +15,8 @@ function HomePage() {
   const navigate = useNavigate()
 
   const handleUrlSubmit = (values: any) => {
-    // 这里可以添加URL验证逻辑
-    // 然后导航到主应用页面
+    // 设置待处理的URL，然后导航到App页面
+    setPendingUrl(url);
     navigate('/app')
   }
 

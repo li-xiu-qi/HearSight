@@ -51,11 +51,11 @@
   width: 18px; 
   justify-content: center; 
   margin-top: 2px; 
-  color: #8c8c8c; 
+  color: var(--color-text-tertiary); 
   line-height: 1; 
 }
 .segment-btn.is-div:hover .segment-icon { 
-  color: #1677ff; 
+  color: var(--color-primary); 
 }
 .segment-btn.ant-btn-sm { 
   height: auto; 
@@ -71,13 +71,13 @@
   flex: 0 0 auto; 
 }
 .segment-btn:hover {
-  border-color: rgba(100,111,255,0.18);
-  background: rgba(100,111,255,0.03);
+  border-color: rgba(0, 102, 255, 0.25);
+  background: rgba(0, 102, 255, 0.04);
 }
 .segment-btn.active {
-  border-color: rgba(100,111,255,0.36);
-  box-shadow: 0 0 0 1px rgba(100,111,255,0.12) inset;
-  background: rgba(100,111,255,0.06);
+  border-color: rgba(0, 102, 255, 0.4);
+  box-shadow: 0 0 0 1px rgba(0, 102, 255, 0.15) inset;
+  background: rgba(0, 102, 255, 0.08);
 }
 .segment-line {
   display: none; /* 用新的两列布局替代 */
@@ -86,17 +86,17 @@
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   font-size: 12px;
-  color: #262626;
+  color: var(--color-text-secondary);
 }
 .segment-spk {
   font-size: 11px;
-  color: #8c8c8c;
-  background: #fafafa;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-tertiary);
   border-radius: 10px;
   padding: 1px 6px;
 }
 .segment-text {
-  color: #434343;
+  color: var(--color-text-primary);
   line-height: 1.5;
   font-size: 13px;
   /* 自动换行并尽量保持自然换行 */
@@ -142,7 +142,7 @@
 .seg-time {
   font-variant-numeric: tabular-nums;
   font-weight: 500;
-  color: #8c8c8c;
+  color: var(--color-text-tertiary);
   white-space: nowrap;
   min-width: 96px; /* 与整体两列设计保持一致 */
   text-align: right;

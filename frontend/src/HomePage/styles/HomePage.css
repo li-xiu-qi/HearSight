@@ -26,7 +26,7 @@
 
 /* 首屏区域样式 */
 .hero-section {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #001529 0%, #1890ff 100%);
   color: white;
   padding: 50px 24px;
   text-align: center;
@@ -69,6 +69,7 @@
   padding: 40px 24px;
   max-width: 1200px;
   margin: 0 auto;
+  background: #fafbff;
 }
 
 .features-section .ant-divider-horizontal.ant-divider-with-text {
@@ -90,7 +91,7 @@
 .feature-icon {
   font-size: 2.5rem;
   padding: 20px;
-  background: #f0f2f5;
+  background: #e6f7ff;
   border-radius: 8px;
   margin: 12px auto;
   width: fit-content;
@@ -102,7 +103,7 @@
 /* 使用场景区域样式 */
 .use-cases-section {
   padding: 40px 24px;
-  background: #f9f9f9;
+  background: #f0f8ff;
 }
 
 .use-cases-section .ant-divider-horizontal.ant-divider-with-text {
@@ -118,6 +119,7 @@
 /* 常见问题区域样式 */
 .faq-section {
   padding: 40px 24px;
+  background: #fafbff;
 }
 
 .faq-section .ant-divider-horizontal.ant-divider-with-text {

@@ -32,7 +32,7 @@ const SummaryView: React.FC<SummaryViewProps> = ({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%' }}>
-      <div style={{ padding: '8px 8px 12px 8px', borderBottom: '1px solid #f0f0f0' }}>
+      <div style={{ padding: 'var(--spacing-sm) var(--spacing-sm) var(--spacing-md) var(--spacing-sm)', borderBottom: '1px solid var(--color-border-light)' }}>
         <Button
           size="small"
           type="primary"
@@ -43,11 +43,17 @@ const SummaryView: React.FC<SummaryViewProps> = ({
         </Button>
       </div>
 
-      <div className="summaries-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 8 }}>
+      <div className="summaries-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 'var(--spacing-sm)' }}>
         {summariesLoading && <div>生成中，请稍候…</div>}
         {summariesError && <Alert type="error" message={summariesError} showIcon />}
         {!summariesLoading && !summariesError && summaries.length === 0 && (
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无总结，点击上方按钮生成" />
+          <div className="empty-state">
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            <div className="empty-title">暂无内容总结</div>
+            <div className="empty-description">
+              点击上方的"生成总结"按钮，AI将为您分析视频内容并生成结构化摘要。
+            </div>
+          </div>
         )}
         {!summariesLoading && summaries.length > 0 && (
           <List

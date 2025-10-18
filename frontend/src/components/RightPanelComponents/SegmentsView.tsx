@@ -16,7 +16,13 @@ const SegmentsView = forwardRef<HTMLDivElement, SegmentsViewProps>(
     return (
       <div className="segments-scroll" ref={ref} style={{ height: '100%', minHeight: 0 }}>
         {segments.length === 0 ? (
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无分句" />
+          <div className="empty-state">
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            <div className="empty-title">暂无分句内容</div>
+            <div className="empty-description">
+              视频处理完成后，分句结果将显示在这里。您可以点击分句来跳转到对应时间。
+            </div>
+          </div>
         ) : (
           <List
             split={false}

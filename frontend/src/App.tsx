@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import './index.css'
-import { Layout, Tag } from 'antd'
+import { Layout, Tag, message } from 'antd'
 import { usePanelResize, useUrlHandler, useVideoSync, useDataLoader } from './hooks'
 import LeftPanel from './components/LeftPanel'
 import VideoPlayer from './components/VideoPlayer'
@@ -11,13 +11,21 @@ import UrlResultBar from './components/UrlResultBar'
 
 const { Header, Footer } = Layout
 
+// 创建一个全局变量来存储从HomePage传递的URL
+let pendingUrl: string | null = null;
+
+// 提供一个函数来设置待处理的URL
+export const setPendingUrl = (url: string | null) => {
+  pendingUrl = url;
+};
+
 function App() {
   const location = useLocation()
   const [autoScroll, setAutoScroll] = useState<boolean>(true) // 默认开启自动滚动
   
   // 全屏布局状态
-  const [leftPanelVisible, setLeftPanelVisible] = useState(true) // 默认显示历史记录面板
-  const [rightPanelVisible, setRightPanelVisible] = useState(true) // 默认显示右侧面板
+  const [leftPanelVisible, setLeftPanelVisible] = useState(window.innerWidth > 768) // 在移动端默认隐藏左侧面板
+  const [rightPanelVisible, setRightPanelVisible] = useState(window.innerWidth > 768) // 在移动端默认隐藏右侧面板
   
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const segScrollRef = useRef<HTMLDivElement | null>(null)
@@ -80,7 +88,24 @@ function App() {
     getSiblingPanelWidth: () => leftPanelVisible ? leftPanelResize.width : 0 // 获取兄弟面板宽度
   });
 
-  // 当 activeTranscriptId 改变时，让历史列表滚动到该项
+  // 响应式面板控制
+  useEffect(() => {
+    const handleResize = () => {
+      const isDesktop = window.innerWidth > 768;
+      if (isDesktop) {
+        // 桌面端：显示面板
+        setLeftPanelVisible(true);
+        setRightPanelVisible(true);
+      } else {
+        // 移动端：隐藏面板
+        setLeftPanelVisible(false);
+        setRightPanelVisible(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   useEffect(() => {
     if (activeTranscriptId == null) return
     const el = histScrollRef.current?.querySelector(`[data-transcript-id="${activeTranscriptId}"]`) as HTMLElement | null
@@ -93,16 +118,14 @@ function App() {
     }
   }, [activeTranscriptId])
 
-  // 检查URL参数，如果有的话自动加载视频
+  // 检查是否有待处理的URL
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search)
-    const videoUrl = searchParams.get('url')
-    if (videoUrl) {
-      setUrl(videoUrl)
-      // 可以在这里自动提交URL
-      // handleUrlSubmit()
+    if (pendingUrl) {
+      setUrl(pendingUrl);
+      message.info('URL已加载，请点击"解析"按钮开始处理');
+      pendingUrl = null; // 清除待处理的URL
     }
-  }, [location, setUrl])
+  }, [setUrl]);
 
   // 窗口大小变化时更新最大宽度
   useEffect(() => {
@@ -114,9 +137,20 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleUrlSubmit = (e?: React.FormEvent) => {
-    e?.preventDefault();
-    submitUrl(url);
+  // 处理表单提交（适配Ant Design Form的onFinish回调）
+  const handleUrlSubmit = (values?: any) => {
+    if (!url.trim()) {
+      message.warning('请输入视频链接');
+      return;
+    }
+    submitUrl(url)
+      .then(() => {
+        message.success('任务已提交');
+      })
+      .catch((error) => {
+        console.error('提交URL失败:', error);
+        message.error('提交URL失败: ' + (error.message || '未知错误'));
+      });
   };
 
   return (
@@ -147,60 +181,106 @@ function App() {
       {/* 主内容区域 */}
       <div className="fullscreen-content">
         {/* 左侧面板 */}
-        {leftPanelVisible && (
+        <div 
+          className={`fullscreen-left-panel ${leftPanelVisible ? 'visible' : ''}`}
+          style={{ 
+            width: leftPanelVisible ? leftPanelResize.width : 0,
+            minWidth: leftPanelVisible ? leftPanelResize.width : 0,
+            maxWidth: leftPanelVisible ? leftPanelResize.width : 0,
+            transform: leftPanelVisible ? 'translateX(0)' : 'translateX(-100%)',
+            opacity: leftPanelVisible ? 1 : 0
+          }}
+        >
+          {/* 拖拽手柄 */}
           <div 
-            className="fullscreen-left-panel"
-            style={{ 
-              width: leftPanelResize.width,
-              minWidth: leftPanelResize.width,
-              maxWidth: leftPanelResize.width
+            className={`panel-resize-handle left ${leftPanelResize.isResizing ? 'dragging' : ''}`}
+            onMouseDown={leftPanelResize.startResizing}
+            tabIndex={0}
+            role="separator"
+            aria-label="调整左侧面板宽度"
+            aria-orientation="vertical"
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                // 减少宽度
+                const newWidth = Math.max(leftPanelResize.width - 20, 280);
+                // 这里需要手动更新宽度，暂时简化处理
+              } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                // 增加宽度
+                const newWidth = Math.min(leftPanelResize.width + 20, window.innerWidth * 0.5);
+                // 这里需要手动更新宽度，暂时简化处理
+              }
             }}
-          >
-            {/* 拖拽手柄 */}
-            <div 
-              className="panel-resize-handle left"
-              onMouseDown={leftPanelResize.startResizing}
-            />
-            <div className="panel-header">
-              <span>历史记录</span>
-              <button 
-                type="button" 
-                className="close-button"
-                onClick={() => setLeftPanelVisible(false)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="panel-content">
-              <LeftPanel
-                transcripts={transcripts}
-                jobs={jobs}
-                activeTranscriptId={activeTranscriptId}
-                onLoadTranscript={loadTranscriptDetail}
-                onJobsUpdate={loadJobs}
-                onTranscriptsUpdate={loadTranscripts}
-              />
-            </div>
+          />
+          <div className="panel-header">
+            <span>历史记录</span>
+            <button 
+              type="button" 
+              className="close-button"
+              onClick={() => setLeftPanelVisible(false)}
+              aria-label="关闭历史记录面板"
+            >
+              ×
+            </button>
           </div>
-        )}
+          <div className="panel-content" role="region" aria-label="历史记录面板内容">
+            <LeftPanel
+              transcripts={transcripts}
+              jobs={jobs}
+              activeTranscriptId={activeTranscriptId}
+              onLoadTranscript={loadTranscriptDetail}
+              onJobsUpdate={loadJobs}
+              onTranscriptsUpdate={loadTranscripts}
+            />
+          </div>
+        </div>
         
+        {/* 移动端遮罩 */}
+        {(leftPanelVisible || rightPanelVisible) && window.innerWidth <= 768 && (
+          <div 
+            className="mobile-overlay visible"
+            onClick={() => {
+              setLeftPanelVisible(false);
+              setRightPanelVisible(false);
+            }}
+          />
+        )}
+
         {/* 左侧面板展开按钮 */}
         {!leftPanelVisible && (
           <button 
             className="panel-toggle-btn left"
             onClick={() => setLeftPanelVisible(true)}
             title="展开左侧面板"
+            aria-label="展开历史记录面板"
+            aria-expanded={leftPanelVisible}
           >
             ▶
           </button>
         )}
-        
+
+        {/* 移动端遮罩 */}
+        {(leftPanelVisible || rightPanelVisible) && window.innerWidth <= 768 && (
+          <div 
+            className="mobile-overlay visible"
+            onClick={() => {
+              setLeftPanelVisible(false);
+              setRightPanelVisible(false);
+            }}
+            role="presentation"
+            aria-hidden="true"
+          />
+        )}
+
         {/* 主视频区域 */}
         <div 
           className={`fullscreen-main ${leftPanelVisible ? 'with-left' : ''} ${rightPanelVisible ? 'with-right' : ''}`}
           style={{ 
             minWidth: minVideoWidth
           }}
+          role="main"
+          aria-label="视频播放区域"
         >
           <VideoPlayer
             ref={videoRef}
@@ -215,49 +295,65 @@ function App() {
             className="panel-toggle-btn right"
             onClick={() => setRightPanelVisible(true)}
             title="展开右侧面板"
+            aria-label="展开AI分析面板"
+            aria-expanded={rightPanelVisible}
           >
             ◀
           </button>
         )}
         
         {/* 右侧面板 */}
-        {rightPanelVisible && (
+        <div 
+          className={`fullscreen-right-panel ${rightPanelVisible ? 'visible' : ''}`}
+          style={{ 
+            width: rightPanelVisible ? rightPanelResize.width : 0,
+            minWidth: rightPanelVisible ? rightPanelResize.width : 0,
+            maxWidth: rightPanelVisible ? rightPanelResize.width : 0,
+            transform: rightPanelVisible ? 'translateX(0)' : 'translateX(100%)',
+            opacity: rightPanelVisible ? 1 : 0
+          }}
+        >
+          {/* 拖拽手柄 */}
           <div 
-            className="fullscreen-right-panel"
-            style={{ 
-              width: rightPanelResize.width,
-              minWidth: rightPanelResize.width,
-              maxWidth: rightPanelResize.width
+            className={`panel-resize-handle right ${rightPanelResize.isResizing ? 'dragging' : ''}`}
+            onMouseDown={rightPanelResize.startResizing}
+            tabIndex={0}
+            role="separator"
+            aria-label="调整右侧面板宽度"
+            aria-orientation="vertical"
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                // 减少宽度
+              } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                // 增加宽度
+              }
             }}
-          >
-            {/* 拖拽手柄 */}
-            <div 
-              className="panel-resize-handle right"
-              onMouseDown={rightPanelResize.startResizing}
-            />
-            <div className="panel-header">
-              <span>AI</span>
-              <button 
-                type="button" 
-                className="close-button"
-                onClick={() => setRightPanelVisible(false)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="panel-content">
-              <RightPanel
-                ref={segScrollRef}
-                segments={segments}
-                activeSegIndex={activeSegIndex}
-                autoScroll={autoScroll}
-                onSeekTo={handleSeekTo}
-                onActiveSegmentChange={setActiveSegIndex}
-                onAutoScrollChange={setAutoScroll}
-              />
-            </div>
+          />
+          <div className="panel-header">
+            <span>AI</span>
+            <button 
+              type="button" 
+              className="close-button"
+              onClick={() => setRightPanelVisible(false)}
+              aria-label="关闭AI分析面板"
+            >
+              ×
+            </button>
           </div>
-        )}
+          <div className="panel-content" role="region" aria-label="AI分析面板内容">
+            <RightPanel
+              ref={segScrollRef}
+              segments={segments}
+              activeSegIndex={activeSegIndex}
+              autoScroll={autoScroll}
+              onSeekTo={handleSeekTo}
+              onActiveSegmentChange={setActiveSegIndex}
+              onAutoScrollChange={setAutoScroll}
+            />
+          </div>
+        </div>
       </div>
       
       {/* 底部状态栏 */}

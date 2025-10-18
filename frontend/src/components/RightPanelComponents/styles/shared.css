@@ -51,3 +51,17 @@
   background: white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
+
+/* 工具栏标签样式 */
+.toolbar-label { 
+  color: #8c8c8c; 
+  font-size: 12px; 
+}
+
+/* 自动滚动组样式 */
+.auto-scroll-group { 
+  display: flex; 
+  align-items: center; 
+  gap: 6px; 
+  white-space: nowrap; 
+}

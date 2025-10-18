@@ -77,9 +77,15 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
               label: '已处理',
               forceRender: true,
               children: (
-                <div style={{ padding: 8, display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
+                <div style={{ padding: 'var(--spacing-sm)', display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
                   {transcripts.length === 0 ? (
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无记录" />
+                    <div className="empty-state">
+                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                      <div className="empty-title">暂无处理记录</div>
+                      <div className="empty-description">
+                        您还没有处理过任何视频。在上方输入视频URL开始分析吧！
+                      </div>
+                    </div>
                   ) : (
                     <div className="hist-scroll">
                       <List
@@ -166,9 +172,15 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
               label: '处理情况',
               forceRender: true,
               children: (
-                <div style={{ padding: 8 }}>
+                <div style={{ padding: 'var(--spacing-sm)' }}>
                   {jobs.length === 0 ? (
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无任务" />
+                    <div className="empty-state">
+                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                      <div className="empty-title">暂无处理任务</div>
+                      <div className="empty-description">
+                        当前没有正在处理的视频。提交视频URL后，处理进度会显示在这里。
+                      </div>
+                    </div>
                   ) : (
                     <div className="hist-scroll">
                       <List

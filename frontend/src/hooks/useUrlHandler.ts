@@ -22,7 +22,7 @@ export const useUrlHandler = (): UseUrlHandlerReturn => {
   const [urlResult, setUrlResult] = useState<ParseResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const handleUrlSubmit = async (urlToSubmit: string) => {
+  const handleUrlSubmit = async (urlToSubmit: string): Promise<void> => {
     setUrlError(null);
     setUrlResult(null);
     
@@ -30,6 +30,7 @@ export const useUrlHandler = (): UseUrlHandlerReturn => {
     if ('error' in parsed) {
       setUrlError(parsed.error);
       setUrlResult(parsed);
+      throw new Error(parsed.error);
     } else {
       setUrlResult(parsed);
       try {
@@ -43,6 +44,7 @@ export const useUrlHandler = (): UseUrlHandlerReturn => {
       } catch (e: any) {
         setUrlError(e?.message || '创建任务出错');
         message.error(e?.message || '创建任务出错');
+        throw e;
       } finally {
         setSubmitting(false);
       }

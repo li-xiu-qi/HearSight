@@ -353,7 +353,7 @@ const RightPanel = forwardRef<HTMLDivElement, RightPanelProps>(
             )}
             
             {activeTab === 'summaries' && (
-              <div className="summaries-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 8 }}>
+              <div className="summaries-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 'var(--spacing-sm)' }}>
                 <SummaryView
                   summaries={summaries}
                   summariesLoading={summariesLoading}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Alert } from 'antd';
 import type { ParseResult } from '../types';
 
@@ -15,6 +15,17 @@ const UrlResultBar: React.FC<UrlResultBarProps> = ({
   setUrlError,
   setUrlResult
 }) => {
+  // 自动关闭成功提示
+  useEffect(() => {
+    if (urlResult && !('error' in urlResult)) {
+      const timer = setTimeout(() => {
+        setUrlResult(null);
+      }, 3000); // 3秒后自动关闭
+
+      return () => clearTimeout(timer);
+    }
+  }, [urlResult, setUrlResult]);
+
   if (!urlError && !urlResult) {
     return null;
   }

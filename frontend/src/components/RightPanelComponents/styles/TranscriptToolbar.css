@@ -12,18 +12,6 @@
   gap: 8px;
 }
 
-.toolbar-label { 
-  color: #8c8c8c; 
-  font-size: 12px; 
-}
-
-.auto-scroll-group { 
-  display: flex; 
-  align-items: center; 
-  gap: 6px; 
-  white-space: nowrap; 
-}
-
 .auto-scroll-group .toolbar-label { 
   margin-right: 0; 
 }
