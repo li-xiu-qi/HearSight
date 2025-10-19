@@ -1,211 +1,228 @@
-import { useState } from 'react'
-import { Layout, Typography, Button, Form, Input, Space, Card, Row, Col, Divider } from 'antd'
-import { SearchOutlined, PlayCircleOutlined, FileTextOutlined, BarChartOutlined, CommentOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
-import './styles/HomePage.css'
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { Search, PlayCircle, FileText, BarChart, MessageSquare } from "lucide-react"
 
-// 导入设置待处理URL的函数
-const { setPendingUrl } = await import('../App');
+let pendingUrl: string | null = null
 
-const { Header, Content, Footer } = Layout
-const { Title, Paragraph } = Typography
+export const setPendingUrl = (url: string | null) => {
+  pendingUrl = url
+}
+
+export const getPendingUrl = () => {
+  const url = pendingUrl
+  pendingUrl = null
+  return url
+}
 
 function HomePage() {
-  const [url, setUrl] = useState('')
+  const [url, setUrl] = useState("")
   const navigate = useNavigate()
 
-  const handleUrlSubmit = (values: any) => {
-    // 设置待处理的URL，然后导航到App页面
-    setPendingUrl(url);
-    navigate('/app')
+  const handleUrlSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (url.trim()) {
+      setPendingUrl(url)
+      navigate("/app")
+    }
   }
 
   const handleGetStarted = () => {
-    navigate('/app')
+    navigate("/app")
   }
 
   return (
-    <Layout className="homepage-layout">
+    <div className="min-h-screen flex flex-col">
       {/* 顶部导航栏 */}
-      <Header className="homepage-header">
-        <div className="header-content">
-          <Title level={3} style={{ margin: 0, color: 'white' }}>HearSight</Title>
-          <Space>
-            <Button type="text" onClick={() => navigate('/app')} style={{ color: 'white' }}>
-              进入应用
-            </Button>
-          </Space>
+      <header className="bg-card border-b px-6 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto h-16 flex justify-between items-center">
+          <h3 className="text-2xl font-semibold text-foreground m-0">HearSight</h3>
+          <Button variant="ghost" onClick={() => navigate("/app")} className="hover:bg-accent">
+            进入应用
+          </Button>
         </div>
-      </Header>
+      </header>
 
-      {/* 主要内容区域 - 采用上下线性布局 */}
-      <Content className="homepage-content">
+      {/* 主要内容区域 */}
+      <main className="flex-1">
         {/* 首屏区域 */}
-        <section className="hero-section">
-          <Title level={1} className="hero-title">HearSight</Title>
-          <Title level={3} className="hero-subtitle">智能视频内容分析与理解平台</Title>
-          <Paragraph className="hero-description">
+        <section className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground py-20 px-6 text-center">
+          <h1 className="text-5xl font-bold mb-4">HearSight</h1>
+          <h3 className="text-2xl font-medium mb-6 text-primary-foreground/90">智能视频内容分析与理解平台</h3>
+          <p className="text-lg max-w-3xl mx-auto mb-8 text-primary-foreground/85 leading-relaxed">
             HearSight 是一个强大的视频内容分析工具，能够自动识别视频中的语音内容，
             将其转换为文本，并提供智能分句、内容总结和智能问答功能，帮助您快速理解和分析视频内容。
-          </Paragraph>
+          </p>
           
-          <Form 
-            layout="inline" 
-            onFinish={handleUrlSubmit}
-            className="url-input-form"
-          >
-            <Form.Item
-              name="url"
-              rules={[{ required: true, message: '请输入视频链接!' }]}
-              style={{ flex: 1, minWidth: 300 }}
-            >
-              <Input
-                size="large"
-                placeholder="请输入 bilibili.com 视频链接"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-            <Form.Item>
-              <Button 
-                type="primary" 
-                size="large" 
-                htmlType="submit" 
-                icon={<SearchOutlined />}
-              >
-                开始分析
-              </Button>
-            </Form.Item>
-          </Form>
+          <form onSubmit={handleUrlSubmit} className="max-w-2xl mx-auto mb-8 flex gap-3 flex-wrap justify-center">
+            <Input
+              type="text"
+              placeholder="请输入 bilibili.com 视频链接"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              className="flex-1 min-w-[300px] h-12 bg-background text-foreground"
+            />
+            <Button type="submit" size="lg" className="h-12 bg-primary-foreground text-primary hover:bg-primary-foreground/90">
+              <Search className="mr-2 h-4 w-4" />
+              开始分析
+            </Button>
+          </form>
           
-          <div className="cta-section">
+          <div className="mt-8">
             <Button 
-              type="default" 
-              size="large" 
-              onClick={handleGetStarted}
-              icon={<PlayCircleOutlined />}
+              variant="outline" 
+              size="lg" 
+              onClick={handleGetStarted} 
+              className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary bg-transparent"
             >
+              <PlayCircle className="mr-2 h-4 w-4" />
               直接进入应用
             </Button>
           </div>
         </section>
 
         {/* 核心功能区域 */}
-        <section className="features-section">
-          <Divider>核心功能</Divider>
-          <Row gutter={[16, 16]} justify="center">
-            <Col xs={24} sm={12} lg={8}>
-              <Card 
-                className="feature-card"
-                cover={<div className="feature-icon"><FileTextOutlined /></div>}
-              >
-                <Card.Meta
-                  title="语音转文字"
-                  description="高精度语音识别技术，将视频中的语音内容准确转换为文字"
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={8}>
-              <Card 
-                className="feature-card"
-                cover={<div className="feature-icon"><BarChartOutlined /></div>}
-              >
-                <Card.Meta
-                  title="智能分句"
-                  description="自动将长文本分割为语义完整的句子，便于理解和分析"
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={8}>
-              <Card 
-                className="feature-card"
-                cover={<div className="feature-icon"><CommentOutlined /></div>}
-              >
-                <Card.Meta
-                  title="智能问答"
-                  description="基于AI技术的智能问答系统，可针对视频内容进行提问和交互"
-                />
-              </Card>
-            </Col>
-          </Row>
+        <section className="py-16 px-6 max-w-7xl mx-auto bg-muted/30">
+          <Separator className="mb-8" />
+          <h2 className="text-3xl font-bold text-center mb-12 text-foreground">核心功能</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card className="text-center hover:-translate-y-1 transition-transform duration-300">
+              <CardHeader>
+                <div className="bg-primary/10 text-primary rounded-xl mx-auto w-fit p-5 mb-4">
+                  <FileText className="h-10 w-10" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <CardTitle className="mb-3">语音转文字</CardTitle>
+                <CardDescription className="text-base">
+                  高精度语音识别技术，将视频中的语音内容准确转换为文字
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center hover:-translate-y-1 transition-transform duration-300">
+              <CardHeader>
+                <div className="bg-primary/10 text-primary rounded-xl mx-auto w-fit p-5 mb-4">
+                  <BarChart className="h-10 w-10" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <CardTitle className="mb-3">智能分句</CardTitle>
+                <CardDescription className="text-base">
+                  自动将长文本分割为语义完整的句子，便于理解和分析
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center hover:-translate-y-1 transition-transform duration-300">
+              <CardHeader>
+                <div className="bg-primary/10 text-primary rounded-xl mx-auto w-fit p-5 mb-4">
+                  <MessageSquare className="h-10 w-10" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <CardTitle className="mb-3">智能问答</CardTitle>
+                <CardDescription className="text-base">
+                  基于AI技术的智能问答系统，可针对视频内容进行提问和交互
+                </CardDescription>
+              </CardContent>
+            </Card>
+          </div>
         </section>
 
         {/* 使用场景区域 */}
-        <section className="use-cases-section">
-          <Divider>适用场景</Divider>
-          <Row gutter={[16, 16]} justify="center">
-            <Col xs={24} md={12} lg={8}>
-              <Card className="use-case-card">
-                <Title level={4}>学习研究</Title>
-                <Paragraph>
-                  快速提取视频课程、讲座中的关键信息，提高学习效率
-                </Paragraph>
+        <section className="py-16 px-6 bg-accent/30">
+          <div className="max-w-7xl mx-auto">
+            <Separator className="mb-8" />
+            <h2 className="text-3xl font-bold text-center mb-12 text-foreground">适用场景</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Card className="hover:-translate-y-1 transition-transform duration-300">
+                <CardHeader>
+                  <CardTitle>学习研究</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">快速提取视频课程、讲座中的关键信息，提高学习效率</p>
+                </CardContent>
               </Card>
-            </Col>
-            <Col xs={24} md={12} lg={8}>
-              <Card className="use-case-card">
-                <Title level={4}>内容创作</Title>
-                <Paragraph>
-                  为视频内容生成文字稿，便于编辑、翻译和二次创作
-                </Paragraph>
+
+              <Card className="hover:-translate-y-1 transition-transform duration-300">
+                <CardHeader>
+                  <CardTitle>内容创作</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">为视频内容生成文字稿，便于编辑、翻译和二次创作</p>
+                </CardContent>
               </Card>
-            </Col>
-            <Col xs={24} md={12} lg={8}>
-              <Card className="use-case-card">
-                <Title level={4}>会议记录</Title>
-                <Paragraph>
-                  自动转写会议内容，生成结构化会议纪要
-                </Paragraph>
+
+              <Card className="hover:-translate-y-1 transition-transform duration-300">
+                <CardHeader>
+                  <CardTitle>会议记录</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">自动转写会议内容，生成结构化会议纪要</p>
+                </CardContent>
               </Card>
-            </Col>
-          </Row>
+            </div>
+          </div>
         </section>
 
         {/* 常见问题区域 */}
-        <section className="faq-section">
-          <Divider>常见问题</Divider>
-          <Row gutter={[16, 16]} justify="center">
-            <Col xs={24} lg={12}>
-              <Card title="HearSight支持哪些视频平台？">
-                <Paragraph>
-                  目前HearSight主要支持Bilibili平台的视频分析，我们正在努力扩展对更多平台的支持。
-                </Paragraph>
+        <section className="py-16 px-6 bg-muted/30">
+          <div className="max-w-7xl mx-auto">
+            <Separator className="mb-8" />
+            <h2 className="text-3xl font-bold text-center mb-12 text-foreground">常见问题</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>HearSight支持哪些视频平台？</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">目前HearSight主要支持Bilibili平台的视频分析，我们正在努力扩展对更多平台的支持。</p>
+                </CardContent>
               </Card>
-            </Col>
-            <Col xs={24} lg={12}>
-              <Card title="转写准确率如何？">
-                <Paragraph>
-                  我们使用了先进的语音识别技术，对于清晰的普通话音频，准确率可达95%以上。
-                  对于有背景音乐、杂音或方言的情况，准确率可能会有所下降。
-                </Paragraph>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>转写准确率如何？</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">我们使用了先进的语音识别技术，对于清晰的普通话音频，准确率可达95%以上。
+                  对于有背景音乐、杂音或方言的情况，准确率可能会有所下降。</p>
+                </CardContent>
               </Card>
-            </Col>
-            <Col xs={24} lg={12}>
-              <Card title="处理一个视频需要多长时间？">
-                <Paragraph>
-                  处理时间取决于视频的长度和当前系统负载，通常5-10分钟的视频需要2-5分钟处理时间。
-                </Paragraph>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>处理一个视频需要多长时间？</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">处理时间取决于视频的长度和当前系统负载，通常5-10分钟的视频需要2-5分钟处理时间。</p>
+                </CardContent>
               </Card>
-            </Col>
-            <Col xs={24} lg={12}>
-              <Card title="是否支持导出转写结果？">
-                <Paragraph>
-                  是的，您可以在分析完成后导出文本内容，支持多种格式包括TXT、SRT等。
-                </Paragraph>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>是否支持导出转写结果？</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">是的，您可以在分析完成后导出文本内容，支持多种格式包括TXT、SRT等。</p>
+                </CardContent>
               </Card>
-            </Col>
-          </Row>
+            </div>
+          </div>
         </section>
-      </Content>
+      </main>
 
       {/* 底部信息 */}
-      <Footer className="homepage-footer">
-        <div className="footer-content">
-          <Paragraph>HearSight &copy; {new Date().getFullYear()} - 智能视频内容分析平台</Paragraph>
+      <footer className="bg-card border-t text-muted-foreground text-center py-8 px-6 mt-auto">
+        <div className="max-w-7xl mx-auto">
+          <p className="m-0">HearSight &copy; {new Date().getFullYear()} - 智能视频内容分析平台</p>
         </div>
-      </Footer>
-    </Layout>
+      </footer>
+    </div>
   )
 }
 

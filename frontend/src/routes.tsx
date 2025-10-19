@@ -1,6 +1,6 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import App from './App'
-import HomePage from './HomePage/HomePage'
+import { createBrowserRouter, RouterProvider } from "react-router-dom"
+import HomePage from "./HomePage/HomePage"
+import App from "./App"
 
 const router = createBrowserRouter([
   {
@@ -13,4 +13,6 @@ const router = createBrowserRouter([
   },
 ])
 
-export default router
+export default function Routes() {
+  return <RouterProvider router={router} />
+}

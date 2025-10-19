@@ -1,24 +1,35 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
+import path from "path"
+import tailwindcss from "@tailwindcss/vite"
+import react from "@vitejs/plugin-react"
+import { defineConfig } from "vite"
 
-declare const process: any
-
-// https://vite.dev/config/
 // 支持通过环境变量配置后端地址/端口，适配本地（localhost）和 docker（服务名）场景
-const isDocker = Boolean((process as any).env.USE_DOCKER || (process as any).env.DOCKER)
-const backendHost = (process as any).env.BACKEND_HOST || (isDocker ? 'backend' : 'localhost')
-const backendPort = Number((process as any).env.BACKEND_PORT || 9999)
+const isDocker = Boolean(process.env.USE_DOCKER || process.env.DOCKER)
+const backendHost = process.env.BACKEND_HOST || (isDocker ? "backend" : "localhost")
+const backendPort = Number(process.env.BACKEND_PORT || 9999)
 const backendTarget = `http://${backendHost}:${backendPort}`
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      babel: {
+        plugins: [["babel-plugin-react-compiler"]],
+      },
+    }),
+    tailwindcss(),
+  ],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
   server: {
     proxy: {
-      '/api': {
+      "/api": {
         target: backendTarget,
         changeOrigin: true,
       },
-      '/static': {
+      "/static": {
         target: backendTarget,
         changeOrigin: true,
       },

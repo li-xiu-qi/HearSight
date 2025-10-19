@@ -1,225 +1,217 @@
-import React from 'react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
-  Card,
-  Empty,
-  Tabs,
-  List,
-  Tag,
-  Button,
-  Typography,
-  Dropdown,
-  message,
-} from 'antd'
-import { MoreOutlined } from '@ant-design/icons'
-import type { MenuProps } from 'antd'
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { MoreHorizontal, FileText, Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react'
 import type { TranscriptMeta, JobItem } from '../types'
 import { extractFilename } from '../utils'
 import { deleteTranscriptComplete } from '../services/api'
-import './RightPanelComponents/styles/HistoryView.css'
-
-const { Text } = Typography
+import { message } from '../utils/message'
 
 interface LeftPanelProps {
-  transcripts: TranscriptMeta[]
-  jobs: JobItem[]
-  activeTranscriptId: number | null
-  onLoadTranscript: (id: number) => void
-  onJobsUpdate: () => void
-  onTranscriptsUpdate: () => void  // 新增：用于刷新转写记录列表
+  readonly transcripts: TranscriptMeta[]
+  readonly jobs: JobItem[]
+  readonly activeTranscriptId: number | null
+  readonly onLoadTranscript: (id: number) => void
+  readonly onTranscriptsUpdate: () => void
 }
 
-const LeftPanel: React.FC<LeftPanelProps> = ({
+function LeftPanel({
   transcripts,
   jobs,
   activeTranscriptId,
   onLoadTranscript,
-  onJobsUpdate,
   onTranscriptsUpdate,
-}) => {
+}: LeftPanelProps) {
 
-  // 删除转写记录（包含视频文件和数据库记录）
-  const handleDeleteTranscript = (transcriptId: number, filename: string) => {
-    console.log('开始删除操作:', { transcriptId, filename })
-    
-    // 直接执行删除，不使用确认对话框（临时测试）
-    console.log('直接执行删除操作（测试模式）')
-    
-    deleteTranscriptComplete(transcriptId)
-      .then(result => {
-        console.log('删除结果:', result)
-        if (result.success) {
-          message.success(result.message || '删除成功')
-          onTranscriptsUpdate() // 刷新列表
-        } else {
-          message.warning(result.message || '删除失败')
-        }
-      })
-      .catch(error => {
-        console.error('删除错误:', error)
-        message.error(error?.message || '删除失败')
-      })
+  const handleDeleteTranscript = async (transcriptId: number) => {
+    try {
+      const result = await deleteTranscriptComplete(transcriptId)
+      if (result.success) {
+        message.success(result.message || '删除成功')
+        onTranscriptsUpdate()
+      } else {
+        message.warning(result.message || '删除失败')
+      }
+    } catch (error: any) {
+      message.error(error?.message || '删除失败')
+    }
+  }
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'running':
+        return <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
+      case 'success':
+        return <CheckCircle2 className="h-3 w-3 text-green-600" />
+      case 'failed':
+        return <XCircle className="h-3 w-3 text-red-600" />
+      default:
+        return <Clock className="h-3 w-3 text-slate-400" />
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'running':
+        return 'bg-blue-100 text-blue-700'
+      case 'success':
+        return 'bg-green-100 text-green-700'
+      case 'failed':
+        return 'bg-red-100 text-red-700'
+      default:
+        return 'bg-slate-100 text-slate-600'
+    }
   }
 
   return (
-    <div className="fullscreen-left-panel-content">
-      <Card 
-        size="small" 
-        className="left-grow-card" 
-        styles={{ body: { padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0 } }}
-      >
-        <Tabs 
-          defaultActiveKey="processed" 
-          size="small" 
-          centered
-          items={[
-            {
-              key: 'processed',
-              label: '已处理',
-              forceRender: true,
-              children: (
-                <div style={{ padding: 'var(--spacing-sm)', display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
-                  {transcripts.length === 0 ? (
-                    <div className="empty-state">
-                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                      <div className="empty-title">暂无处理记录</div>
-                      <div className="empty-description">
-                        您还没有处理过任何视频。在上方输入视频URL开始分析吧！
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="hist-scroll">
-                      <List
-                        split={false}
-                        size="small"
-                        dataSource={transcripts}
-                        renderItem={(item: TranscriptMeta) => {
-                          const basename = extractFilename(item.media_path)
-                          const isActive = activeTranscriptId === item.id
-                          
-                          // 下拉菜单项
-                          const handleMenuClick = (key: string) => {
-                            console.log('菜单点击事件触发:', key, { transcriptId: item.id, basename })
-                            
-                            if (key === 'deleteTranscript') {
-                              console.log('准备执行删除操作')
-                              handleDeleteTranscript(item.id, basename)
+    <div className="h-full flex flex-col">
+      <Card className="h-full flex flex-col">
+        <CardContent className="flex-1 p-0 min-h-0">
+          <Tabs defaultValue="processed" className="h-full flex flex-col">
+            <TabsList className="w-full rounded-none border-b">
+              <TabsTrigger value="processed" className="flex-1">已处理</TabsTrigger>
+              <TabsTrigger value="tasks" className="flex-1">处理情况</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="processed" className="flex-1 m-0 p-3 overflow-hidden">
+              {transcripts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                  <FileText className="h-12 w-12 text-slate-300 mb-4" />
+                  <div className="text-base font-medium text-slate-700 mb-2">暂无处理记录</div>
+                  <div className="text-sm text-slate-500">
+                    您还没有处理过任何视频。在上方输入视频URL开始分析吧！
+                  </div>
+                </div>
+              ) : (
+                <ScrollArea className="h-full">
+                  <div className="space-y-2">
+                    {transcripts.map((item) => {
+                      const basename = extractFilename(item.media_path)
+                      const isActive = activeTranscriptId === item.id
+                      
+                      return (
+                        // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
+                        <div
+                          key={item.id}
+                          className={`
+                            w-full text-left p-3 rounded-lg border transition-all cursor-pointer
+                            ${isActive 
+                              ? 'bg-blue-50 border-blue-200 shadow-sm text-blue-900' 
+                              : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-900'
                             }
-                          }
-                          
-                          const menuItems: MenuProps['items'] = [
-                            {
-                              key: 'deleteTranscript',
-                              label: '删除记录',
-                              danger: true,
-                            },
-                          ]
-                          
-                          return (
-                            <List.Item 
-                              className={`hist-item ${isActive ? 'hist-item-active' : ''}`} 
-                              data-transcript-id={item.id}
+                          `}
+                          onClick={() => onLoadTranscript(item.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault()
+                              onLoadTranscript(item.id)
+                            }
+                          }}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div 
+                              className="flex-1 min-w-0"
                             >
-                              <div className={`hist-main ${isActive ? 'hist-main-active' : ''}`}>
-                                <div className="hist-row">
-                                  <div 
-                                    className="hist-title" 
-                                    title={basename}
-                                    style={{ cursor: 'pointer' }}
-                                    onClick={() => onLoadTranscript(item.id)}
+                              <div 
+                                className={`
+                                  text-sm font-medium line-clamp-2
+                                  ${isActive ? 'text-blue-900' : 'text-slate-900'}
+                                `}
+                                title={basename}
+                              >
+                                {basename}
+                              </div>
+                              <div className="text-xs text-slate-500 mt-1 line-clamp-1">
+                                ID {item.id} · {item.segment_count} 段 · {item.created_at}
+                              </div>
+                            </div>
+                            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
+                            <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-7 w-7 p-0"
                                   >
-                                    {basename}
-                                  </div>
-                                  <div className="hist-action-area">
-                                    <Dropdown 
-                                      menu={{ 
-                                        items: menuItems,
-                                        onClick: ({ key }) => {
-                                          console.log('Dropdown onClick 触发:', key)
-                                          handleMenuClick(key)
-                                        }
-                                      }}
-                                      trigger={['click']}
-                                      placement="bottomRight"
-                                    >
-                                      <Button 
-                                        type="text" 
-                                        size="small" 
-                                        icon={<MoreOutlined />}
-                                        onClick={(e) => {
-                                          console.log('更多按钮被点击')
-                                          e.stopPropagation()
-                                          e.preventDefault()
-                                        }}
-                                      />
-                                    </Dropdown>
-                                  </div>
-                                </div>
-                                <div className="hist-meta">
-                                  ID {item.id} · {item.segment_count} 段 · {item.created_at}
-                                </div>
-                              </div>
-                            </List.Item>
-                          )
-                        }}
-                      />
-                    </div>
-                  )}
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    className="text-red-600"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleDeleteTranscript(item.id)
+                                    }}
+                                  >
+                                    删除记录
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </ScrollArea>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="tasks" className="flex-1 m-0 p-3 overflow-hidden">
+              {jobs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                  <Clock className="h-12 w-12 text-slate-300 mb-4" />
+                  <div className="text-base font-medium text-slate-700 mb-2">暂无处理任务</div>
+                  <div className="text-sm text-slate-500">
+                    当前没有正在处理的视频。提交视频URL后，处理进度会显示在这里。
+                  </div>
                 </div>
-              )
-            },
-            {
-              key: 'tasks',
-              label: '处理情况',
-              forceRender: true,
-              children: (
-                <div style={{ padding: 'var(--spacing-sm)' }}>
-                  {jobs.length === 0 ? (
-                    <div className="empty-state">
-                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                      <div className="empty-title">暂无处理任务</div>
-                      <div className="empty-description">
-                        当前没有正在处理的视频。提交视频URL后，处理进度会显示在这里。
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="hist-scroll">
-                      <List
-                        split={false}
-                        size="small"
-                        dataSource={jobs}
-                        renderItem={(item: JobItem) => {
-                          const shortUrl = (item.url || '').replace(/^https?:\/\//, '')
-                          const color = item.status === 'running' 
-                            ? 'blue' 
-                            : (item.status === 'pending' 
-                              ? 'default' 
-                              : (item.status === 'failed' ? 'red' : 'green'))
-                          return (
-                            <List.Item className="hist-item">
-                              <div className="hist-main">
-                                <div className="hist-row">
-                                  <div className="hist-title" title={item.url}>
-                                    {shortUrl}
-                                  </div>
-                                  <div className="hist-action-area">
-                                    <Tag color={color}>{item.status}</Tag>
-                                  </div>
-                                </div>
-                                <div className="hist-meta">
-                                  # {item.id} · {item.created_at || item.started_at || ''}
-                                </div>
+              ) : (
+                <ScrollArea className="h-full">
+                  <div className="space-y-2">
+                    {jobs.map((item) => {
+                      const shortUrl = (item.url || '').replace(/^https?:\/\//, '')
+                      
+                      return (
+                        <div
+                          key={item.id}
+                          className="p-3 rounded-lg border border-slate-200 bg-white"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div 
+                                className="text-sm font-medium text-slate-900 line-clamp-2" 
+                                title={item.url}
+                              >
+                                {shortUrl}
                               </div>
-                            </List.Item>
-                          )
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              )
-            }
-          ]}
-        />
+                              <div className="text-xs text-slate-500 mt-1 line-clamp-1">
+                                # {item.id} · {item.created_at || item.started_at || ''}
+                              </div>
+                            </div>
+                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${getStatusColor(item.status)}`}>
+                              {getStatusIcon(item.status)}
+                              {item.status}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </ScrollArea>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
       </Card>
     </div>
   )
