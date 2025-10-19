@@ -5,9 +5,16 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Send, PlayCircle, Trash2, Loader2, Copy } from "lucide-react"
 import { toast } from "sonner"
 import type { Segment, ChatResponse } from "../../types"
-import { chatWithSegments } from "../../services/api"
+import { chatWithSegments, fetchThumbnail } from "../../services/api"
 import { formatTime } from "../../utils"
 import MarkdownRenderer from "../MarkdownRenderer"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 interface ChatViewProps {
   readonly segments: Segment[]
@@ -17,6 +24,7 @@ interface ChatViewProps {
   readonly onMessagesChange?: (messages: ChatMessage[]) => void
   readonly onLoadingChange?: (loading: boolean) => void
   readonly onErrorChange?: (error: string | null) => void
+  readonly transcriptId?: number
 }
 
 export interface ChatMessage {
@@ -34,11 +42,14 @@ export default function ChatView({
   onMessagesChange,
   onLoadingChange,
   onErrorChange,
+  transcriptId,
 }: Readonly<ChatViewProps>) {
   const [inputValue, setInputValue] = useState("")
   const [internalMessages, setInternalMessages] = useState<ChatMessage[]>([])
   const [internalLoading, setInternalLoading] = useState(false)
   const [internalError, setInternalError] = useState<string | null>(null)
+  const [imageModeEnabled, setImageModeEnabled] = useState(false)
+  const [frameCache, setFrameCache] = useState<Record<string, string>>({})
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const messages = externalMessages ?? internalMessages
@@ -56,6 +67,49 @@ export default function ChatView({
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // 加载所有时间戳的截图
+  useEffect(() => {
+    if (!imageModeEnabled || !transcriptId) return
+
+    const loadAllThumbnails = async () => {
+      const timeStamps: { midTime: number; startTime: number; endTime: number; cacheKey: string }[] = []
+
+      // 收集所有消息中的时间戳
+      for (const message of messages) {
+        if (message.type === 'ai') {
+          const timeMatches = message.content.matchAll(/\[(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)\]/g)
+          for (const match of timeMatches) {
+            const startTimeMs = Number.parseFloat(match[1])
+            const endTimeMs = Number.parseFloat(match[2])
+            // 使用秒作为缓存键，避免毫秒精度差异导致的重复缓存
+            const startTimeSec = Math.floor(startTimeMs / 1000)
+            const endTimeSec = Math.floor(endTimeMs / 1000)
+            const cacheKey = `${startTimeSec}-${endTimeSec}`
+            if (!frameCache[cacheKey]) {
+              // 使用中点时间来截图，避免边界问题
+              const midTime = (startTimeMs + endTimeMs) / 2
+              timeStamps.push({ midTime, startTime: startTimeMs, endTime: endTimeMs, cacheKey })
+            }
+          }
+        }
+      }
+
+      // 加载未缓存的截图
+      for (const { startTime, endTime, cacheKey } of timeStamps) {
+        try {
+          const url = await fetchThumbnail(transcriptId, startTime, endTime, 320)
+          if (url) {
+            setFrameCache(prev => ({ ...prev, [cacheKey]: url }))
+          }
+        } catch (error) {
+          console.error('Failed to fetch thumbnail:', error)
+        }
+      }
+    }
+
+    loadAllThumbnails()
+  }, [imageModeEnabled, messages, transcriptId])
 
   const handleSend = async () => {
     if (!inputValue.trim() || loading) return
@@ -109,30 +163,63 @@ export default function ChatView({
   const renderMessageContent = (content: string) => {
     const parts = content.split(/(\[\d+(?:\.\d+)?-\d+(?:\.\d+)?\])/g)
 
-    return parts.map((part) => {
+    return parts.map((part, index) => {
       const timeMatch = /\[(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)\]/.exec(part)
       if (timeMatch) {
         const startTime = Number.parseFloat(timeMatch[1])
         const endTime = Number.parseFloat(timeMatch[2])
+        // 使用秒作为缓存键，与加载逻辑保持一致
+        const startTimeSec = Math.floor(startTime / 1000)
+        const endTimeSec = Math.floor(endTime / 1000)
+        const cacheKey = `${startTimeSec}-${endTimeSec}`
+        const cachedImage = frameCache[cacheKey]
+
         return (
-          <button
-            key={`time-${startTime}-${endTime}`}
-            type="button"
-            onClick={() => {
-              globalThis.dispatchEvent(
-                new CustomEvent("seekToTime", { detail: startTime })
-              )
-            }}
-            className="inline-flex items-center gap-1 text-blue-600 hover:underline text-sm"
-            title={`时间: ${formatTime(startTime)} ~ ${formatTime(endTime)}`}
-          >
-            <PlayCircle className="h-3 w-3" />
-            跳转到对应位置
-          </button>
+          <div key={`time-${index}-${startTime}-${endTime}`} className="inline-flex flex-col gap-2 my-2">
+            {imageModeEnabled && (
+              <div className="relative">
+                {cachedImage ? (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <img
+                        src={cachedImage}
+                        alt={`视频截图 ${formatTime(startTime)}`}
+                        className="w-full max-w-xs h-24 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
+                      />
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl">
+                      <img
+                        src={cachedImage}
+                        alt={`视频截图 ${formatTime(startTime)}`}
+                        className="w-full h-auto max-h-[80vh] object-contain"
+                      />
+                    </DialogContent>
+                  </Dialog>
+                ) : (
+                  <div className="w-full max-w-xs h-24 bg-gray-200 rounded flex items-center justify-center">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </div>
+                )}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                globalThis.dispatchEvent(
+                  new CustomEvent("seekToTime", { detail: startTime / 1000 })
+                )
+              }}
+              className="inline-flex items-center gap-1 text-blue-600 hover:underline text-sm"
+              title={`时间: ${formatTime(startTime)} ~ ${formatTime(endTime)}`}
+            >
+              <PlayCircle className="h-3 w-3" />
+              跳转到对应位置
+            </button>
+          </div>
         )
       }
       return (
-        <span key={`text-${part.substring(0, 20)}`} className="inline">
+        <span key={`text-${index}`} className="inline">
           <MarkdownRenderer>{part}</MarkdownRenderer>
         </span>
       )
@@ -226,7 +313,17 @@ export default function ChatView({
       </ScrollArea>
 
       <div className="p-3 border-t space-y-2 flex-shrink-0">
-        <div className="flex justify-end">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="image-mode"
+              checked={imageModeEnabled}
+              onCheckedChange={setImageModeEnabled}
+            />
+            <Label htmlFor="image-mode" className="text-sm cursor-pointer">
+              图文展示
+            </Label>
+          </div>
           <Button
             variant="ghost"
             size="sm"

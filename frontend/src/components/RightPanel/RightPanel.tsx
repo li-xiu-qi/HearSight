@@ -24,10 +24,11 @@ interface RightPanelProps {
   readonly autoScroll: boolean
   readonly onSeekTo: (timeMs: number) => void
   readonly onActiveSegmentChange: (index: number) => void
+  readonly transcriptId?: number
 }
 
 const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
-  ({ segments, activeSegIndex, autoScroll, onSeekTo, onActiveSegmentChange }, ref) => {
+  ({ segments, activeSegIndex, autoScroll, onSeekTo, onActiveSegmentChange, transcriptId }, ref) => {
     const [activeTab, setActiveTab] = useState("segments")
     const [searchModalOpen, setSearchModalOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
@@ -171,6 +172,7 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
                 error={summariesError}
                 onGenerate={handleGenerateSummary}
                 onSeekTo={onSeekTo}
+                transcriptId={transcriptId}
               />
             </TabsContent>
 
@@ -183,6 +185,7 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
                 onMessagesChange={setChatMessages}
                 onLoadingChange={setChatLoading}
                 onErrorChange={setChatError}
+                transcriptId={transcriptId}
               />
             </TabsContent>
           </div>

@@ -14,31 +14,40 @@ HearSight 是一个智能视频内容分析与理解平台，能够自动识别�
 - 🔊 自动将音频转文字并按时间戳生成可跳转的段落，支持精确定位与播放同步
 - 📝 基于大语言模型生成段落级与视频级的摘要总结，便于快速获取要点
 - 💬 与视频内容进行智能对话交互，支持基于上下文的问答
+- 🖼️ 图文展示模式：支持添加重要的图片内容到回答里面，进行图文展示
 <!-- 效果展示 -->
 ## 🔧 效果展示
 
 视频播放页展示：
-![视频播放页展示](https://oss-liuchengtu.hudunsoft.com/userimg/cd/cd358f5d8dda396687dd1e5cf98c7ca0.png)
+![视频播放页展示](https://oss-liuchengtu.hudunsoft.com/userimg/27/27e3d807bc8e6a3abf5739eeb5effb27.png)
 
 打开一个视频：
 
-![打开一个视频](https://oss-liuchengtu.hudunsoft.com/userimg/98/9838c5b1ee4c1f7874db92db224fe0fa.png)
+![打开一个视频](https://oss-liuchengtu.hudunsoft.com/userimg/8d/8daf5b438a9de50fd4425ee1518536a9.png)
 
 打开视频后的文稿效果展示：
 
-![打开视频后的文稿效果展示](https://oss-liuchengtu.hudunsoft.com/userimg/01/018ed773d3300b14e112f3c0a9eefb2c.png)
+![打开视频后的文稿效果展示](https://oss-liuchengtu.hudunsoft.com/userimg/f5/f548ca996e1b001e371df9bca74fc60a.png)
 
 视频总结的展示：
 
-![视频总结的展示](https://oss-liuchengtu.hudunsoft.com/userimg/f3/f36290c83d0236d4bfaf2a50d179596a.png)
+![视频总结的展示](https://oss-liuchengtu.hudunsoft.com/userimg/de/defdd1d7dd03e7b34f34232895455dd9.png)
+![视频总结的放大图片展示](https://oss-liuchengtu.hudunsoft.com/userimg/0f/0f4df03f82e2250bc3c6f77d87514f8c.png)
 
 与视频之间的智能对话：
 
-![与视频之间的智能对话](https://oss-liuchengtu.hudunsoft.com/userimg/df/dfc7673263c5ff345cb801d300af4bf4.png)
+![与视频之间的智能对话](https://oss-liuchengtu.hudunsoft.com/userimg/73/73c98a266a46f1b4524772227c89f23a.png)
+
+![与视频之间的智能对话](https://oss-liuchengtu.hudunsoft.com/userimg/4b/4bd189e43bc033aa1b3e3abc14f9bac6.png)
+
+
+![图文模式对话图片放大展示](https://oss-liuchengtu.hudunsoft.com/userimg/45/45b084440a50e098229d8c827ab5f01f.png)
 
 ## 🛠 技术栈
 
 后端采用 FastAPI 框架结合 PostgreSQL 数据库，前端采用 React 18 + TypeScript + Tailwind CSS，支持 Docker 一键部署。🚀
+
+![架构图](https://oss-liuchengtu.hudunsoft.com/userimg/b5/b54f2ca20885a98aa90ec0557b8354e1.png)
 
 ## 🎯 适用场景
 
@@ -199,4 +208,4 @@ HearSight/
 
 ## 📝 许可证
 
-本项目采用 MIT 许可证，详见 LICENSE 文件。
+本项目采用  Apache-2.0 license 许可证，详见 LICENSE 文件。

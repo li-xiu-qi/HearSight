@@ -207,6 +207,7 @@ function App() {
               autoScroll={autoScroll}
               onSeekTo={handleSeekTo}
               onActiveSegmentChange={setActiveSegIndex}
+              transcriptId={activeTranscriptId ?? undefined}
             />
           </div>
         )}
