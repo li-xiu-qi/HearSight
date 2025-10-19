@@ -1,0 +1,7 @@
+/* 聊天视图滚动区域 */
+.chat-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  position: relative;
+}

@@ -1,0 +1,257 @@
+/* 分句视图样式 */
+.segments-scroll {
+  /* 填满父容器剩余空间，由父级 Card / sider-inner 控制高度 */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  box-sizing: border-box;
+  padding-right: 6px; /* 给滚动条留出内边距，避免覆盖右侧内容 */
+  padding-left: 2px;
+  scrollbar-gutter: stable both-edges;
+  contain: layout style; /* 优化渲染性能 */
+}
+
+/* 回退：如果父容器高度没有正确传递，使用视口高度计算一个合理的最大高度，保证出现滚动条 */
+.segments-scroll {
+  max-height: calc(100vh - 220px) !important;
+}
+
+/* --- Segments list item styles --- */
+.segment-item { 
+  padding: 4px 0 !important; 
+}
+
+.segment-btn { 
+  text-align: left;
+  white-space: normal;
+  padding: 8px 8px; /* 收紧左右内边距，减少左侧空白 */
+  /* 与 Card 背景保持一致，消除强烈白底造成的割裂感 */
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.03);
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px; /* 缩小图标与内容间距 */
+  width: 100%;
+  height: auto; /* 允许多行 */
+}
+.segment-btn.is-div { 
+  cursor: pointer; 
+  user-select: none; 
+}
+.segment-btn.is-div:focus { 
+  outline: none; 
+  box-shadow: 0 0 0 2px rgba(22,119,255,.2); 
+}
+.segment-icon { 
+  flex: 0 0 auto; 
+  display: inline-flex; 
+  width: 18px; 
+  justify-content: center; 
+  margin-top: 2px; 
+  color: var(--color-text-tertiary); 
+  line-height: 1; 
+}
+.segment-btn.is-div:hover .segment-icon { 
+  color: var(--color-primary); 
+}
+.segment-btn.ant-btn-sm { 
+  height: auto; 
+  padding-top: 8px; 
+  padding-bottom: 8px; 
+}
+.segment-btn > span { 
+  line-height: 1.5; 
+}
+.segment-btn .ant-btn-icon { 
+  margin-top: 2px; 
+  line-height: 1; 
+  flex: 0 0 auto; 
+}
+.segment-btn:hover {
+  border-color: rgba(0, 102, 255, 0.25);
+  background: rgba(0, 102, 255, 0.04);
+}
+.segment-btn.active {
+  border-color: rgba(0, 102, 255, 0.4);
+  box-shadow: 0 0 0 1px rgba(0, 102, 255, 0.15) inset;
+  background: rgba(0, 102, 255, 0.08);
+}
+.segment-line {
+  display: none; /* 用新的两列布局替代 */
+}
+.segment-time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.segment-spk {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-tertiary);
+  border-radius: 10px;
+  padding: 1px 6px;
+}
+.segment-text {
+  color: var(--color-text-primary);
+  line-height: 1.5;
+  font-size: 13px;
+  /* 自动换行并尽量保持自然换行 */
+  word-break: break-word;      /* 优先在单词边界换行 */
+  overflow-wrap: anywhere;     /* 过长时任何位置都可断行 */
+}
+
+/* 新的两列布局 */
+.segment-grid {
+  display: grid;
+  grid-template-columns: 96px 1fr; /* 左列定宽，右列自适应 */
+  gap: 10px;
+  width: 100%;
+}
+.segment-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 96px;
+  align-items: flex-end; /* 右对齐时间文本 */
+  padding-right: 6px; /* 与右侧正文保持小间距 */
+}
+.segment-right { 
+  min-width: 0; 
+}
+
+.segment-time-sep { 
+  margin: 0 3px; 
+  color: #bfbfbf; 
+}
+
+/* 分句卡片样式 */
+.seg-card { flex: 1 1 auto; min-width: 0; }
+.seg-head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* 时间与右侧内容在同一行左起对齐 */
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+/* 时间样式：固定列宽、等宽数字、右对齐，颜色更淡以降低视觉重量 */
+.seg-time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  min-width: 96px; /* 与整体两列设计保持一致 */
+  text-align: right;
+  font-size: 12px;
+}
+.seg-spk { font-size: 11px; color: #8c8c8c; background: #fafafa; border-radius: 10px; padding: 1px 6px; }
+.seg-body { color: #434343; line-height: 1.6; font-size: 13px; word-break: break-word; overflow-wrap: anywhere; }
+
+/* 分句内联样式 */
+.segment-inline {
+  display: block;
+}
+.segment-inline .segment-time {
+  display: inline-block;
+  margin-right: 8px;
+  white-space: nowrap;
+}
+.segment-inline .segment-text-inline {
+  display: inline;
+  white-space: normal !important; /* 强制换行 */
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+.segment-spk-row { display: block; margin-top: 4px; }
+
+/* 分句按钮样式 */
+.segment-btn .ant-btn-icon + span,
+.segment-btn > span:not(.segment-icon) {
+  /* 让按钮文字容器占满并可换行 */
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  white-space: normal !important; /* 覆盖 antd 默认 nowrap */
+  overflow: visible;
+  width: 100%;
+}
+
+.segment-btn .ant-btn-icon { margin-top: 2px; }
+
+/* 更友好的滚动条 */
+.segments-scroll::-webkit-scrollbar { 
+  width: 8px; 
+}
+.segments-scroll::-webkit-scrollbar-thumb { 
+  background: #d9d9d9; 
+  border-radius: 4px; 
+}
+.segments-scroll::-webkit-scrollbar-thumb:hover { 
+  background: #bfbfbf; 
+}
+
+/* 确保 Tabs 标题始终保持可见 */
+.fullscreen-right-panel-content .ant-tabs {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.fullscreen-right-panel-content .ant-tabs > .ant-tabs-nav {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 120;
+  margin-bottom: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  height: 46px; /* 明确设置高度 */
+}
+
+.fullscreen-right-panel-content .ant-tabs .ant-tabs-content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.fullscreen-right-panel-content .ant-tabs .ant-tabs-tabpane {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  contain: layout style; /* 优化渲染性能 */
+}
+
+/* defensive: hide any non-active tabpane to prevent overlapping content */
+.left-grow-card .ant-tabs .ant-tabs-tabpane:not(.ant-tabs-tabpane-active),
+.right-grow-card .ant-tabs .ant-tabs-tabpane:not(.ant-tabs-tabpane-active) {
+  display: none !important;
+}
+
+.right-grow-card .ant-card-body,
+.left-grow-card .ant-card-body {
+  /* ensure body is a flex column so children can stretch */
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Stronger height propagation for right column to ensure inner scroll area gets constrained height */
+.three-col__right,
+.three-col__right > .sider-inner,
+.three-col__right .right-grow-card,
+.three-col__right .right-grow-card .ant-card-body,
+.three-col__right .right-grow-card .ant-tabs,
+.three-col__right .right-grow-card .ant-tabs .ant-tabs-content,
+.three-col__right .right-grow-card .ant-tabs .ant-tabs-content .ant-tabs-tabpane {
+  height: 100%;
+  min-height: 0;
+}

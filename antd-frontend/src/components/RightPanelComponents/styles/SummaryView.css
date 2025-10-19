@@ -1,0 +1,7 @@
+/* 确保总结视图可以正常滚动 */
+.summaries-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px;
+}
