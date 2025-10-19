@@ -1,108 +1,175 @@
-## 📖 项目介绍
+# 📖 项目介绍
 
 ![HearSight logo](https://oss-liuchengtu.hudunsoft.com/userimg/33/3374fce0ebc0d82f093c6c7361b84fcc.png)
 
-HearSight 是一个基于 AI 的视频辅助阅读工具，目标是让视频内容的获取、定位与理解变得更简单。🎯
-地址：<https://github.com/li-xiu-qi/HearSight>
+HearSight 是一个智能视频内容分析与理解平台，能够自动识别视频中的语音内容，将其转换为文本，并提供智能分句、内容总结和智能问答功能，帮助用户快速理解和分析视频内容。🎯
 
-### ✨ 主要特性
+项目地址：<https://github.com/li-xiu-qi/HearSight>
+
+## ✨ 主要特性
 
 - 📹 从哔哩哔哩导入视频并自动下载与管理媒体文件
-- 🔊 自动将音频转文字并按时间戳生成可跳转的段落（支持精确定位与播放同步）
-- 🧠 基于大语言模型生成段落级与视频级的摘要/总结，便于快速获取要点
+- 🔊 自动将音频转文字并按时间戳生成可跳转的段落，支持精确定位与播放同步
+- 📝 基于大语言模型生成段落级与视频级的摘要总结，便于快速获取要点
+- 💬 与视频内容进行智能对话交互，支持基于上下文的问答
 
-### 🛠 技术栈
+## 🛠 技术栈
 
-FastAPI + PostgreSQL（后端）、React + Ant Design（前端），支持使用 Docker 一键部署。🚀
+后端采用 FastAPI 框架结合 PostgreSQL 数据库，前端采用 React 18 + TypeScript + Tailwind CSS，支持 Docker 一键部署。🚀
 
-### 🎯 适用场景
+## 🎯 适用场景
 
-学习笔记、教学资料整理、视频内容检索与快速复习~。
-
-## 📸 效果展示
-
-![](https://oss-liuchengtu.hudunsoft.com/userimg/b8/b87b5287450f1d747bfc32c72f3a7acd.png)
-![](https://oss-liuchengtu.hudunsoft.com/userimg/26/2640815c1c2a81206040f8271f37e0f2.png)
-
-![](https://oss-liuchengtu.hudunsoft.com/userimg/56/56ebfee708490e8094b045ad83e6b4a7.png)
-
-![](https://oss-liuchengtu.hudunsoft.com/userimg/8a/8a84f398c61ea93e8449a0ab0da624bc.png)
+学习笔记、教学资料整理、视频内容检索、在线课程理解与快速复习。
 
 ## 🚀 快速开始
 
-### 🔥拉取项目
+### 🔥 克隆项目
 
 ```bash
 git clone https://github.com/li-xiu-qi/HearSight
+cd HearSight
 ```
 
 ### ⚙️ 配置环境变量
 
-```bash
-# Local environment variables (do NOT commit this file)
+在项目根目录创建 `.env` 文件，配置以下参数：
 
-# Postgres - change this password for production
+```bash
+# PostgreSQL 数据库配置（生产环境请修改密码）
 POSTGRES_USER=hearsight
 POSTGRES_PASSWORD=hearsight_pass
 POSTGRES_DB=hearsight
 POSTGRES_PORT=5432
 
-# Backend / Frontend ports (optional)
+# 后端和前端端口（可选）
 BACKEND_PORT=9999
 FRONTEND_PORT=10000
 
-# OpenAI / Chat Server
-# Set OPENAI_API_KEY in your local .env or export in your shell
-OPENAI_API_KEY= # 必须要配置
+# OpenAI / 大语言模型 API 配置（必填）
+OPENAI_API_KEY=your_api_key_here
 OPENAI_BASE_URL=https://api.siliconflow.cn/v1
-OPENAI_CHAT_MODEL=deepseek-ai/DeepSeek-V3 # THUDM/GLM-4-9B-0414
+OPENAI_CHAT_MODEL=deepseek-ai/DeepSeek-V3
+
+# 会话上下文窗口大小（可选，默认 1000000）
 CHAT_MAX_WINDOWS=1000000
 
-# Bilibili
-BILIBILI_SESSDATA= # 可以不配置，也可以配置，可以去哔哩哔哩官网获取。
+# 哔哩哔哩 Cookie（可选，用于下载需要登录的视频）
+BILIBILI_SESSDATA=
 ```
 
-💡 除了必须要配置的部分，其他的可以不配置，所以只有 `OPENAI_API_KEY` 是需要配置的。默认使用硅基流动 API，但你可以换成其他厂商。硅基流动地址：<https://cloud.siliconflow.cn/i/FcjKykMn>，上面有免费的大语言模型，比如 `THUDM/GLM-4-9B-0414` 就是免费的。
+💡 **必填项**：仅需配置 `OPENAI_API_KEY`。我们默认使用硅基流动的 API，获取免费额度：<https://cloud.siliconflow.cn/i/FcjKykMn>，上面提供免费的大语言模型如 `THUDM/GLM-4-9B-0414`。
 
-### 🐳 方案一：使用 Docker（推荐，免去依赖安装问题）
+### 🐳 方案一：Docker 部署（推荐）
 
 ```bash
 docker compose up -d --build
 ```
 
-🌐 使用 Docker 启动项目后，访问 <http://localhost:10000>
+启动完成后，访问 <http://localhost:10000> 打开应用。
 
 ### 💻 方案二：本地运行
 
 #### 📦 安装后端依赖
 
-```
+```bash
 pip install -r requirements.txt
 ```
 
-🔧 安装完依赖后，需要安装 Pytorch，请访问 <https://pytorch.org/get-started/locally/> 查询对应版本并进行安装。
+安装完依赖后，需要安装 PyTorch，请访问 <https://pytorch.org/get-started/locally/> 查询对应版本。
 
-#### 🚀 启动后端
+#### 🚀 启动后端服务
 
-```
+```bash
 python main.py
 ```
 
-⚠️ 如果遇到问题，欢迎联系我。
+后端服务默认运行在 `http://localhost:9999`。
 
 #### 🎨 安装前端依赖
 
 ```bash
 cd frontend
-npm install .
+npm install
 ```
 
-#### 🌟 启动前端
+#### 🌟 启动前端开发服务器
 
-```
+```bash
 npm run dev
 ```
 
-🌐 使用手动启动方式，前端默认在 5173 端口启动，访问 <http://localhost:5173>
+前端默认在 <http://localhost:5173> 启动。
 
-后续我还会继续开发HearSight项目，也欢迎大家来提交pr改进项目，有问题可以到issue。
+## 📡 API 文档
+
+后端已集成 FastAPI 自动文档，启动后端后访问 <http://localhost:9999/docs> 查看完整 API 文档。
+
+### 核心 API 端点
+
+- `POST /api/download` - 下载视频文件
+- `POST /api/jobs` - 创建处理任务
+- `GET /api/jobs/{job_id}` - 获取任务状态
+- `POST /api/asr/segments` - 语音转文字并生成句子片段
+- `GET /api/transcripts` - 获取所有转录记录
+- `GET /api/transcripts/{transcript_id}` - 获取转录详情
+- `POST /api/summarize` - 生成内容摘要
+- `POST /api/chat` - 与内容进行智能对话
+
+## 📂 项目结构
+
+```
+HearSight/
+├── backend/                    # 后端核心代码
+│   ├── routers/               # API 路由
+│   │   ├── asr_router.py      # 语音识别相关接口
+│   │   ├── chat_router.py     # 对话与总结接口
+│   │   ├── download_router.py # 视频下载接口
+│   │   ├── job_router.py      # 任务管理接口
+│   │   └── transcript_router.py # 转录管理接口
+│   ├── services/              # 业务服务层
+│   ├── db/                    # 数据库操作
+│   ├── audio2text/            # 语音转文字模块
+│   ├── text_process/          # 文本处理（总结、对话）
+│   ├── cache/                 # 缓存管理
+│   └── utils/                 # 工具函数
+├── frontend/                  # 前端 React 应用
+│   ├── src/
+│   │   ├── components/        # React 组件
+│   │   ├── hooks/             # 自定义 React Hook
+│   │   ├── services/          # API 调用服务
+│   │   ├── types/             # TypeScript 类型定义
+│   │   ├── HomePage/          # 首页
+│   │   └── App.tsx            # 主应用界面
+│   └── vite.config.ts         # Vite 配置
+├── main.py                    # FastAPI 应用入口
+├── config.py                  # 配置管理
+├── docker-compose.yml         # Docker 编排文件
+├── Dockerfile.backend         # 后端 Docker 镜像
+└── requirements.txt           # Python 依赖
+```
+
+## 🔧 功能特性详解
+
+### 1. 视频下载与管理
+
+支持从哔哩哔哩直接下载视频，自动处理媒体文件的存储和管理。
+
+### 2. 语音识别与分句
+
+使用先进的语音识别模型将音频转换为文本，并自动分割为句子片段，每个片段都带有精确的时间戳。
+
+### 3. 内容摘要与总结
+
+基于大语言模型，自动生成视频的段落级摘要和全文总结，帮助用户快速抓住核心要点。
+
+### 4. 智能问答
+
+用户可以与视频内容进行交互式对话，提出问题并获得基于内容的精准答案。
+
+## 🤝 贡献指南
+
+我们欢迎所有贡献！如果您有改进建议或发现问题，请提交 PR 或在 Issues 中告诉我们。
+
+## 📝 许可证
+
+本项目采用 MIT 许可证，详见 LICENSE 文件。
