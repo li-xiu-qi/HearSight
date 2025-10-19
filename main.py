@@ -12,7 +12,13 @@ from config import get_config, load_config
 from backend.db.pg_store import init_db, claim_next_pending_job, finish_job_success, finish_job_failed
 from backend.utils.vedio_utils.download_video.download_bilibili import download_bilibili
 from backend.audio2text.asr_sentence_segments import process as asr_process
-from backend.routers.media import router as media_router
+from backend.routers import (
+    download_router,
+    asr_router,
+    transcript_router,
+    job_router,
+    chat_router,
+)
 
 
 
@@ -66,7 +72,11 @@ app.state.static_dir = download_video_path
 app.state.db_url = db_url
 
 # 注册路由
-app.include_router(media_router)
+app.include_router(download_router)
+app.include_router(asr_router)
+app.include_router(transcript_router)
+app.include_router(job_router)
+app.include_router(chat_router)
 
 
 # 启动后台worker：简单串行处理下载+ASR，避免阻塞请求线程
