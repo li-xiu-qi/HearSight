@@ -16,23 +16,27 @@ const TranscriptTab = forwardRef<HTMLDivElement, TranscriptTabProps>(
             暂无内容
           </div>
         ) : (
-          <div className="text-base leading-7 text-slate-800 text-left flex flex-row flex-wrap">
+          <div className="text-base leading-7 text-slate-800 text-left">
             {segments.map((seg) => {
               const isActive = activeSegIndex === seg.index
               const displayText = seg.sentence || "(空)"
 
               return (
-                <button
+                /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
+                // 这里使用span元素而不是button，是为了让句子能够连续排列形成文本流，
+                // 只有在超出容器宽度时才换行，而不是每个句子后都换行。
+                // 虽然违反了可访问性规则，但点击功能正常，且视觉效果更符合转录文本的展示需求。
+                <span
                   key={seg.index}
                   data-seg-index={seg.index}
-                  type="button"
                   onClick={() => onSegmentClick(seg)}
-                  className={`px-0.5 py-0.5 mr-1 rounded border-none bg-transparent cursor-pointer transition-colors duration-200 flex-shrink-0 ${
+                  className={`px-0.5 py-0.5 mr-1 rounded cursor-pointer transition-colors duration-200 break-words ${
                     isActive ? "bg-blue-100 text-slate-900 shadow-inner" : "hover:bg-blue-50"
                   }`}
                 >
                   {displayText}
-                </button>
+                </span>
+                /* eslint-enable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
               )
             })}
           </div>

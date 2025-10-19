@@ -8,10 +8,33 @@ HearSight 是一个智能视频内容分析与理解平台，能够自动识别�
 
 ## ✨ 主要特性
 
+![主要特性](https://oss-liuchengtu.hudunsoft.com/userimg/eb/eb8ce69e51ffee1798ab4419f391adab.png)
+
 - 📹 从哔哩哔哩导入视频并自动下载与管理媒体文件
 - 🔊 自动将音频转文字并按时间戳生成可跳转的段落，支持精确定位与播放同步
 - 📝 基于大语言模型生成段落级与视频级的摘要总结，便于快速获取要点
 - 💬 与视频内容进行智能对话交互，支持基于上下文的问答
+<!-- 效果展示 -->
+## 🔧 效果展示
+
+视频播放页展示：
+![视频播放页展示](https://oss-liuchengtu.hudunsoft.com/userimg/cd/cd358f5d8dda396687dd1e5cf98c7ca0.png)
+
+打开一个视频：
+
+![打开一个视频](https://oss-liuchengtu.hudunsoft.com/userimg/98/9838c5b1ee4c1f7874db92db224fe0fa.png)
+
+打开视频后的文稿效果展示：
+
+![打开视频后的文稿效果展示](https://oss-liuchengtu.hudunsoft.com/userimg/01/018ed773d3300b14e112f3c0a9eefb2c.png)
+
+视频总结的展示：
+
+![视频总结的展示](https://oss-liuchengtu.hudunsoft.com/userimg/f3/f36290c83d0236d4bfaf2a50d179596a.png)
+
+与视频之间的智能对话：
+
+![与视频之间的智能对话](https://oss-liuchengtu.hudunsoft.com/userimg/df/dfc7673263c5ff345cb801d300af4bf4.png)
 
 ## 🛠 技术栈
 
@@ -65,10 +88,14 @@ BILIBILI_SESSDATA=
 docker compose up -d --build
 ```
 
+> 你也可以通过仅仅使用docker运行postgres数据库，单独启动后端和前端。
+
 启动完成后，访问 <http://localhost:10000> 打开应用。
 
 ### 💻 方案二：本地运行
-
+>
+> postgres数据库必须要启动，你可以通过docker启动或者安装postgres数据库。
+>
 #### 📦 安装后端依赖
 
 ```bash
