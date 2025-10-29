@@ -10,6 +10,8 @@ import {
   Dialog,
   DialogContent,
   DialogTrigger,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import type { Summary } from "../../types"
 import { formatTime } from "../../utils"
@@ -162,6 +164,10 @@ export default function SummariesTab({
                               />
                             </DialogTrigger>
                             <DialogContent className="max-w-4xl">
+                              <DialogTitle className="sr-only">总结截图预览</DialogTitle>
+                              <DialogDescription className="sr-only">
+                                总结截图 {formatTime(sum.start_time)} 的预览
+                              </DialogDescription>
                               <img
                                 src={cachedImage}
                                 alt={`总结截图 ${formatTime(sum.start_time)}`}

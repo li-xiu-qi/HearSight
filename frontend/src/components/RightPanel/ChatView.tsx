@@ -14,6 +14,8 @@ import {
   Dialog,
   DialogContent,
   DialogTrigger,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog"
 
 interface ChatViewProps {
@@ -188,6 +190,10 @@ export default function ChatView({
                       />
                     </DialogTrigger>
                     <DialogContent className="max-w-4xl">
+                      <DialogTitle className="sr-only">视频截图预览</DialogTitle>
+                      <DialogDescription className="sr-only">
+                        视频截图 {formatTime(startTime)} 的预览
+                      </DialogDescription>
                       <img
                         src={cachedImage}
                         alt={`视频截图 ${formatTime(startTime)}`}

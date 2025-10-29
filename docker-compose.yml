@@ -56,7 +56,7 @@ services:
 
 
   postgres:
-    image: docker.xuanyuan.run/postgres:17
+    image: postgres:17
     container_name: hearsight-postgres
     restart: unless-stopped
     ports:

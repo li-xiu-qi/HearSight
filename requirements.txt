@@ -12,3 +12,6 @@ uvicorn
 PyYAML
 psycopg2-binary
 python-dotenv
+# 备用视频截图方案
+opencv-python 
+pillow

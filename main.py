@@ -18,6 +18,7 @@ from backend.routers import (
     transcript_router,
     job_router,
     chat_router,
+    thumbnail_router,
 )
 
 
@@ -77,6 +78,7 @@ app.include_router(asr_router)
 app.include_router(transcript_router)
 app.include_router(job_router)
 app.include_router(chat_router)
+app.include_router(thumbnail_router)
 
 
 # 启动后台worker：简单串行处理下载+ASR，避免阻塞请求线程

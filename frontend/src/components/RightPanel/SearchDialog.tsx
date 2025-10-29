@@ -3,6 +3,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,6 +35,7 @@ export default function SearchDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>搜索字幕</DialogTitle>
+          <DialogDescription>在字幕中搜索关键词并跳转到对应位置</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div className="flex gap-2">

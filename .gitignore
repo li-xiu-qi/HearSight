@@ -100,3 +100,4 @@ tests/results
 tests/datas
 
 docs/architecture
+docker-compose-xuanyuan.yml

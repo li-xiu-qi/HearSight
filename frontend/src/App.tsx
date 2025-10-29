@@ -20,6 +20,7 @@ function App() {
   
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const segScrollRef = useRef<HTMLDivElement | null>(null)
+  const seekHandlerRef = useRef<((event: Event) => void) | null>(null)
 
   const {
     url,
@@ -58,18 +59,24 @@ function App() {
   }
 
   useEffect(() => {
-    const handleSeekToTime = (event: Event) => {
+    seekHandlerRef.current = (event: Event) => {
       const timeMs = (event as CustomEvent).detail
       if (typeof timeMs === "number") {
         handleSeekTo(timeMs)
       }
     }
+  }, [])
 
-    globalThis.addEventListener("seekToTime", handleSeekToTime)
-    return () => {
-      globalThis.removeEventListener("seekToTime", handleSeekToTime)
+  useEffect(() => {
+    const handler = (event: Event) => {
+      seekHandlerRef.current?.(event)
     }
-  }, [videoRef])
+
+    globalThis.addEventListener("seekToTime", handler)
+    return () => {
+      globalThis.removeEventListener("seekToTime", handler)
+    }
+  }, [])
 
   useEffect(() => {
     const pending = getPendingUrl()
