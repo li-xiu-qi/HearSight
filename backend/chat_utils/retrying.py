@@ -4,12 +4,8 @@ from __future__ import annotations
 import logging
 
 import requests
-from tenacity import (
-    before_log,
-    retry_if_exception,
-    stop_after_attempt,
-    wait_exponential,
-)
+from tenacity import (before_log, retry_if_exception, stop_after_attempt,
+                      wait_exponential)
 
 logger = logging.getLogger(__name__)
 

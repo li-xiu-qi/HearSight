@@ -10,16 +10,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from backend.routers import (
-    asr_router,
-    chat_router,
-    download_router,
-    job_router,
-    progress_router,
-    thumbnail_router,
-    transcript_router,
-    upload_router,
-)
+from backend.routers import (asr_router, chat_router, download_router,
+                             job_router, progress_router, thumbnail_router,
+                             transcript_router, upload_router)
 
 
 def create_app(static_dir: Path, db_url: str | None) -> FastAPI:

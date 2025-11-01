@@ -11,9 +11,8 @@ from typing import Any, Dict, List
 
 from backend.db.pg_store import update_job_result
 from backend.routers.progress_router import set_download_progress
-from backend.utils.vedio_utils.download_video.download_bilibili_with_progress import (
-    download_bilibili_with_progress,
-)
+from backend.utils.vedio_utils.download_video.download_bilibili_with_progress import \
+    download_bilibili_with_progress
 
 logger = logging.getLogger(__name__)
 
