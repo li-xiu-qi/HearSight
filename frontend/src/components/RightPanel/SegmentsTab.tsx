@@ -8,11 +8,22 @@ interface SegmentsTabProps {
   readonly segments: Segment[]
   readonly activeSegIndex: number | null
   readonly onSegmentClick: (segment: Segment) => void
+  readonly displayLanguage?: string
 }
 
 const SegmentsTab = forwardRef<HTMLDivElement, SegmentsTabProps>(
-  ({ segments, activeSegIndex, onSegmentClick }, ref) => {
-    return (
+  ({ segments, activeSegIndex, onSegmentClick, displayLanguage = 'original' }, ref) => {
+  const getDisplayText = (segment: Segment) => {
+    if (displayLanguage === 'original') {
+      return segment.sentence || "(空)"
+    }
+    if (segment.translation?.[displayLanguage]) {
+      return segment.translation[displayLanguage]
+    }
+    return segment.sentence || "(空)"
+  }
+
+  return (
       <ScrollArea ref={ref} className="h-full">
         {segments.length === 0 ? (
           <div className="flex items-center justify-center h-40 text-sm text-slate-500">
@@ -47,7 +58,7 @@ const SegmentsTab = forwardRef<HTMLDivElement, SegmentsTabProps>(
                           </span>
                         )}
                       </div>
-                      <div className="text-sm text-slate-900">{seg.sentence || "(空)"}</div>
+                      <div className="text-sm text-slate-900">{getDisplayText(seg)}</div>
                     </div>
                   </div>
                 </button>

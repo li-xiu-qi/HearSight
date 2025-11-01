@@ -1,9 +1,34 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Union, Literal, TypedDict, cast
+from typing import Any, Dict, List, Optional, Union, Literal, TypedDict, cast, Callable
 
 import requests
 import json
+import logging
+import asyncio
+import aiohttp
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception, before_log
+
+
+logger = logging.getLogger(__name__)
+
+
+def on_retry_error(retry_state):
+    """重试错误回调：记录详细的错误信息"""
+    exception = retry_state.outcome.exception()
+    logger.warning(f"重试 {retry_state.fn.__name__}，原因：{type(exception).__name__}: {exception}，尝试次数：{retry_state.attempt_number}")
+
+
+def should_retry(exception):
+    """判断是否需要重试的异常条件"""
+    if isinstance(exception, (requests.exceptions.ReadTimeout, requests.exceptions.ConnectionError)):
+        return True
+    if isinstance(exception, requests.HTTPError):
+        # 仅对硅基流动 API 的 429 错误进行重试，其他 API 不重试
+        if exception.response.status_code == 429 and 'siliconflow' in exception.response.url:
+            return True
+        return False
+    return False
 
 
 # === 类型声明（OpenAI 兼容）===
@@ -48,11 +73,20 @@ def _endpoint(base_url: str) -> str:
     return f"{base_url.rstrip('/')}/chat/completions"
 
 
+@retry(
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=4, max=60),
+    retry=retry_if_exception(should_retry),
+    before=before_log(logger, logging.INFO),
+    retry_error_callback=on_retry_error
+)
 def chat(
     messages: List[ChatMessage],
     api_key: str,
     base_url: str,
     model: str,
+    max_tokens: int = 4096,
+    timeout: int = 60,
     **kwargs: Any,
 ) -> str:
     """
@@ -60,6 +94,8 @@ def chat(
 
     messages: 例如 [{"role": "user", "content": "你好"}]
     model: 指定模型名
+    max_tokens: 最大输出token数（默认4096）
+    timeout: 请求超时时间（秒，默认60）
     kwargs: 透传给接口，例如 temperature, top_p 等
 
     返回第一条 choice 的 message.content
@@ -72,11 +108,12 @@ def chat(
     payload: Dict[str, Any] = {
         "model": model,
         "messages": messages,
+        "max_tokens": max_tokens,
     }
     if kwargs:
         payload.update(kwargs)
 
-    r = requests.post(url, json=payload, headers=headers, timeout=60)
+    r = requests.post(url, json=payload, headers=headers, timeout=timeout)
     # 提供更清晰的错误信息（包含响应体），便于诊断 401/模型未授权等问题
     if not r.ok:
         raise requests.HTTPError(f"{r.status_code} {r.reason}: {r.text}")
@@ -86,6 +123,13 @@ def chat(
     return (data.get("choices") or [{}])[0].get("message", {}).get("content", "")
 
 
+@retry(
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=4, max=60),
+    retry=retry_if_exception(should_retry),
+    before=before_log(logger, logging.INFO),
+    retry_error_callback=on_retry_error
+)
 def chat_with_tools(
     messages: List[Message],
     tools: List[ToolSpec],
@@ -93,6 +137,7 @@ def chat_with_tools(
     base_url: str,
     model: str,
     tool_choice: Optional[Union[Literal["auto", "none"], Dict[str, Any]]] = "auto",
+    timeout: int = 60,
     **kwargs: Any,
 ) -> AssistantMessage:
     """
@@ -102,6 +147,7 @@ def chat_with_tools(
     - tools: OpenAI 工具列表（schema 见官方定义）
     - tool_choice: 可选，"auto"/"none"/具体工具对象
     - model: 指定模型名
+    - timeout: 请求超时时间（秒，默认60）
     - kwargs: 透传 temperature, top_p 等参数
 
     返回第一条 choice 的 message（可能包含 tool_calls）。
@@ -122,7 +168,7 @@ def chat_with_tools(
     if kwargs:
         payload.update(kwargs)
 
-    r = requests.post(url, json=payload, headers=headers, timeout=60)
+    r = requests.post(url, json=payload, headers=headers, timeout=timeout)
     if not r.ok:
         raise requests.HTTPError(f"{r.status_code} {r.reason}: {r.text}")
     # r.raise_for_status()
@@ -138,6 +184,7 @@ def chat_with_tools_stream(
     base_url: str,
     model: str,
     tool_choice: Optional[Union[Literal["auto", "none"], Dict[str, Any]]] = "auto",
+    timeout: int = 300,
     **kwargs: Any,
 ):
     """OpenAI 兼容流式接口。逐行解析 SSE（data: ...）。
@@ -167,7 +214,7 @@ def chat_with_tools_stream(
         payload.update(kwargs)
 
     try:
-        with requests.post(url, json=payload, headers=headers, stream=True, timeout=300) as r:
+        with requests.post(url, json=payload, headers=headers, stream=True, timeout=timeout) as r:
             # 若鉴权失败或其他非 2xx，直接返回一条错误事件，包含响应体，便于定位（避免仅有 401 文案）
             if not r.ok:
                 yield {"type": "error", "message": f"{r.status_code} {r.reason}: {r.text}"}
@@ -241,21 +288,119 @@ def chat_text(
     base_url: str,
     model: str,
     system: Optional[str] = None,
+    max_tokens: int = 4096,
+    timeout: int = 60,
     **kwargs: Any,
 ) -> str:
     """
     简洁文本接口：给定 prompt（和可选 system），返回文本回复。
+    
+    参数:
+    - prompt: 用户输入
+    - api_key: API密钥
+    - base_url: API基础URL
+    - model: 模型名
+    - system: 系统提示词
+    - max_tokens: 最大输出token数（默认4096）
+    - timeout: 请求超时时间（秒，默认60）
+    - kwargs: 其他参数
     """
     msgs: List[ChatMessage] = []
     if system:
         msgs.append({"role": "system", "content": system})
     msgs.append({"role": "user", "content": prompt})
-    return chat(msgs, api_key=api_key, base_url=base_url, model=model, **kwargs)
+    return chat(msgs, api_key=api_key, base_url=base_url, model=model, max_tokens=max_tokens, timeout=timeout, **kwargs)
+
+
+async def chat_text_async(
+    prompt: str,
+    api_key: str,
+    base_url: str,
+    model: str,
+    system: Optional[str] = None,
+    max_tokens: int = 4096,
+    timeout: int = 60,
+    stream: bool = True,
+    **kwargs: Any,
+) -> str:
+    """
+    异步简洁文本接口：给定 prompt（和可选 system），返回文本回复。
+    
+    参数:
+    - prompt: 用户输入
+    - api_key: API密钥
+    - base_url: API基础URL
+    - model: 模型名
+    - system: 系统提示词
+    - max_tokens: 最大输出token数（默认4096）
+    - timeout: 请求超时时间（秒，默认60）
+    - stream: 是否使用流式接收（默认True，更抗超时）
+    - kwargs: 其他参数
+    """
+    msgs: List[ChatMessage] = []
+    if system:
+        msgs.append({"role": "system", "content": system})
+    msgs.append({"role": "user", "content": prompt})
+    
+    url = _endpoint(base_url)
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    payload: Dict[str, Any] = {
+        "model": model,
+        "messages": msgs,
+        "max_tokens": max_tokens,
+        "stream": stream,
+    }
+    if kwargs:
+        payload.update(kwargs)
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url, 
+                json=payload, 
+                headers=headers, 
+                timeout=aiohttp.ClientTimeout(total=timeout)
+            ) as response:
+                if not response.ok:
+                    text = await response.text()
+                    raise Exception(f"{response.status} {response.reason}: {text}")
+                
+                if stream:
+                    # 流式接收：逐行读取并拼接内容
+                    content = ""
+                    async for line in response.content:
+                        line = line.decode('utf-8').strip()
+                        if not line or line.startswith('[DONE]'):
+                            continue
+                        if line.startswith('data: '):
+                            line = line[6:]
+                        try:
+                            chunk = json.loads(line)
+                            choice = (chunk.get("choices") or [{}])[0]
+                            delta = choice.get("delta", {})
+                            if "content" in delta:
+                                content += delta["content"]
+                        except (json.JSONDecodeError, IndexError, KeyError):
+                            pass
+                    return content
+                else:
+                    # 非流式：一次性读取
+                    data = await response.json()
+                    return (data.get("choices") or [{}])[0].get("message", {}).get("content", "")
+    except asyncio.TimeoutError:
+        raise Exception(f"异步请求超时：{timeout}秒")
+    except Exception as e:
+        logger.error(f"异步聊天请求失败：{e}")
+        raise
 
 
 __all__ = [
     "chat",
     "chat_text",
+    "chat_text_async",
     "chat_with_tools",
     "chat_with_tools_stream",
 ]

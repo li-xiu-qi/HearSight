@@ -1,0 +1,19 @@
+{
+    "name": "backend-tests",
+    "version": "1.0.0",
+    "type": "module",
+    "scripts": {
+        "test": "vitest",
+        "test:ui": "vitest --ui",
+        "test:coverage": "vitest --coverage",
+        "lint": "eslint *.js",
+        "lint:fix": "eslint --fix *.js"
+    },
+    "devDependencies": {
+        "@vitest/ui": "^1.0.0",
+        "@eslint/js": "^9.36.0",
+        "eslint": "^9.36.0",
+        "globals": "^16.4.0",
+        "vitest": "^1.0.0"
+    }
+}

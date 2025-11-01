@@ -111,7 +111,7 @@ export default function ChatView({
     }
 
     loadAllThumbnails()
-  }, [imageModeEnabled, messages, transcriptId])
+  }, [imageModeEnabled, messages, transcriptId, frameCache])
 
   const handleSend = async () => {
     if (!inputValue.trim() || loading) return

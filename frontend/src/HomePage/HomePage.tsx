@@ -5,18 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Search, PlayCircle, FileText, BarChart, MessageSquare } from "lucide-react"
-
-let pendingUrl: string | null = null
-
-export const setPendingUrl = (url: string | null) => {
-  pendingUrl = url
-}
-
-export const getPendingUrl = () => {
-  const url = pendingUrl
-  pendingUrl = null
-  return url
-}
+import { setPendingUrl } from "@/utils/pendingUrl"
 
 function HomePage() {
   const [url, setUrl] = useState("")
@@ -53,14 +42,15 @@ function HomePage() {
           <h1 className="text-5xl font-bold mb-4">HearSight</h1>
           <h3 className="text-2xl font-medium mb-6 text-primary-foreground/90">智能视频内容分析与理解平台</h3>
           <p className="text-lg max-w-3xl mx-auto mb-8 text-primary-foreground/85 leading-relaxed">
-            HearSight 是一个强大的视频内容分析工具，能够自动识别视频中的语音内容，
-            将其转换为文本，并提供智能分句、内容总结和智能问答功能，帮助您快速理解和分析视频内容。
+            HearSight 是一个强大的视频和音频内容分析工具，支持在线视频链接和本地文件上传，
+            能够自动识别其中的语音内容，将其转换为文本，并提供智能分句、内容总结和智能问答功能，
+            帮助您快速理解和分析媒体内容。
           </p>
           
           <form onSubmit={handleUrlSubmit} className="max-w-2xl mx-auto mb-8 flex gap-3 flex-wrap justify-center">
             <Input
               type="text"
-              placeholder="请输入 bilibili.com 视频链接"
+              placeholder="请输入 bilibili.com 视频链接或上传本地文件"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               className="flex-1 min-w-[300px] h-12 bg-background text-foreground"
@@ -177,10 +167,10 @@ function HomePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>HearSight支持哪些视频平台？</CardTitle>
+                  <CardTitle>HearSight支持哪些视频平台和文件格式？</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">目前HearSight主要支持Bilibili平台的视频分析，我们正在努力扩展对更多平台的支持。</p>
+                  <p className="text-muted-foreground">支持Bilibili平台的视频链接分析，同时支持本地上传视频文件(MP4、AVI、MOV、MKV等)和音频文件(MP3、WAV、M4A、AAC等)。</p>
                 </CardContent>
               </Card>
 

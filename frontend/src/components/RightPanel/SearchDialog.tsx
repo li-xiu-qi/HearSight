@@ -19,6 +19,7 @@ interface SearchDialogProps {
   readonly onSubmit: () => void
   readonly results: Segment[]
   readonly onSelect: (segment: Segment) => void
+  readonly displayLanguage?: string
 }
 
 export default function SearchDialog({
@@ -29,6 +30,7 @@ export default function SearchDialog({
   onSubmit,
   results,
   onSelect,
+  displayLanguage = 'original',
 }: Readonly<SearchDialogProps>) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -56,20 +58,31 @@ export default function SearchDialog({
               </div>
             ) : (
               <div className="space-y-2">
-                {results.map((seg) => (
-                  <button
-                    key={seg.index}
-                    type="button"
-                    aria-label={`跳转到 ${formatTime(seg.start_time)}`}
-                    onClick={() => onSelect(seg)}
-                    className="w-full text-left p-2 hover:bg-slate-50 cursor-pointer rounded text-sm"
-                  >
-                    <div className="text-xs text-slate-500 mb-1">
-                      {formatTime(seg.start_time)}
-                    </div>
-                    <div>{seg.sentence}</div>
-                  </button>
-                ))}
+                {results.map((seg) => {
+                  let displayContent = seg.sentence || ''
+
+                  if (displayLanguage !== 'original') {
+                    // 检查translation字段（对象格式）
+                    if (seg.translation && typeof seg.translation === 'object' && seg.translation[displayLanguage]) {
+                      displayContent = seg.translation[displayLanguage] || seg.sentence || ''
+                    }
+                  }
+
+                  return (
+                    <button
+                      key={seg.index}
+                      type="button"
+                      aria-label={`跳转到 ${formatTime(seg.start_time)}`}
+                      onClick={() => onSelect(seg)}
+                      className="w-full text-left p-2 hover:bg-slate-50 cursor-pointer rounded text-sm"
+                    >
+                      <div className="text-xs text-slate-500 mb-1">
+                        {formatTime(seg.start_time)}
+                      </div>
+                      <div>{displayContent}</div>
+                    </button>
+                  )
+                })}
               </div>
             )}
           </ScrollArea>

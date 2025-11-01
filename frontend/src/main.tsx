@@ -7,6 +7,10 @@ import Routes from "./routes.tsx"
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Routes />
-    <Toaster position="top-center" richColors />
+    <Toaster
+      position="top-center"
+      richColors
+      toastOptions={{ closeButton: true }}
+    />
   </StrictMode>,
 )

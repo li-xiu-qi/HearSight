@@ -33,27 +33,28 @@ export const fetchTranscripts = async (limit = 50, offset = 0): Promise<Transcri
 }
 
 export const fetchJobs = async (): Promise<JobsResponse> => {
-  const [pendingResponse, runningResponse] = await Promise.all([
-    fetch('/api/jobs?status=pending&limit=50&offset=0'),
-    fetch('/api/jobs?status=running&limit=50&offset=0'),
+  const results = await Promise.allSettled([
+    fetch('/api/jobs?status=downloading&limit=50&offset=0'),
+    fetch('/api/jobs?status=processing&limit=50&offset=0'),
   ])
   
-  if (!pendingResponse.ok) {
-    throw new Error(`获取待处理任务失败：${pendingResponse.status}`)
-  }
-  if (!runningResponse.ok) {
-    throw new Error(`获取进行中任务失败：${runningResponse.status}`)
+  const items = []
+  
+  // 处理downloading任务
+  if (results[0].status === 'fulfilled' && results[0].value.ok) {
+    const data = await results[0].value.json()
+    if (Array.isArray(data.items)) {
+      items.push(...data.items)
+    }
   }
   
-  const [pendingJobs, runningJobs] = await Promise.all([
-    pendingResponse.json(),
-    runningResponse.json()
-  ])
-  
-  const items = [
-    ...(Array.isArray(pendingJobs.items) ? pendingJobs.items : []),
-    ...(Array.isArray(runningJobs.items) ? runningJobs.items : []),
-  ]
+  // 处理processing任务
+  if (results[1].status === 'fulfilled' && results[1].value.ok) {
+    const data = await results[1].value.json()
+    if (Array.isArray(data.items)) {
+      items.push(...data.items)
+    }
+  }
   
   const map = new Map()
   for (const item of items) {
@@ -82,7 +83,7 @@ export const generateSummary = async (segments: Segment[]): Promise<SummarizeRes
   })
   
   if (!response.ok) {
-    throw new Error(`summarize failed: ${response.status}`)
+    throw new Error(`总结失败：${response.status}`)
   }
   
   return response.json()
@@ -97,7 +98,6 @@ export const deleteTranscriptComplete = async (transcriptId: number): Promise<{ 
   })
   
   if (!response.ok) {
-    const errorText = await response.text()
     throw new Error(`删除失败：${response.status} - ${response.statusText}`)
   }
   
@@ -112,10 +112,138 @@ export const chatWithSegments = async (segments: Segment[], question: string): P
   })
   
   if (!response.ok) {
-    throw new Error(`chat failed: ${response.status}`)
+    throw new Error(`聊天失败：${response.status}`)
   }
   
   return response.json()
+}
+export interface TranslateResponse {
+  status: string
+  updated_segments: Segment[]
+  new_transcript_id: number
+  message: string
+}
+
+export interface TranslateProgressEvent {
+  type: 'progress' | 'complete' | 'error'
+  translated_count?: number
+  total_count?: number
+  progress?: number
+  status?: string
+  is_complete?: boolean
+  message?: string
+}
+
+export const translateTranscript = async (
+  transcriptId: number,
+  targetLanguage: string = 'zh',
+  maxTokens: number = 4096,
+  forceRetranslate: boolean = false
+): Promise<TranslateResponse> => {
+  const response = await fetch(`/api/transcripts/${transcriptId}/translate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      target_language: targetLanguage,
+      confirmed: true,
+      max_tokens: maxTokens,
+      force_retranslate: forceRetranslate
+    })
+  })
+  
+  if (!response.ok) {
+    throw new Error(`翻译失败：${response.status}`)
+  }
+  
+  return response.json()
+}
+
+export const startTranslate = async (
+  transcriptId: number,
+  targetLanguage: string = 'zh',
+  maxTokens: number = 4096,
+  forceRetranslate: boolean = false
+): Promise<{ status: string; transcript_id: number; total_count: number }> => {
+  const response = await fetch(`/api/transcripts/${transcriptId}/translate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      target_language: targetLanguage,
+      confirmed: true,
+      max_tokens: maxTokens,
+      force_retranslate: forceRetranslate
+    })
+  })
+  
+  if (!response.ok) {
+    throw new Error(`翻译失败：${response.status}`)
+  }
+  
+  return response.json()
+}
+
+export const getTranslateProgress = async (
+  transcriptId: number
+): Promise<{
+  status: string
+  progress: number
+  translated_count: number
+  total_count: number
+  message: string
+}> => {
+  const response = await fetch(`/api/transcripts/${transcriptId}/translate-progress`)
+  
+  if (!response.ok) {
+    throw new Error(`获取进度失败：${response.status}`)
+  }
+  
+  return response.json()
+}
+
+export const translateTranscriptStream = async (
+  transcriptId: number,
+  targetLanguage: string = 'zh',
+  maxTokens: number = 4096,
+  onProgress: (event: TranslateProgressEvent) => void,
+  forceRetranslate: boolean = false
+): Promise<void> => {
+  // 启动翻译任务
+  await startTranslate(transcriptId, targetLanguage, maxTokens, forceRetranslate)
+  
+  // 轮询获取进度（每 5 秒查询一次）
+  const pollInterval = setInterval(async () => {
+    try {
+      const progress = await getTranslateProgress(transcriptId)
+      
+      if (progress.status === 'translating') {
+        onProgress({
+          type: 'progress',
+          progress: progress.progress,
+          translated_count: progress.translated_count,
+          total_count: progress.total_count
+        })
+      } else if (progress.status === 'completed') {
+        onProgress({
+          type: 'complete',
+          status: 'completed',
+          translated_count: progress.translated_count,
+          total_count: progress.total_count,
+          is_complete: true,
+          message: progress.message
+        })
+        clearInterval(pollInterval)
+      } else if (progress.status === 'error') {
+        onProgress({
+          type: 'error',
+          message: progress.message
+        })
+        clearInterval(pollInterval)
+      }
+    } catch (err) {
+      console.error('轮询进度时出错:', err)
+      clearInterval(pollInterval)
+    }
+  }, 5000) // 每 5 秒查询一次进度
 }
 
 export const fetchThumbnail = async (
@@ -138,4 +266,51 @@ export const fetchThumbnail = async (
   }
   
   return result.data
+}
+
+export const getDownloadProgress = async (jobId: number) => {
+  const response = await fetch(`/api/progress/download/${jobId}`)
+  
+  if (!response.ok) {
+    throw new Error(`获取下载进度失败：${response.status}`)
+  }
+  
+  return response.json()
+}
+
+export const getTaskProgress = async (jobId: number) => {
+  const response = await fetch(`/api/progress/task/${jobId}`)
+  
+  if (!response.ok) {
+    throw new Error(`获取任务进度失败：${response.status}`)
+  }
+  
+  return response.json()
+}
+
+export const startDownload = async (
+  url: string,
+  jobId: number,
+  sessdata?: string,
+  playlist?: boolean,
+  quality?: string
+) => {
+  const response = await fetch('/api/download', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      url,
+      job_id: jobId,
+      sessdata: sessdata || '',
+      playlist: playlist || false,
+      quality: quality || 'best',
+      workers: 1,
+    })
+  })
+  
+  if (!response.ok) {
+    throw new Error(`启动下载失败：${response.status}`)
+  }
+  
+  return response.json()
 }

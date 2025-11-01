@@ -6,14 +6,15 @@
 """
 from __future__ import annotations
 
-from typing import TypedDict
+from typing import TypedDict, Optional, Dict
 
 
-class Segment(TypedDict):
+class Segment(TypedDict, total=False):
     index: int
     sentence: str
     start_time: float
     end_time: float
+    translation: Optional[Dict[str, str]]
 
 
 class SummaryItem(TypedDict):

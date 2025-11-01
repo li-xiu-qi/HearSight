@@ -14,7 +14,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 try:
-    from backend.utils.vedio_utils.download_video.download_with_progress import (
+    from backend.utils.vedio_utils.download_video.download_bilibili_with_progress import (
         download_bilibili_with_progress,
         ProgressInfo,
     )

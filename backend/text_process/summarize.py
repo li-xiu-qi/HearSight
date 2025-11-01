@@ -22,6 +22,49 @@ def _count_tokens_for_segments(segments: List[Segment], encoding_name: str = "cl
     return len(enc.encode(text))
 
 
+def _split_segments_by_output_tokens(
+    segments: List[Segment],
+    max_tokens: int = 4096,
+    encoding_name: str = "cl100k_base"
+) -> List[List[Segment]]:
+    """
+    根据预估的总结输出token数，将分句分批。
+    
+    参数:
+    - segments: 要分批的分句列表
+    - max_tokens: 每批最大输出token数（默认4096）
+    - encoding_name: 编码方式
+    
+    返回: 分批后的分句列表
+    """
+    if not segments:
+        return []
+    
+    enc = tiktoken.get_encoding(encoding_name)
+    batches = []
+    current_batch = []
+    current_output_tokens = 0
+    
+    for seg in segments:
+        sentence = seg.get("sentence", "")
+        # 估算总结输出的token数（原文的0.8倍作为总结大小）
+        estimated_tokens = int(len(enc.encode(sentence)) * 0.8) + 50
+        
+        if current_output_tokens + estimated_tokens > max_tokens and current_batch:
+            # 当前批次满了，开始新批次
+            batches.append(current_batch)
+            current_batch = [seg]
+            current_output_tokens = estimated_tokens
+        else:
+            current_batch.append(seg)
+            current_output_tokens += estimated_tokens
+    
+    if current_batch:
+        batches.append(current_batch)
+    
+    return batches
+
+
 def _build_prompt(segments: List[Segment]) -> str:
 
     header = """
@@ -108,13 +151,15 @@ def summarize_segments(
     base_url: str,
     model: str,
     chat_max_windows: int = 1_000_000,
+    max_tokens: int = 4096,
 ) -> List[SummaryItem]:
-    """一次性生成多个主题的总结。
+    """生成多个主题的总结，支持分批处理长内容。
 
     参数：
     - segments：句级片段
     - api_key/base_url/model：复用 chat_client 统一配置
     - chat_max_windows：用于限制输入的近似 token 上限（项目内称为 CHAT_MAX_WINDOWS）
+    - max_tokens：每批总结的最大输出token数（默认4096）
 
     返回：list[SummaryItem]
     - 生成多个主题的总结，每个总结有独立的时间范围
@@ -124,8 +169,22 @@ def summarize_segments(
 
     tokens = _count_tokens_for_segments(segments)
     if tokens > chat_max_windows:
-        # 超限直接抛出，由上层决定是否改用分段 Summarization
-        raise ValueError(f"input tokens {tokens} exceed chat_max_windows {chat_max_windows}")
+        # 超限时进行分批处理
+        batches = _split_segments_by_output_tokens(segments, max_tokens)
+        all_summaries: List[SummaryItem] = []
+        
+        for batch in batches:
+            batch_summaries = summarize_segments(
+                batch,
+                api_key=api_key,
+                base_url=base_url,
+                model=model,
+                chat_max_windows=chat_max_windows,
+                max_tokens=max_tokens,
+            )
+            all_summaries.extend(batch_summaries)
+        
+        return all_summaries
 
     prompt = _build_prompt(segments)
 
@@ -134,6 +193,7 @@ def summarize_segments(
         api_key=api_key,
         base_url=base_url,
         model=model,
+        max_tokens=max_tokens,
     ).strip()
 
     # 初始化返回值
