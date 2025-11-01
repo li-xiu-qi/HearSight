@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 def create_audio_placeholder(output_path: Path, duration: float = 0) -> None:
     """为音频文件创建占位符图片"""
     width, height = 1280, 720
-    img = Image.new('RGB', (width, height), color=(45, 55, 72))
+    img = Image.new("RGB", (width, height), color=(45, 55, 72))
     draw = ImageDraw.Draw(img)
 
     try:

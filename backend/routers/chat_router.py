@@ -6,8 +6,8 @@ from typing import Any, Dict
 
 from fastapi import APIRouter, HTTPException, Request
 
-from backend.text_process.summarize import summarize_segments
 from backend.text_process.chat_with_segment import chat_with_segments
+from backend.text_process.summarize import summarize_segments
 from config import settings
 
 router = APIRouter(prefix="/api", tags=["chat"])
@@ -28,15 +28,32 @@ def api_summarize(payload: Dict[str, Any], request: Request) -> Dict[str, Any]:
         raise HTTPException(status_code=400, detail="segments (list) is required")
 
     # 优先使用请求体中的配置；其次使用配置或环境变量
-    api_key = payload.get("api_key") or settings.openai_api_key or os.environ.get("OPENAI_API_KEY")
-    base_url = payload.get("base_url") or settings.openai_base_url or os.environ.get("OPENAI_BASE_URL")
-    model = payload.get("model") or settings.openai_chat_model or os.environ.get("OPENAI_CHAT_MODEL")
+    api_key = (
+        payload.get("api_key")
+        or settings.openai_api_key
+        or os.environ.get("OPENAI_API_KEY")
+    )
+    base_url = (
+        payload.get("base_url")
+        or settings.openai_base_url
+        or os.environ.get("OPENAI_BASE_URL")
+    )
+    model = (
+        payload.get("model")
+        or settings.openai_chat_model
+        or os.environ.get("OPENAI_CHAT_MODEL")
+    )
 
     if not api_key or not base_url or not model:
-        raise HTTPException(status_code=400, detail="chat api_key, base_url and model are required (either in payload or config/env)")
+        raise HTTPException(
+            status_code=400,
+            detail="chat api_key, base_url and model are required (either in payload or config/env)",
+        )
 
     # 从配置或环境读取 CHAT_MAX_WINDOWS（优先级：config -> 环境变量 -> 默认 1000000）
-    chat_max = settings.chat_max_windows or int(os.environ.get("CHAT_MAX_WINDOWS") or 1000000)
+    chat_max = settings.chat_max_windows or int(
+        os.environ.get("CHAT_MAX_WINDOWS") or 1000000
+    )
 
     try:
         summaries = summarize_segments(
@@ -79,15 +96,32 @@ def api_chat_with_segments(payload: Dict[str, Any], request: Request) -> Dict[st
         raise HTTPException(status_code=400, detail="question (string) is required")
 
     # 优先使用请求体中的配置；其次使用配置或环境变量
-    api_key = payload.get("api_key") or settings.openai_api_key or os.environ.get("OPENAI_API_KEY")
-    base_url = payload.get("base_url") or settings.openai_base_url or os.environ.get("OPENAI_BASE_URL")
-    model = payload.get("model") or settings.openai_chat_model or os.environ.get("OPENAI_CHAT_MODEL")
+    api_key = (
+        payload.get("api_key")
+        or settings.openai_api_key
+        or os.environ.get("OPENAI_API_KEY")
+    )
+    base_url = (
+        payload.get("base_url")
+        or settings.openai_base_url
+        or os.environ.get("OPENAI_BASE_URL")
+    )
+    model = (
+        payload.get("model")
+        or settings.openai_chat_model
+        or os.environ.get("OPENAI_CHAT_MODEL")
+    )
 
     if not api_key or not base_url or not model:
-        raise HTTPException(status_code=400, detail="chat api_key, base_url and model are required (either in payload or config/env)")
+        raise HTTPException(
+            status_code=400,
+            detail="chat api_key, base_url and model are required (either in payload or config/env)",
+        )
 
     # 从配置或环境读取 CHAT_MAX_WINDOWS（优先级：config -> 环境变量 -> 默认 1000000）
-    chat_max = settings.chat_max_windows or int(os.environ.get("CHAT_MAX_WINDOWS") or 1000000)
+    chat_max = settings.chat_max_windows or int(
+        os.environ.get("CHAT_MAX_WINDOWS") or 1000000
+    )
 
     try:
         answer = chat_with_segments(

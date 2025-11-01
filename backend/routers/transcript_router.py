@@ -46,9 +46,7 @@ async def api_list_transcripts(
 
 
 @router.get("/transcripts/{transcript_id}")
-async def api_get_transcript(
-    transcript_id: int, request: Request
-) -> Dict[str, Any]:
+async def api_get_transcript(transcript_id: int, request: Request) -> Dict[str, Any]:
     """获取指定转写记录的详情（包含 segments）。"""
     db_url = request.app.state.db_url
     data = await get_transcript_async(db_url, transcript_id)
@@ -71,9 +69,7 @@ async def api_delete_transcript_complete(
 
     result = await delete_transcript_async(db_url, transcript_id, static_dir)
     if not result:
-        raise HTTPException(
-            status_code=404, detail="转写记录不存在或已被删除"
-        )
+        raise HTTPException(status_code=404, detail="转写记录不存在或已被删除")
     return result
 
 
@@ -82,12 +78,12 @@ async def api_translate(
     transcript_id: int, request: Request, body: TranslateRequest
 ) -> Dict[str, Any]:
     """翻译转写内容。后台异步翻译，使用轮询查询进度。
-    
+
     请求体: {
         "target_language": "zh" | "en",
         "confirmed": bool
     }
-    
+
     返回: { "status": "started", "transcript_id": int }
     """
     db_url = request.app.state.db_url
@@ -98,9 +94,7 @@ async def api_translate(
 
     if not all([api_key, base_url, model]):
         logging.error("LLM 配置缺失")
-        raise HTTPException(
-            status_code=500, detail="LLM configuration is missing"
-        )
+        raise HTTPException(status_code=500, detail="LLM configuration is missing")
 
     data = await get_transcript_async(db_url, transcript_id)
     if not data:
@@ -132,7 +126,7 @@ async def api_get_translate_progress(
     transcript_id: int, request: Request
 ) -> Dict[str, Any]:
     """获取翻译进度。
-    
+
     返回: {
         "status": "translating" | "completed" | "error",
         "progress": 0-100,

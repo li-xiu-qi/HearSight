@@ -11,13 +11,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from backend.routers import (
-    download_router,
     asr_router,
-    transcript_router,
-    job_router,
     chat_router,
-    thumbnail_router,
+    download_router,
+    job_router,
     progress_router,
+    thumbnail_router,
+    transcript_router,
     upload_router,
 )
 

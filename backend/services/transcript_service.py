@@ -1,4 +1,5 @@
 """转写记录服务层"""
+
 from __future__ import annotations
 
 import asyncio
@@ -102,7 +103,7 @@ async def delete_transcript_async(
             "message": "，".join(message_parts),
             "transcript_id": transcript_id,
             "deleted_files": deleted_files,
-            "errors": errors if errors else None
+            "errors": errors if errors else None,
         }
     except Exception as e:
         logging.error(f"删除操作失败: {e}")

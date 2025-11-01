@@ -4,16 +4,16 @@
 """
 from __future__ import annotations
 
-from pathlib import Path
 import logging
 import threading
+from pathlib import Path
 from typing import Any, Dict, List
 
+from backend.db.pg_store import update_job_result
+from backend.routers.progress_router import set_download_progress
 from backend.utils.vedio_utils.download_video.download_bilibili_with_progress import (
     download_bilibili_with_progress,
 )
-from backend.routers.progress_router import set_download_progress
-from backend.db.pg_store import update_job_result
 
 logger = logging.getLogger(__name__)
 
@@ -71,25 +71,30 @@ def _download_worker(
         result_items = []
         for fp in files:
             p = Path(fp)
-            result_items.append({
-                "path": str(p.resolve()),
-                "basename": p.name,
-                "static_url": f"/static/{p.name}",
-            })
+            result_items.append(
+                {
+                    "path": str(p.resolve()),
+                    "basename": p.name,
+                    "static_url": f"/static/{p.name}",
+                }
+            )
 
-        set_download_progress(job_id, {
-            "status": "completed",
-            "stage": "downloading",
-            "progress_percent": 100.0,
-            "filename": result_items[0]["basename"] if result_items else "",
-            "current_bytes": 0,
-            "total_bytes": 0,
-            "speed": 0,
-            "eta_seconds": None,
-            "timestamp": "",
-            "job_id": job_id,
-            "items": result_items,
-        })
+        set_download_progress(
+            job_id,
+            {
+                "status": "completed",
+                "stage": "downloading",
+                "progress_percent": 100.0,
+                "filename": result_items[0]["basename"] if result_items else "",
+                "current_bytes": 0,
+                "total_bytes": 0,
+                "speed": 0,
+                "eta_seconds": None,
+                "timestamp": "",
+                "job_id": job_id,
+                "items": result_items,
+            },
+        )
 
         # 更新数据库中的任务结果
         if db_url:
@@ -97,19 +102,22 @@ def _download_worker(
 
     except Exception as e:
         logger.error(f"下载任务失败 (job_id={job_id}): {e}", exc_info=True)
-        set_download_progress(job_id, {
-            "status": "error",
-            "stage": "downloading",
-            "progress_percent": 0,
-            "filename": "",
-            "current_bytes": 0,
-            "total_bytes": 0,
-            "speed": 0,
-            "eta_seconds": None,
-            "timestamp": "",
-            "job_id": job_id,
-            "error": str(e),
-        })
+        set_download_progress(
+            job_id,
+            {
+                "status": "error",
+                "stage": "downloading",
+                "progress_percent": 0,
+                "filename": "",
+                "current_bytes": 0,
+                "total_bytes": 0,
+                "speed": 0,
+                "eta_seconds": None,
+                "timestamp": "",
+                "job_id": job_id,
+                "error": str(e),
+            },
+        )
 
 
 def start_download(

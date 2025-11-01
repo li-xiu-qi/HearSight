@@ -10,7 +10,9 @@ from psycopg2.extras import RealDictCursor
 from .conn_utils import connect_db
 
 
-def get_latest_transcript(db_url: Optional[str], media_path: str) -> Optional[List[Dict[str, Any]]]:
+def get_latest_transcript(
+    db_url: Optional[str], media_path: str
+) -> Optional[List[Dict[str, Any]]]:
     """获取指定媒体文件的最新转写记录。
 
     Args:
@@ -44,7 +46,9 @@ def get_latest_transcript(db_url: Optional[str], media_path: str) -> Optional[Li
         conn.close()
 
 
-def list_transcripts_meta(db_url: Optional[str], limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+def list_transcripts_meta(
+    db_url: Optional[str], limit: int = 50, offset: int = 0
+) -> List[Dict[str, Any]]:
     """列出转写记录的元信息（不包含大字段），按 id 倒序。
 
     Args:
@@ -80,12 +84,14 @@ def list_transcripts_meta(db_url: Optional[str], limit: int = 50, offset: int = 
                         seg_count = len(segs) if isinstance(segs, list) else 0
                     except Exception:
                         seg_count = 0
-                    items.append({
-                        "id": int(rid),
-                        "media_path": str(media_path),
-                        "created_at": str(created_at),
-                        "segment_count": int(seg_count),
-                    })
+                    items.append(
+                        {
+                            "id": int(rid),
+                            "media_path": str(media_path),
+                            "created_at": str(created_at),
+                            "segment_count": int(seg_count),
+                        }
+                    )
                 return items
     finally:
         conn.close()

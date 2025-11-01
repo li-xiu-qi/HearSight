@@ -11,7 +11,9 @@ from psycopg2.extras import RealDictCursor
 from .conn_utils import connect_db
 
 
-def save_transcript(db_url: Optional[str], media_path: str, segments: List[Dict[str, Any]]) -> int:
+def save_transcript(
+    db_url: Optional[str], media_path: str, segments: List[Dict[str, Any]]
+) -> int:
     """保存转写记录。
 
     Args:
@@ -39,7 +41,9 @@ def save_transcript(db_url: Optional[str], media_path: str, segments: List[Dict[
         conn.close()
 
 
-def update_transcript(db_url: Optional[str], transcript_id: int, segments: List[Dict[str, Any]]) -> bool:
+def update_transcript(
+    db_url: Optional[str], transcript_id: int, segments: List[Dict[str, Any]]
+) -> bool:
     """更新转写记录。
 
     Args:
@@ -64,7 +68,9 @@ def update_transcript(db_url: Optional[str], transcript_id: int, segments: List[
         conn.close()
 
 
-def get_transcript_by_id(db_url: Optional[str], transcript_id: int) -> Optional[Dict[str, Any]]:
+def get_transcript_by_id(
+    db_url: Optional[str], transcript_id: int
+) -> Optional[Dict[str, Any]]:
     """根据 ID 获取转写记录。
 
     Args:
@@ -104,7 +110,9 @@ def get_transcript_by_id(db_url: Optional[str], transcript_id: int) -> Optional[
         conn.close()
 
 
-def update_transcript_media_path(db_url: Optional[str], old_media_path: str, new_media_path: str) -> int:
+def update_transcript_media_path(
+    db_url: Optional[str], old_media_path: str, new_media_path: str
+) -> int:
     """更新转写记录的media_path。
 
     Args:

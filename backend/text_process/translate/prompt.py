@@ -8,10 +8,10 @@ from backend.utils.typing_defs import Segment
 
 
 def build_translate_prompt(
-    segments: List[Segment], 
-    source_lang: str, 
-    target_lang: str, 
-    all_segments: Optional[List[Segment]] = None
+    segments: List[Segment],
+    source_lang: str,
+    target_lang: str,
+    all_segments: Optional[List[Segment]] = None,
 ) -> str:
     """
     构建翻译提示词，支持任意语言对，包含上下文信息。

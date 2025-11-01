@@ -4,9 +4,9 @@
 """
 from __future__ import annotations
 
-import json
 import asyncio
-from typing import List, Dict, Any, Optional, Callable
+import json
+from typing import Any, Callable, Dict, List, Optional
 
 import tiktoken
 
@@ -33,17 +33,17 @@ def _split_segments_by_output_tokens(
 
     # 目标：每批约 10 句
     target_batch_size = 10
-    
+
     # 先按数量分批，然后检查 token 限制
     batches = []
     for i in range(0, len(segments), target_batch_size):
-        batch = segments[i:i + target_batch_size]
+        batch = segments[i : i + target_batch_size]
         batches.append(batch)
-    
+
     # 如果某个批次过大（token 超限），则进一步拆分
     enc = tiktoken.get_encoding(encoding_name)
     final_batches = []
-    
+
     for batch in batches:
         # 估算这个批次的总 token 数
         total_tokens = 0
@@ -51,24 +51,25 @@ def _split_segments_by_output_tokens(
             sentence = seg.get("sentence", "")
             estimated_tokens = int(len(enc.encode(sentence)) * 1.5) + 20
             total_tokens += estimated_tokens
-        
+
         # 如果在 token 限制内，直接使用
         if total_tokens <= max_tokens:
             final_batches.append(batch)
         else:
             # 否则进一步拆分为更小的批次
             import logging
+
             logging.warning(
                 f"批次 token 数 ({total_tokens}) 超过限制 ({max_tokens})，"
                 f"将 {len(batch)} 句拆分为更小的批次"
             )
             current_sub_batch = []
             current_tokens = 0
-            
+
             for seg in batch:
                 sentence = seg.get("sentence", "")
                 estimated_tokens = int(len(enc.encode(sentence)) * 1.5) + 20
-                
+
                 if current_tokens + estimated_tokens > max_tokens and current_sub_batch:
                     final_batches.append(current_sub_batch)
                     current_sub_batch = [seg]
@@ -76,15 +77,18 @@ def _split_segments_by_output_tokens(
                 else:
                     current_sub_batch.append(seg)
                     current_tokens += estimated_tokens
-            
+
             if current_sub_batch:
                 final_batches.append(current_sub_batch)
-    
+
     return final_batches
 
 
 def _build_translate_prompt(
-    segments: List[Segment], source_lang: str, target_lang: str, all_segments: Optional[List[Segment]] = None
+    segments: List[Segment],
+    source_lang: str,
+    target_lang: str,
+    all_segments: Optional[List[Segment]] = None,
 ) -> str:
     """
     构建翻译提示词，支持任意语言对，包含上下文信息。
@@ -120,14 +124,14 @@ translation_content:
 
     # 构建上下文部分
     context_lines = [header, ""]
-    
+
     if all_segments is None:
         all_segments = segments
-    
+
     # 获取第一个和最后一个要翻译句子的索引
     first_idx = segments[0].get("index", 0) if segments else 0
     last_idx = segments[-1].get("index", 0) if segments else 0
-    
+
     # 添加前文上下文（前两句，如果存在）
     if first_idx > 0:
         context_lines.append("【前文上下文（仅供参考）】")
@@ -139,7 +143,7 @@ translation_content:
                 found_context = True
         if found_context:
             context_lines.append("")
-    
+
     # 添加待翻译句子（这是唯一需要翻译的部分）
     context_lines.append("【待翻译句子】")
     for seg in segments:
@@ -148,7 +152,7 @@ translation_content:
         if sentence:
             context_lines.append(f"{index}: {sentence}")
     context_lines.append("")
-    
+
     # 添加后文上下文（后两句，如果存在）
     max_idx = max((seg.get("index", 0) for seg in all_segments), default=0)
     if last_idx < max_idx:
@@ -161,7 +165,7 @@ translation_content:
                 found_context = True
         if found_context:
             context_lines.append("")
-    
+
     return "\n".join(context_lines)
 
 
@@ -176,12 +180,12 @@ def _extract_translations(response_text: str) -> Dict[int, str]:
 
     try:
         cleaned = response_text.strip()
-        
+
         # 首先尝试提取 translation_content: 后的内容
         if "translation_content:" in cleaned:
             translation_start = cleaned.find("translation_content:")
-            cleaned = cleaned[translation_start + len("translation_content:"):].strip()
-        
+            cleaned = cleaned[translation_start + len("translation_content:") :].strip()
+
         # 移除 markdown 代码块标记（如果有）
         if cleaned.startswith("```"):
             cleaned = cleaned[3:]
@@ -189,31 +193,32 @@ def _extract_translations(response_text: str) -> Dict[int, str]:
             cleaned = cleaned[4:]
         if cleaned.endswith("```"):
             cleaned = cleaned[:-3]
-        
+
         # 清理前后的空白符
         cleaned = cleaned.strip()
-        
+
         # 尝试从回答中提取 JSON 数组
         # 处理 LLM 可能在 JSON 前后添加的说明文字
         if not cleaned.startswith("["):
             bracket_pos = cleaned.find("[")
             if bracket_pos >= 0:
                 cleaned = cleaned[bracket_pos:]
-        
+
         if not cleaned.endswith("]"):
             bracket_pos = cleaned.rfind("]")
             if bracket_pos >= 0:
-                cleaned = cleaned[:bracket_pos + 1]
-        
+                cleaned = cleaned[: bracket_pos + 1]
+
         # 如果仍然没有找到 JSON，尝试更激进的清理
         if not cleaned.startswith("[") or not cleaned.endswith("]"):
             import logging
+
             logging.warning(f"无法识别JSON数组边界，原始响应: {response_text[:300]}")
             return translations
-        
+
         # 解析 JSON，允许更多错误
         data = json.loads(cleaned)
-        
+
         if isinstance(data, list):
             for item in data:
                 if isinstance(item, dict) and "index" in item and "translation" in item:
@@ -222,6 +227,7 @@ def _extract_translations(response_text: str) -> Dict[int, str]:
                         translations[item["index"]] = trans.strip()
     except (json.JSONDecodeError, IndexError, KeyError, ValueError) as e:
         import logging
+
         logging.warning(f"翻译结果解析失败: {e}，原始响应: {response_text[:300]}")
 
     return translations
@@ -264,6 +270,7 @@ async def translate_segments_async(
         # 强制重新翻译：所有分句都需要重新翻译
         untranslated_segments = segments
         import logging
+
         logging.info(f"强制重新翻译模式启用，将重新翻译所有 {len(segments)} 个分句")
     else:
         # 正常模式：只翻译未翻译的分句（检查目标语言是否已有翻译）
@@ -275,7 +282,10 @@ async def translate_segments_async(
         ]
 
     import logging
-    logging.info(f"翻译分析: 总分句数={len(segments)}, 待翻译={len(untranslated_segments)}, 目标语言={target_language}, 强制重译={force_retranslate}")
+
+    logging.info(
+        f"翻译分析: 总分句数={len(segments)}, 待翻译={len(untranslated_segments)}, 目标语言={target_language}, 强制重译={force_retranslate}"
+    )
 
     if not untranslated_segments:
         # 所有都已翻译，直接返回
@@ -314,7 +324,9 @@ async def translate_segments_async(
     for batch_idx, batch in enumerate(batches):
         logging.info(f"翻译第 {batch_idx + 1}/{len(batches)} 批（{len(batch)} 个分句）")
         # 传递完整的 segments 作为上下文，帮助 LLM 理解语境
-        prompt = _build_translate_prompt(batch, source_name, target_name, all_segments=segments)
+        prompt = _build_translate_prompt(
+            batch, source_name, target_name, all_segments=segments
+        )
 
         try:
             response = await chat_text_async(
@@ -335,17 +347,21 @@ async def translate_segments_async(
             continue
 
         batch_translations = _extract_translations(response)
-        logging.info(f"第 {batch_idx + 1} 批解析出 {len(batch_translations)} 个翻译结果 (from {len(batch)} 个请求)")
-        
+        logging.info(
+            f"第 {batch_idx + 1} 批解析出 {len(batch_translations)} 个翻译结果 (from {len(batch)} 个请求)"
+        )
+
         if len(batch_translations) == 0:
-            logging.warning(f"第 {batch_idx + 1} 批 LLM 未返回有效的翻译结果，可能的原因：")
+            logging.warning(
+                f"第 {batch_idx + 1} 批 LLM 未返回有效的翻译结果，可能的原因："
+            )
             logging.warning(f"  - API 返回了非 JSON 格式的响应")
             logging.warning(f"  - 网络超时或错误")
             logging.warning(f"  - LLM 返回的错误消息而非翻译")
             for seg in batch:
                 failed_indices.append(seg.get("index", 0))
             continue
-        
+
         # 质量检查：验证翻译的有效性
         quality_checked = {}
         for seg in batch:
@@ -353,7 +369,7 @@ async def translate_segments_async(
             if index in batch_translations:
                 original = seg.get("sentence", "").strip()
                 translated = batch_translations[index].strip()
-                
+
                 # 只检查翻译是否为空，不做长度检查
                 if len(translated) > 0:
                     quality_checked[index] = translated
@@ -363,7 +379,7 @@ async def translate_segments_async(
             else:
                 logging.warning(f"未获得翻译结果 (index={index})")
                 failed_indices.append(index)
-        
+
         all_translations.update(quality_checked)
 
         # 回调进度
@@ -383,25 +399,35 @@ async def translate_segments_async(
 
     # 重试失败的翻译（分组重试，每组最多 5 个句子）
     if failed_indices:
-        logging.warning(f"共有 {len(failed_indices)} 个分句翻译失败或未获得结果，索引为: {failed_indices[:10]}{'...' if len(failed_indices) > 10 else ''}")
-        retry_segments = [seg for seg in untranslated_segments if seg.get("index") in failed_indices]
-        
+        logging.warning(
+            f"共有 {len(failed_indices)} 个分句翻译失败或未获得结果，索引为: {failed_indices[:10]}{'...' if len(failed_indices) > 10 else ''}"
+        )
+        retry_segments = [
+            seg for seg in untranslated_segments if seg.get("index") in failed_indices
+        ]
+
         # 分组重试（每组最多 5 个失败的句子）
         retry_batch_size = 5
         for retry_batch_start in range(0, len(retry_segments), retry_batch_size):
-            retry_batch = retry_segments[retry_batch_start:retry_batch_start + retry_batch_size]
+            retry_batch = retry_segments[
+                retry_batch_start : retry_batch_start + retry_batch_size
+            ]
             retry_indices = [seg.get("index", 0) for seg in retry_batch]
-            
+
             # 检查是否所有句子都已经翻译成功
             if all(idx in all_translations for idx in retry_indices):
                 logging.info(f"重试批次 {retry_indices} 已全部成功，跳过")
                 continue
-            
+
             try:
                 # 使用重试提示词，确保格式一致
-                retry_prompt = _build_translate_prompt(retry_batch, source_name, target_name, all_segments=segments)
-                logging.info(f"重试 {len(retry_batch)} 个失败的分句 (indices: {retry_indices})")
-                
+                retry_prompt = _build_translate_prompt(
+                    retry_batch, source_name, target_name, all_segments=segments
+                )
+                logging.info(
+                    f"重试 {len(retry_batch)} 个失败的分句 (indices: {retry_indices})"
+                )
+
                 response = await chat_text_async(
                     prompt=retry_prompt,
                     api_key=api_key,
@@ -412,19 +438,19 @@ async def translate_segments_async(
                     stream=True,
                 )
                 retry_trans = _extract_translations(response)
-                
+
                 # 统计重试成功的数量
                 success_count = 0
                 for idx in retry_indices:
                     if idx in retry_trans and idx not in all_translations:
                         all_translations[idx] = retry_trans[idx]
                         success_count += 1
-                
+
                 if success_count > 0:
                     logging.info(f"重试成功: {success_count}/{len(retry_batch)} 个分句")
                 else:
                     logging.warning(f"重试未获得新的翻译结果，indices: {retry_indices}")
-                    
+
             except Exception as e:
                 logging.error(f"重试批次失败 (indices: {retry_indices}): {e}")
 

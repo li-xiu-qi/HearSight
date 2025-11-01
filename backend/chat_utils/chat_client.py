@@ -1,14 +1,19 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Union, Literal, TypedDict, cast, Callable
-
-import requests
+import asyncio
 import json
 import logging
-import asyncio
-import aiohttp
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception, before_log
+from typing import Any, Callable, Dict, List, Literal, Optional, TypedDict, Union, cast
 
+import aiohttp
+import requests
+from tenacity import (
+    before_log,
+    retry,
+    retry_if_exception,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -16,16 +21,24 @@ logger = logging.getLogger(__name__)
 def on_retry_error(retry_state):
     """重试错误回调：记录详细的错误信息"""
     exception = retry_state.outcome.exception()
-    logger.warning(f"重试 {retry_state.fn.__name__}，原因：{type(exception).__name__}: {exception}，尝试次数：{retry_state.attempt_number}")
+    logger.warning(
+        f"重试 {retry_state.fn.__name__}，原因：{type(exception).__name__}: {exception}，尝试次数：{retry_state.attempt_number}"
+    )
 
 
 def should_retry(exception):
     """判断是否需要重试的异常条件"""
-    if isinstance(exception, (requests.exceptions.ReadTimeout, requests.exceptions.ConnectionError)):
+    if isinstance(
+        exception,
+        (requests.exceptions.ReadTimeout, requests.exceptions.ConnectionError),
+    ):
         return True
     if isinstance(exception, requests.HTTPError):
         # 仅对硅基流动 API 的 429 错误进行重试，其他 API 不重试
-        if exception.response.status_code == 429 and 'siliconflow' in exception.response.url:
+        if (
+            exception.response.status_code == 429
+            and "siliconflow" in exception.response.url
+        ):
             return True
         return False
     return False
@@ -78,7 +91,7 @@ def _endpoint(base_url: str) -> str:
     wait=wait_exponential(multiplier=1, min=4, max=60),
     retry=retry_if_exception(should_retry),
     before=before_log(logger, logging.INFO),
-    retry_error_callback=on_retry_error
+    retry_error_callback=on_retry_error,
 )
 def chat(
     messages: List[ChatMessage],
@@ -128,7 +141,7 @@ def chat(
     wait=wait_exponential(multiplier=1, min=4, max=60),
     retry=retry_if_exception(should_retry),
     before=before_log(logger, logging.INFO),
-    retry_error_callback=on_retry_error
+    retry_error_callback=on_retry_error,
 )
 def chat_with_tools(
     messages: List[Message],
@@ -214,10 +227,15 @@ def chat_with_tools_stream(
         payload.update(kwargs)
 
     try:
-        with requests.post(url, json=payload, headers=headers, stream=True, timeout=timeout) as r:
+        with requests.post(
+            url, json=payload, headers=headers, stream=True, timeout=timeout
+        ) as r:
             # 若鉴权失败或其他非 2xx，直接返回一条错误事件，包含响应体，便于定位（避免仅有 401 文案）
             if not r.ok:
-                yield {"type": "error", "message": f"{r.status_code} {r.reason}: {r.text}"}
+                yield {
+                    "type": "error",
+                    "message": f"{r.status_code} {r.reason}: {r.text}",
+                }
                 return
             # r.raise_for_status()
             # 工具调用缓冲（按 index 累积）
@@ -265,7 +283,9 @@ def chat_with_tools_stream(
                     tool_calls = delta.get("tool_calls") or []
                     for tc in tool_calls:
                         idx = tc.get("index", 0)
-                        buf = tool_buf.setdefault(idx, {"id": None, "name": None, "arguments": ""})
+                        buf = tool_buf.setdefault(
+                            idx, {"id": None, "name": None, "arguments": ""}
+                        )
                         tc_id = tc.get("id")
                         if tc_id:
                             buf["id"] = buf["id"] or tc_id
@@ -282,6 +302,7 @@ def chat_with_tools_stream(
         # 捕获网络/协议等异常，避免上层 SSE 连接被硬断
         yield {"type": "error", "message": f"stream request error: {e}"}
 
+
 def chat_text(
     prompt: str,
     api_key: str,
@@ -294,7 +315,7 @@ def chat_text(
 ) -> str:
     """
     简洁文本接口：给定 prompt（和可选 system），返回文本回复。
-    
+
     参数:
     - prompt: 用户输入
     - api_key: API密钥
@@ -309,7 +330,15 @@ def chat_text(
     if system:
         msgs.append({"role": "system", "content": system})
     msgs.append({"role": "user", "content": prompt})
-    return chat(msgs, api_key=api_key, base_url=base_url, model=model, max_tokens=max_tokens, timeout=timeout, **kwargs)
+    return chat(
+        msgs,
+        api_key=api_key,
+        base_url=base_url,
+        model=model,
+        max_tokens=max_tokens,
+        timeout=timeout,
+        **kwargs,
+    )
 
 
 async def chat_text_async(
@@ -325,7 +354,7 @@ async def chat_text_async(
 ) -> str:
     """
     异步简洁文本接口：给定 prompt（和可选 system），返回文本回复。
-    
+
     参数:
     - prompt: 用户输入
     - api_key: API密钥
@@ -341,7 +370,7 @@ async def chat_text_async(
     if system:
         msgs.append({"role": "system", "content": system})
     msgs.append({"role": "user", "content": prompt})
-    
+
     url = _endpoint(base_url)
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -355,27 +384,27 @@ async def chat_text_async(
     }
     if kwargs:
         payload.update(kwargs)
-    
+
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                url, 
-                json=payload, 
-                headers=headers, 
-                timeout=aiohttp.ClientTimeout(total=timeout)
+                url,
+                json=payload,
+                headers=headers,
+                timeout=aiohttp.ClientTimeout(total=timeout),
             ) as response:
                 if not response.ok:
                     text = await response.text()
                     raise Exception(f"{response.status} {response.reason}: {text}")
-                
+
                 if stream:
                     # 流式接收：逐行读取并拼接内容
                     content = ""
                     async for line in response.content:
-                        line = line.decode('utf-8').strip()
-                        if not line or line.startswith('[DONE]'):
+                        line = line.decode("utf-8").strip()
+                        if not line or line.startswith("[DONE]"):
                             continue
-                        if line.startswith('data: '):
+                        if line.startswith("data: "):
                             line = line[6:]
                         try:
                             chunk = json.loads(line)
@@ -389,7 +418,11 @@ async def chat_text_async(
                 else:
                     # 非流式：一次性读取
                     data = await response.json()
-                    return (data.get("choices") or [{}])[0].get("message", {}).get("content", "")
+                    return (
+                        (data.get("choices") or [{}])[0]
+                        .get("message", {})
+                        .get("content", "")
+                    )
     except asyncio.TimeoutError:
         raise Exception(f"异步请求超时：{timeout}秒")
     except Exception as e:
