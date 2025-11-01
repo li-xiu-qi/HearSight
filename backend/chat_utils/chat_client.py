@@ -3,17 +3,13 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Any, Callable, Dict, List, Literal, Optional, TypedDict, Union, cast
+from typing import (Any, Callable, Dict, List, Literal, Optional, TypedDict,
+                    Union, cast)
 
 import aiohttp
 import requests
-from tenacity import (
-    before_log,
-    retry,
-    retry_if_exception,
-    stop_after_attempt,
-    wait_exponential,
-)
+from tenacity import (before_log, retry, retry_if_exception,
+                      stop_after_attempt, wait_exponential)
 
 logger = logging.getLogger(__name__)
 
