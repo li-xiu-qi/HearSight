@@ -9,12 +9,6 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 export default defineConfig([
   globalIgnores(['dist']),
   {
-    files: ['**/src/components/ui/**/*.{ts,tsx}'],
-    rules: {
-      'react-refresh/only-export-components': 'off',
-    },
-  },
-  {
     files: ['**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
@@ -30,6 +24,7 @@ export default defineConfig([
       'jsx-a11y': jsxA11y,
     },
     rules: {
+      'react-refresh/only-export-components': 'off',
       'jsx-a11y/click-events-have-key-events': 'off',
       'jsx-a11y/no-static-element-interactions': 'off',
     },
