@@ -9,8 +9,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from config import settings
 from backend.db.pg_store import init_db
+from config import settings
 
 
 def initialize_app() -> tuple[Path, str | None]:

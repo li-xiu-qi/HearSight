@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from typing import Any, Dict
-from pathlib import Path
 import logging
-from backend.services.download_service import start_download
-from backend.db.job_store import check_duplicate_url
+from pathlib import Path
+from typing import Any, Dict
+
 from fastapi import APIRouter, HTTPException, Request
 
+from backend.db.job_store import check_duplicate_url
 from backend.routers.progress_router import set_download_progress
+from backend.services.download_service import start_download
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["download"])
@@ -38,21 +39,24 @@ def api_download(payload: Dict[str, Any], request: Request) -> Dict[str, Any]:
         existing_job = check_duplicate_url(db_url, url)
         if existing_job:
             logger.info(f"检测到重复下载，URL已在job_id={existing_job['id']}中成功下载")
-            set_download_progress(job_id, {
-                "status": "completed",
-                "stage": "downloading",
-                "progress_percent": 100.0,
-                "filename": existing_job.get("result", {}).get("basename", ""),
-                "current_bytes": 0,
-                "total_bytes": 0,
-                "speed": 0,
-                "eta_seconds": None,
-                "timestamp": "",
-                "job_id": job_id,
-                "items": existing_job.get("result", {}).get("items", []),
-                "duplicate": True,
-                "original_job_id": existing_job["id"],
-            })
+            set_download_progress(
+                job_id,
+                {
+                    "status": "completed",
+                    "stage": "downloading",
+                    "progress_percent": 100.0,
+                    "filename": existing_job.get("result", {}).get("basename", ""),
+                    "current_bytes": 0,
+                    "total_bytes": 0,
+                    "speed": 0,
+                    "eta_seconds": None,
+                    "timestamp": "",
+                    "job_id": job_id,
+                    "items": existing_job.get("result", {}).get("items", []),
+                    "duplicate": True,
+                    "original_job_id": existing_job["id"],
+                },
+            )
             return {
                 "status": "duplicate",
                 "job_id": job_id,
@@ -62,24 +66,29 @@ def api_download(payload: Dict[str, Any], request: Request) -> Dict[str, Any]:
             }
 
     # 初始化进度状态
-    set_download_progress(job_id, {
-        "status": "in-progress",
-        "stage": "downloading",
-        "progress_percent": 0,
-        "filename": "",
-        "current_bytes": 0,
-        "total_bytes": 0,
-        "speed": 0,
-        "eta_seconds": None,
-        "timestamp": "",
-        "job_id": job_id,
-    })
+    set_download_progress(
+        job_id,
+        {
+            "status": "in-progress",
+            "stage": "downloading",
+            "progress_percent": 0,
+            "filename": "",
+            "current_bytes": 0,
+            "total_bytes": 0,
+            "speed": 0,
+            "eta_seconds": None,
+            "timestamp": "",
+            "job_id": job_id,
+        },
+    )
 
     # 启动后台下载
-    start_download(job_id, url, out_dir, sessdata or "", playlist, quality, workers, db_url)
+    start_download(
+        job_id, url, out_dir, sessdata or "", playlist, quality, workers, db_url
+    )
 
     return {
         "status": "started",
         "job_id": job_id,
-        "message": "下载任务已启动，请轮询查询进度"
+        "message": "下载任务已启动，请轮询查询进度",
     }

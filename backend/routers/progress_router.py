@@ -1,9 +1,11 @@
 """下载和处理进度查询路由"""
+
 from __future__ import annotations
 
-from fastapi import APIRouter
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
+
+from fastapi import APIRouter
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +31,9 @@ def get_task_progress(job_id: int) -> Dict[str, Any]:
 def set_task_progress(job_id: int, progress: Dict[str, Any]) -> None:
     """设置任务进度"""
     task_progress[job_id] = progress
-    logger.debug(f"更新任务进度 job_id={job_id}: {progress.get('stage')} - {progress.get('message', '')}")
+    logger.debug(
+        f"更新任务进度 job_id={job_id}: {progress.get('stage')} - {progress.get('message', '')}"
+    )
 
 
 # 保留旧名称以兼容现有代码
@@ -53,4 +57,3 @@ def api_get_download_progress(job_id: int) -> Dict[str, Any]:
 def api_get_task_progress(job_id: int) -> Dict[str, Any]:
     """查询任务进度（包括下载和ASR阶段）"""
     return get_task_progress(job_id)
-

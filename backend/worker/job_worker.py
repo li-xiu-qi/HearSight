@@ -3,8 +3,8 @@
 
 from __future__ import annotations
 
-import time
 import threading
+import time
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -12,17 +12,17 @@ from fastapi import FastAPI
 from backend.audio2text.asr_sentence_segments import process as asr_process
 from backend.db.pg_store import (
     claim_next_pending_job,
-    finish_job_success,
     finish_job_failed,
+    finish_job_success,
     get_job,
+    save_transcript,
     update_job_result,
     update_job_status,
-    save_transcript,
 )
 from backend.routers.progress_router import set_task_progress
 from backend.utils.vedio_utils.download_video.download_bilibili_with_progress import (
-    download_bilibili_with_progress,
     ProgressInfo,
+    download_bilibili_with_progress,
 )
 
 
@@ -66,20 +66,23 @@ def _process_job(db_url: str | None, job_id: int, url: str, static_dir: Path) ->
         if url.startswith("upload://"):
             basename = url.replace("upload://", "")
             media_path = str((static_dir / basename).resolve())
-            
+
             if not Path(media_path).exists():
                 raise RuntimeError(f"上传文件不存在: {media_path}")
-            
+
             # 上传文件跳过下载阶段,直接标记为准备ASR
-            set_task_progress(job_id, {
-                "status": "ready",
-                "stage": "upload",
-                "progress_percent": 100,
-                "filename": basename,
-                "message": "文件已上传,准备进行语音识别",
-                "job_id": job_id,
-            })
-            
+            set_task_progress(
+                job_id,
+                {
+                    "status": "ready",
+                    "stage": "upload",
+                    "progress_percent": 100,
+                    "filename": basename,
+                    "message": "文件已上传,准备进行语音识别",
+                    "job_id": job_id,
+                },
+            )
+
             res.update(
                 {
                     "media_path": media_path,
@@ -103,17 +106,20 @@ def _process_job(db_url: str | None, job_id: int, url: str, static_dir: Path) ->
 
             def on_progress(info: ProgressInfo) -> None:
                 """下载进度回调"""
-                set_task_progress(job_id, {
-                    "status": info["status"],
-                    "stage": "download",
-                    "progress_percent": info["progress_percent"],
-                    "current_bytes": info["downloaded_bytes"],
-                    "total_bytes": info["total_bytes"],
-                    "speed": info["speed"],
-                    "eta_seconds": info["eta_seconds"],
-                    "filename": info["filename"],
-                    "job_id": job_id,
-                })
+                set_task_progress(
+                    job_id,
+                    {
+                        "status": info["status"],
+                        "stage": "download",
+                        "progress_percent": info["progress_percent"],
+                        "current_bytes": info["downloaded_bytes"],
+                        "total_bytes": info["total_bytes"],
+                        "speed": info["speed"],
+                        "eta_seconds": info["eta_seconds"],
+                        "filename": info["filename"],
+                        "job_id": job_id,
+                    },
+                )
 
             files = download_bilibili_with_progress(
                 url=url,
@@ -128,15 +134,18 @@ def _process_job(db_url: str | None, job_id: int, url: str, static_dir: Path) ->
             media_path = str(Path(files[0]).resolve())
             basename = Path(media_path).name
 
-            set_task_progress(job_id, {
-                "status": "ready",
-                "stage": "download",
-                "progress_percent": 100,
-                "filename": basename,
-                "message": "下载完成,准备进行语音识别",
-                "job_id": job_id,
-            })
-            
+            set_task_progress(
+                job_id,
+                {
+                    "status": "ready",
+                    "stage": "download",
+                    "progress_percent": 100,
+                    "filename": basename,
+                    "message": "下载完成,准备进行语音识别",
+                    "job_id": job_id,
+                },
+            )
+
             res.update(
                 {
                     "media_path": media_path,
@@ -161,51 +170,63 @@ def _process_job(db_url: str | None, job_id: int, url: str, static_dir: Path) ->
     # Step B: ASR 阶段
     if not res.get("transcript_id"):
         update_job_status(db_url, job_id, "processing")
-        
-        set_task_progress(job_id, {
-            "status": "processing",
-            "stage": "asr",
-            "progress_percent": 0,
-            "filename": basename,
-            "message": "正在进行语音识别,请稍候...",
-            "job_id": job_id,
-        })
+
+        set_task_progress(
+            job_id,
+            {
+                "status": "processing",
+                "stage": "asr",
+                "progress_percent": 0,
+                "filename": basename,
+                "message": "正在进行语音识别,请稍候...",
+                "job_id": job_id,
+            },
+        )
 
         segs = asr_process(str(media_path))
-        
-        set_task_progress(job_id, {
-            "status": "processing",
-            "stage": "asr",
-            "progress_percent": 50,
-            "filename": basename,
-            "message": "语音识别完成,正在保存结果...",
-            "job_id": job_id,
-        })
-        
+
+        set_task_progress(
+            job_id,
+            {
+                "status": "processing",
+                "stage": "asr",
+                "progress_percent": 50,
+                "filename": basename,
+                "message": "语音识别完成,正在保存结果...",
+                "job_id": job_id,
+            },
+        )
+
         transcript_id = save_transcript(db_url, str(media_path), segs)
         res.update({"transcript_id": transcript_id})
         update_job_result(db_url, job_id, {"transcript_id": transcript_id})
-        
-        set_task_progress(job_id, {
-            "status": "completed",
-            "stage": "asr",
-            "progress_percent": 100,
-            "filename": basename,
-            "message": "语音识别完成",
-            "job_id": job_id,
-        })
+
+        set_task_progress(
+            job_id,
+            {
+                "status": "completed",
+                "stage": "asr",
+                "progress_percent": 100,
+                "filename": basename,
+                "message": "语音识别完成",
+                "job_id": job_id,
+            },
+        )
 
     # Step C: 完成任务
     finish_job_success(db_url, job_id, res)
-    
-    set_task_progress(job_id, {
-        "status": "success",
-        "stage": "completed",
-        "progress_percent": 100,
-        "filename": basename,
-        "message": "任务处理完成",
-        "job_id": job_id,
-    })
+
+    set_task_progress(
+        job_id,
+        {
+            "status": "success",
+            "stage": "completed",
+            "progress_percent": 100,
+            "filename": basename,
+            "message": "任务处理完成",
+            "job_id": job_id,
+        },
+    )
 
 
 def start_worker(app: FastAPI, db_url: str | None) -> None:

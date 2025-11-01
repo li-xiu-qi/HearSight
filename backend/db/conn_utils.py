@@ -35,7 +35,9 @@ def ensure_conn_params(db_url: Optional[str] = None) -> Dict[str, Any]:
     return params
 
 
-def connect_db(db_url: Optional[str] = None, max_retries: int = 30, retry_delay: int = 2) -> psycopg2.extensions.connection:
+def connect_db(
+    db_url: Optional[str] = None, max_retries: int = 30, retry_delay: int = 2
+) -> psycopg2.extensions.connection:
     """建立数据库连接，支持重试机制。
 
     Args:
@@ -59,9 +61,13 @@ def connect_db(db_url: Optional[str] = None, max_retries: int = 30, retry_delay:
                 conn = psycopg2.connect(**conn_params)
             return conn
         except psycopg2.OperationalError as e:
-            if "the database system is starting up" in str(e) or "Connection refused" in str(e):
+            if "the database system is starting up" in str(
+                e
+            ) or "Connection refused" in str(e):
                 if attempt < max_retries - 1:
-                    print(f"数据库尚未就绪，等待 {retry_delay} 秒后重试... (第 {attempt + 1}/{max_retries} 次)")
+                    print(
+                        f"数据库尚未就绪，等待 {retry_delay} 秒后重试... (第 {attempt + 1}/{max_retries} 次)"
+                    )
                     time.sleep(retry_delay)
                     continue
                 else:

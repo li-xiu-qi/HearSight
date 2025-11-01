@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Union, Literal, TypedDict
+from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
 
 
 class ChatMessage(TypedDict):

@@ -32,7 +32,9 @@ def api_get_job(job_id: int, request: Request) -> Dict[str, Any]:
 
 
 @router.get("/jobs")
-def api_list_jobs(request: Request, status: str | None = None, limit: int = 50, offset: int = 0) -> Dict[str, Any]:
+def api_list_jobs(
+    request: Request, status: str | None = None, limit: int = 50, offset: int = 0
+) -> Dict[str, Any]:
     """列出任务队列，支持按状态筛选（downloading/processing/success/failed）。
     返回: { items: [{id, url, status, created_at, started_at, finished_at, result, error}] }
     """

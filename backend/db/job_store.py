@@ -58,7 +58,7 @@ def create_job(db_url: Optional[str], url: str) -> int:
             with conn.cursor() as cur:
                 cur.execute(
                     "INSERT INTO jobs (url, status) VALUES (%s, %s) RETURNING id",
-                    (url, 'downloading'),
+                    (url, "downloading"),
                 )
                 row = cur.fetchone()
                 if not row:
@@ -90,7 +90,9 @@ def get_job(db_url: Optional[str], job_id: int) -> Optional[Dict[str, Any]]:
                 if not row:
                     return None
                 try:
-                    result = json.loads(row["result_json"]) if row["result_json"] else None
+                    result = (
+                        json.loads(row["result_json"]) if row["result_json"] else None
+                    )
                 except Exception:
                     result = None
                 return {
@@ -99,7 +101,9 @@ def get_job(db_url: Optional[str], job_id: int) -> Optional[Dict[str, Any]]:
                     "status": str(row["status"]),
                     "created_at": str(row["created_at"]) if row["created_at"] else None,
                     "started_at": str(row["started_at"]) if row["started_at"] else None,
-                    "finished_at": str(row["finished_at"]) if row["finished_at"] else None,
+                    "finished_at": (
+                        str(row["finished_at"]) if row["finished_at"] else None
+                    ),
                     "result": result,
                     "error": str(row["error"]) if row["error"] else None,
                 }
@@ -107,7 +111,12 @@ def get_job(db_url: Optional[str], job_id: int) -> Optional[Dict[str, Any]]:
         conn.close()
 
 
-def list_jobs(db_url: Optional[str], status: Optional[str] = None, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+def list_jobs(
+    db_url: Optional[str],
+    status: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+) -> List[Dict[str, Any]]:
     """列出任务。
 
     Args:
@@ -137,19 +146,29 @@ def list_jobs(db_url: Optional[str], status: Optional[str] = None, limit: int = 
                 items: List[Dict[str, Any]] = []
                 for r in rows:
                     try:
-                        result = json.loads(r["result_json"]) if r["result_json"] else None
+                        result = (
+                            json.loads(r["result_json"]) if r["result_json"] else None
+                        )
                     except Exception:
                         result = None
-                    items.append({
-                        "id": int(r["id"]),
-                        "url": str(r["url"]),
-                        "status": str(r["status"]),
-                        "created_at": str(r["created_at"]) if r["created_at"] else None,
-                        "started_at": str(r["started_at"]) if r["started_at"] else None,
-                        "finished_at": str(r["finished_at"]) if r["finished_at"] else None,
-                        "result": result,
-                        "error": str(r["error"]) if r["error"] else None,
-                    })
+                    items.append(
+                        {
+                            "id": int(r["id"]),
+                            "url": str(r["url"]),
+                            "status": str(r["status"]),
+                            "created_at": (
+                                str(r["created_at"]) if r["created_at"] else None
+                            ),
+                            "started_at": (
+                                str(r["started_at"]) if r["started_at"] else None
+                            ),
+                            "finished_at": (
+                                str(r["finished_at"]) if r["finished_at"] else None
+                            ),
+                            "result": result,
+                            "error": str(r["error"]) if r["error"] else None,
+                        }
+                    )
                 return items
     finally:
         conn.close()
@@ -207,7 +226,9 @@ def claim_next_pending_job(db_url: Optional[str]) -> Optional[Dict[str, Any]]:
         conn.close()
 
 
-def finish_job_success(db_url: Optional[str], job_id: int, result: Dict[str, Any]) -> None:
+def finish_job_success(
+    db_url: Optional[str], job_id: int, result: Dict[str, Any]
+) -> None:
     """标记任务成功完成。
 
     Args:
@@ -269,21 +290,30 @@ def check_duplicate_url(db_url: Optional[str], url: str) -> Optional[Dict[str, A
                 if not row:
                     return None
                 try:
-                    result = json.loads(row["result_json"]) if row["result_json"] else None
+                    result = (
+                        json.loads(row["result_json"]) if row["result_json"] else None
+                    )
                 except Exception:
                     result = None
                 return {
                     "id": int(row["id"]),
                     "url": str(row["url"]),
                     "status": str(row["status"]),
-                    "finished_at": str(row["finished_at"]) if row["finished_at"] else None,
+                    "finished_at": (
+                        str(row["finished_at"]) if row["finished_at"] else None
+                    ),
                     "result": result,
                 }
     finally:
         conn.close()
 
 
-def update_job_result(db_url: Optional[str], job_id: int, patch: Dict[str, Any], status: Optional[str] = None) -> None:
+def update_job_result(
+    db_url: Optional[str],
+    job_id: int,
+    patch: Dict[str, Any],
+    status: Optional[str] = None,
+) -> None:
     """合并写入任务结果，可选同时更新状态。
 
     Args:
@@ -351,7 +381,9 @@ def update_job_status(db_url: Optional[str], job_id: int, status: str) -> None:
         conn.close()
 
 
-def update_job_result_paths(db_url: Optional[str], old_basename: str, new_basename: str, static_dir_path: str) -> int:
+def update_job_result_paths(
+    db_url: Optional[str], old_basename: str, new_basename: str, static_dir_path: str
+) -> int:
     """更新所有相关任务的result中的文件路径信息。
 
     Args:
@@ -371,31 +403,33 @@ def update_job_result_paths(db_url: Optional[str], old_basename: str, new_basena
                 # 查找所有包含该文件的任务
                 cur.execute(
                     "SELECT id, result_json FROM jobs WHERE result_json LIKE %s",
-                    (f'%{old_basename}%',),
+                    (f"%{old_basename}%",),
                 )
                 rows = cur.fetchall()
-                
+
                 for row in rows:
                     job_id = row["id"]
                     result_json = row.get("result_json")
                     if not result_json:
                         continue
-                    
+
                     try:
                         result = json.loads(result_json)
                         if not isinstance(result, dict):
                             continue
-                        
+
                         # 更新basename
                         if result.get("basename") == old_basename:
                             result["basename"] = new_basename
                             result["static_url"] = f"/static/{new_basename}"
-                            
+
                             # 更新media_path
                             old_media_path = result.get("media_path", "")
                             if old_basename in old_media_path:
-                                result["media_path"] = str(Path(static_dir_path) / new_basename)
-                            
+                                result["media_path"] = str(
+                                    Path(static_dir_path) / new_basename
+                                )
+
                             # 保存更新后的result
                             cur.execute(
                                 "UPDATE jobs SET result_json = %s WHERE id = %s",
@@ -405,8 +439,8 @@ def update_job_result_paths(db_url: Optional[str], old_basename: str, new_basena
                     except Exception as e:
                         # 单个任务更新失败不影响其他任务
                         continue
-                        
+
     finally:
         conn.close()
-    
+
     return updated_count

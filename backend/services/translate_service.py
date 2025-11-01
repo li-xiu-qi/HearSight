@@ -1,11 +1,12 @@
 """翻译服务层"""
+
 from __future__ import annotations
 
 import asyncio
 import logging
 from typing import Any, Callable, Dict, Optional
 
-from backend.db.pg_store import  update_transcript
+from backend.db.pg_store import update_transcript
 from backend.text_process.translate import translate_segments_async
 
 translate_tasks: Dict[int, Dict[str, Any]] = {}
