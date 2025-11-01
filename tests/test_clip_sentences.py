@@ -9,13 +9,13 @@ import torch
 from funasr import AutoModel
 
 # ===== 配置 =====
-AUDIO_PATH = r"C:\Users\ke\Documents\projects\python_projects\HearSight\backend\tests\datas\大语言模型进化论：从“听懂指令”到“学会思考”，AI如何与人类对齐？.m4a"
+AUDIO_PATH = r"./datas/test.mp4"
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "results")
 CLIPS_DIR = os.path.join(OUTPUT_DIR, "clips")
 MAX_SENTENCES = 10  # 仅截取前 N 句，避免过多文件
 # 轻微校正：整体将句子开始略微延后、结束再多延后一点，减少句首夹带与句尾缺失
-PADDING_START_S = 0.15
-PADDING_END_S = 0.25
+PADDING_START_MS = 0  # 毫秒
+PADDING_END_MS = 0    # 毫秒
 
 # ===== 工具函数 =====
 def ensure_dirs():
@@ -79,8 +79,8 @@ def map_charpos_to_time_ms(pos: int, text_len: int, seg_ms: List[Tuple[int, int]
 
 def sentences_with_times(text: str, timestamps_ms: List[List[int]]) -> List[Dict[str, Any]]:
     """
-    输入：整段 text 与 VAD 窗口 timestamps_ms -> 近似句子时间范围（秒）
-    输出：[{sentence, start_s, end_s}]
+    输入：整段 text 与 VAD 窗口 timestamps_ms -> 近似句子时间范围（毫秒）
+    输出：[{sentence, start_ms, end_ms}]
     """
     seg_ms = [(int(s), int(e)) for s, e in timestamps_ms if isinstance(s, (int, float)) and isinstance(e, (int, float))]
     seg_ms = [(s, e) for s, e in seg_ms if e > s]
@@ -97,8 +97,8 @@ def sentences_with_times(text: str, timestamps_ms: List[List[int]]) -> List[Dict
             ed_ms = st_ms
         out.append({
             "sentence": sent,
-            "start_s": round(st_ms / 1000.0, 3),
-            "end_s": round(ed_ms / 1000.0, 3),
+            "start_ms": st_ms,
+            "end_ms": ed_ms,
         })
     return out
 
@@ -151,20 +151,20 @@ if __name__ == "__main__":
     #  - 句尾缺少最后几个字（统一延长句尾）
     #  - 下一句包含上一句的一部分（统一将句首略微延后，并与上一句不重叠）
     adjusted_spans: List[Dict[str, Any]] = []
-    prev_end = 0.0
+    prev_end = 0
     for sp in sentence_spans:
-        st = float(sp.get("start_s", 0.0)) + PADDING_START_S
-        ed = float(sp.get("end_s", st)) + PADDING_END_S
+        st = int(sp.get("start_ms", 0)) + PADDING_START_MS
+        ed = int(sp.get("end_ms", st)) + PADDING_END_MS
         # 不与上一句重叠：强制单调不减
         if st < prev_end:
             st = prev_end
         # 至少保留最小时长，避免 0 长或负长
         if ed <= st:
-            ed = st + 0.10
+            ed = st + 100  # 至少100ms
         adjusted_spans.append({
             "sentence": sp.get("sentence", ""),
-            "start_s": round(st, 3),
-            "end_s": round(ed, 3),
+            "start_ms": st,
+            "end_ms": ed,
         })
         prev_end = ed
 
@@ -175,12 +175,15 @@ if __name__ == "__main__":
 
     # 3) 截取前 MAX_SENTENCES 句音频，保存到 clips/
     for i, sp in enumerate(adjusted_spans[:MAX_SENTENCES]):
-        st = float(sp["start_s"]) if isinstance(sp.get("start_s"), (int, float)) else 0.0
-        ed = float(sp["end_s"]) if isinstance(sp.get("end_s"), (int, float)) else st
+        st_ms = int(sp["start_ms"]) if isinstance(sp.get("start_ms"), (int, float)) else 0
+        ed_ms = int(sp["end_ms"]) if isinstance(sp.get("end_ms"), (int, float)) else st_ms
+        # 转换为秒用于ffmpeg
+        st_s = st_ms / 1000.0
+        ed_s = ed_ms / 1000.0
         out_file = os.path.join(CLIPS_DIR, f"sent_{i+1:03d}.m4a")
         try:
-            clip_with_ffmpeg(AUDIO_PATH, st, ed, out_file)
-            print(f"ok: {out_file} [{st:.3f}s ~ {ed:.3f}s]")
+            clip_with_ffmpeg(AUDIO_PATH, st_s, ed_s, out_file)
+            print(f"ok: {out_file} [{st_ms}ms ~ {ed_ms}ms]")
         except subprocess.CalledProcessError as e:
             print(f"ffmpeg 失败: {out_file} - {e}")
 

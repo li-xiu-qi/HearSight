@@ -1,20 +1,15 @@
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react"
+import { forwardRef, useEffect, useImperativeHandle } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import type { Segment, Summary } from "../../types"
-import { generateSummary } from "../../services/api"
-import ChatView, { type ChatMessage } from "./ChatView"
+import type { Segment } from "@/types"
+import ChatView from "./ChatView"
 import SegmentsTab from "./SegmentsTab"
 import TranscriptTab from "./TranscriptTab"
 import SummariesTab from "./SummariesTab"
 import TabToolbar from "./TabToolbar"
 import SearchDialog from "./SearchDialog"
+import TranslateDialog from "./TranslateDialog"
+import TranslateProgressPanel from "./TranslateProgressPanel"
+import { useRightPanelController } from "./hooks"
 
 type ScrollElement = HTMLDivElement | null
 
@@ -25,104 +20,70 @@ interface RightPanelProps {
   readonly onSeekTo: (timeMs: number) => void
   readonly onActiveSegmentChange: (index: number) => void
   readonly transcriptId?: number
+  readonly onTranslateComplete?: () => void
 }
 
 const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
-  ({ segments, activeSegIndex, autoScroll, onSeekTo, onActiveSegmentChange, transcriptId }, ref) => {
-    const [activeTab, setActiveTab] = useState("segments")
-    const [searchModalOpen, setSearchModalOpen] = useState(false)
-    const [searchTerm, setSearchTerm] = useState("")
-    const [searchResults, setSearchResults] = useState<Segment[]>([])
-    const [summaries, setSummaries] = useState<Summary[]>([])
-    const [summariesLoading, setSummariesLoading] = useState(false)
-    const [summariesError, setSummariesError] = useState<string | null>(null)
-    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
-    const [chatLoading, setChatLoading] = useState(false)
-    const [chatError, setChatError] = useState<string | null>(null)
-
-    const segmentsScrollRef = useRef<HTMLDivElement | null>(null)
-    const transcriptScrollRef = useRef<HTMLDivElement | null>(null)
+  ({ segments, activeSegIndex, autoScroll, onSeekTo, onActiveSegmentChange, transcriptId, onTranslateComplete }, ref) => {
+    const {
+      activeTab,
+      setActiveTab,
+      searchModalOpen,
+      setSearchModalOpen,
+      searchTerm,
+      setSearchTerm,
+      searchResults,
+      executeSearch,
+      displaySegments,
+      handleSegmentClick,
+      summaries,
+      summariesLoading,
+      summariesError,
+      triggerSummaryGeneration,
+      chatMessages,
+      setChatMessages,
+      chatLoading,
+      setChatLoading,
+      chatError,
+      setChatError,
+      translateDialogOpen,
+      setTranslateDialogOpen,
+      displayLanguage,
+      availableLanguages,
+      getLanguageName,
+      switchLanguage,
+      translateProgress,
+      showProgressPanel,
+      setShowProgressPanel,
+      handleStartTranslate,
+      handleRetryTranslate,
+      segmentsScrollRef,
+      transcriptScrollRef,
+      scrollUp,
+      scrollDown,
+      centerActiveSegment,
+    } = useRightPanelController({
+      segments,
+      onActiveSegmentChange,
+      onSeekTo,
+      onTranslateComplete,
+    })
 
     useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(
       ref,
       () => segmentsScrollRef.current,
-      []
+      [segmentsScrollRef]
     )
 
-    const handleSegmentClick = (segment: Segment) => {
-      onActiveSegmentChange(segment.index)
-      onSeekTo(segment.start_time)
-    }
-
-    const scrollUp = () => {
-      if (activeTab === "segments") {
-        segmentsScrollRef.current?.scrollBy({ top: -160, behavior: "smooth" })
-      } else if (activeTab === "transcript") {
-        transcriptScrollRef.current?.scrollBy({ top: -160, behavior: "smooth" })
-      }
-    }
-
-    const scrollDown = () => {
-      if (activeTab === "segments") {
-        segmentsScrollRef.current?.scrollBy({ top: 160, behavior: "smooth" })
-      } else if (activeTab === "transcript") {
-        transcriptScrollRef.current?.scrollBy({ top: 160, behavior: "smooth" })
-      }
-    }
-
-    const centerActiveSegment = () => {
-      if (activeSegIndex == null) return
-      if (activeTab === "segments") {
-        const el = segmentsScrollRef.current?.querySelector(
-          `[data-seg-index="${activeSegIndex}"]`
-        ) as HTMLElement | null
-        el?.scrollIntoView({ behavior: "smooth", block: "center" })
-      } else if (activeTab === "transcript") {
-        const el = transcriptScrollRef.current?.querySelector(
-          `[data-seg-index="${activeSegIndex}"]`
-        ) as HTMLElement | null
-        el?.scrollIntoView({ behavior: "smooth", block: "center" })
-      }
-    }
-
-    const performSearch = useCallback(() => {
-      if (!searchTerm.trim()) {
-        setSearchResults([])
-        return
-      }
-      const term = searchTerm.toLowerCase()
-      const results = segments.filter((seg) => seg.sentence?.toLowerCase().includes(term))
-      setSearchResults(results)
-    }, [searchTerm, segments])
-
-    const handleGenerateSummary = async () => {
-      setSummariesError(null)
-      setSummaries([])
-
-      if (segments.length === 0) {
-        setSummariesError("没有可用分句")
-        return
-      }
-
-      setSummariesLoading(true)
-      try {
-        const data = await generateSummary(segments)
-        const items = Array.isArray(data.summaries) ? data.summaries : []
-        setSummaries(items)
-      } catch (err: unknown) {
-        setSummariesError((err as Error)?.message || "调用总结接口失败")
-      } finally {
-        setSummariesLoading(false)
-      }
-    }
-
     useEffect(() => {
-      if (!autoScroll || activeSegIndex == null || activeTab !== "transcript") return
-      const el = transcriptScrollRef.current?.querySelector(
+      if (!autoScroll || activeSegIndex == null || activeTab !== "transcript") {
+        return
+      }
+      const element = transcriptScrollRef.current?.querySelector(
         `[data-seg-index="${activeSegIndex}"]`
       ) as HTMLElement | null
-      el?.scrollIntoView({ behavior: "smooth", block: "center" })
-    }, [activeSegIndex, autoScroll, activeTab])
+      element?.scrollIntoView({ behavior: "smooth", block: "center" })
+    }, [activeSegIndex, autoScroll, activeTab, transcriptScrollRef])
 
     return (
       <div className="h-full flex flex-col overflow-hidden">
@@ -138,11 +99,16 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
 
           {(activeTab === "segments" || activeTab === "transcript") && (
             <TabToolbar
-              onScrollUp={scrollUp}
-              onScrollDown={scrollDown}
-              onCenterActive={centerActiveSegment}
+              onScrollUp={() => scrollUp(activeTab)}
+              onScrollDown={() => scrollDown(activeTab)}
+              onCenterActive={() => centerActiveSegment(activeSegIndex, activeTab)}
               onOpenSearch={() => setSearchModalOpen(true)}
-              segments={segments}
+              onOpenTranslate={() => setTranslateDialogOpen(true)}
+              segments={displaySegments}
+              displayLanguage={displayLanguage}
+              availableLanguages={availableLanguages}
+              onLanguageChange={switchLanguage}
+              getLanguageName={getLanguageName}
             />
           )}
 
@@ -150,18 +116,20 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
             <TabsContent value="segments" className="h-full m-0 data-[state=inactive]:hidden">
               <SegmentsTab
                 ref={segmentsScrollRef}
-                segments={segments}
+                segments={displaySegments}
                 activeSegIndex={activeSegIndex}
                 onSegmentClick={handleSegmentClick}
+                displayLanguage={displayLanguage}
               />
             </TabsContent>
 
             <TabsContent value="transcript" className="h-full m-0 data-[state=inactive]:hidden">
               <TranscriptTab
                 ref={transcriptScrollRef}
-                segments={segments}
+                segments={displaySegments}
                 activeSegIndex={activeSegIndex}
                 onSegmentClick={handleSegmentClick}
+                displayLanguage={displayLanguage}
               />
             </TabsContent>
 
@@ -170,7 +138,7 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
                 summaries={summaries}
                 loading={summariesLoading}
                 error={summariesError}
-                onGenerate={handleGenerateSummary}
+                onGenerate={triggerSummaryGeneration}
                 onSeekTo={onSeekTo}
                 transcriptId={transcriptId}
               />
@@ -196,13 +164,31 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
           onOpenChange={setSearchModalOpen}
           searchTerm={searchTerm}
           onSearchTermChange={setSearchTerm}
-          onSubmit={performSearch}
+          onSubmit={executeSearch}
           results={searchResults}
           onSelect={(segment) => {
             handleSegmentClick(segment)
             setSearchModalOpen(false)
           }}
+          displayLanguage={displayLanguage}
         />
+
+        <TranslateDialog
+          open={translateDialogOpen}
+          onOpenChange={setTranslateDialogOpen}
+          transcriptId={transcriptId}
+          segments={segments}
+          onStartTranslate={(language, forceRetranslate) => handleStartTranslate(transcriptId, language, forceRetranslate)}
+          isTranslating={translateProgress.status === "translating"}
+        />
+
+        {showProgressPanel && (
+          <TranslateProgressPanel
+            state={translateProgress}
+            onClose={() => setShowProgressPanel(false)}
+            onRetry={() => handleRetryTranslate(transcriptId)}
+          />
+        )}
       </div>
     )
   }

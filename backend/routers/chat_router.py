@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from typing import Any, Dict, List
+import os
+from typing import Any, Dict
 
 from fastapi import APIRouter, HTTPException, Request
 
 from backend.text_process.summarize import summarize_segments
 from backend.text_process.chat_with_segment import chat_with_segments
-from config import get_config
-import os
+from config import settings
 
 router = APIRouter(prefix="/api", tags=["chat"])
 
@@ -27,27 +27,16 @@ def api_summarize(payload: Dict[str, Any], request: Request) -> Dict[str, Any]:
     if not segments or not isinstance(segments, list):
         raise HTTPException(status_code=400, detail="segments (list) is required")
 
-    # 优先使用请求体中的配置；其次使用配置文件（config）或环境变量
-    cfg = get_config()
-    api_key = payload.get("api_key") or cfg.OPENAI_API_KEY or os.environ.get("OPENAI_API_KEY")
-    base_url = payload.get("base_url") or cfg.OPENAI_BASE_URL or os.environ.get("OPENAI_BASE_URL")
-    model = payload.get("model") or cfg.OPENAI_CHAT_MODEL or os.environ.get("OPENAI_CHAT_MODEL")
+    # 优先使用请求体中的配置；其次使用配置或环境变量
+    api_key = payload.get("api_key") or settings.openai_api_key or os.environ.get("OPENAI_API_KEY")
+    base_url = payload.get("base_url") or settings.openai_base_url or os.environ.get("OPENAI_BASE_URL")
+    model = payload.get("model") or settings.openai_chat_model or os.environ.get("OPENAI_CHAT_MODEL")
 
     if not api_key or not base_url or not model:
         raise HTTPException(status_code=400, detail="chat api_key, base_url and model are required (either in payload or config/env)")
 
     # 从配置或环境读取 CHAT_MAX_WINDOWS（优先级：config -> 环境变量 -> 默认 1000000）
-    chat_max = None
-    if hasattr(cfg, 'CHAT_MAX_WINDOWS') and cfg.CHAT_MAX_WINDOWS:
-        try:
-            chat_max = int(cfg.CHAT_MAX_WINDOWS)
-        except Exception:
-            chat_max = None
-    if chat_max is None:
-        try:
-            chat_max = int(os.environ.get('CHAT_MAX_WINDOWS') or os.environ.get('CHAT_MAX_WINDOWS'.upper()) or '1000000')
-        except Exception:
-            chat_max = 1000000
+    chat_max = settings.chat_max_windows or int(os.environ.get("CHAT_MAX_WINDOWS") or 1000000)
 
     try:
         summaries = summarize_segments(
@@ -56,6 +45,7 @@ def api_summarize(payload: Dict[str, Any], request: Request) -> Dict[str, Any]:
             base_url=base_url,
             model=model,
             chat_max_windows=chat_max,
+            max_tokens=4096,
         )
     except ValueError as e:
         # 例如 token 超限等可预期的错误，返回 400
@@ -88,27 +78,16 @@ def api_chat_with_segments(payload: Dict[str, Any], request: Request) -> Dict[st
     if not question or not isinstance(question, str):
         raise HTTPException(status_code=400, detail="question (string) is required")
 
-    # 优先使用请求体中的配置；其次使用配置文件（config）或环境变量
-    cfg = get_config()
-    api_key = payload.get("api_key") or cfg.OPENAI_API_KEY or os.environ.get("OPENAI_API_KEY")
-    base_url = payload.get("base_url") or cfg.OPENAI_BASE_URL or os.environ.get("OPENAI_BASE_URL")
-    model = payload.get("model") or cfg.OPENAI_CHAT_MODEL or os.environ.get("OPENAI_CHAT_MODEL")
+    # 优先使用请求体中的配置；其次使用配置或环境变量
+    api_key = payload.get("api_key") or settings.openai_api_key or os.environ.get("OPENAI_API_KEY")
+    base_url = payload.get("base_url") or settings.openai_base_url or os.environ.get("OPENAI_BASE_URL")
+    model = payload.get("model") or settings.openai_chat_model or os.environ.get("OPENAI_CHAT_MODEL")
 
     if not api_key or not base_url or not model:
         raise HTTPException(status_code=400, detail="chat api_key, base_url and model are required (either in payload or config/env)")
 
     # 从配置或环境读取 CHAT_MAX_WINDOWS（优先级：config -> 环境变量 -> 默认 1000000）
-    chat_max = None
-    if hasattr(cfg, 'CHAT_MAX_WINDOWS') and cfg.CHAT_MAX_WINDOWS:
-        try:
-            chat_max = int(cfg.CHAT_MAX_WINDOWS)
-        except Exception:
-            chat_max = None
-    if chat_max is None:
-        try:
-            chat_max = int(os.environ.get('CHAT_MAX_WINDOWS') or os.environ.get('CHAT_MAX_WINDOWS'.upper()) or '1000000')
-        except Exception:
-            chat_max = 1000000
+    chat_max = settings.chat_max_windows or int(os.environ.get("CHAT_MAX_WINDOWS") or 1000000)
 
     try:
         answer = chat_with_segments(

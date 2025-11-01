@@ -1,0 +1,31 @@
+pre-commit:
+  commands:
+    frontend-format:
+      glob: "frontend/**/*.{ts,tsx,js,jsx,json,css,scss,html}"
+      run: bash -c "cd frontend && npx prettier --write \$(git diff --cached --name-only --diff-filter=ACM | grep -E '\\.(ts|tsx|js|jsx|json|css|scss|html)$')"
+      skip: [merge-commit]
+
+    frontend-lint:
+      glob: "frontend/**/*.{ts,tsx,js,jsx}"
+      run: bash -c 'cd frontend && npm run lint && npx tsc --noEmit'
+      skip: [merge-commit]
+
+    backend-format:
+      glob: "backend/**/*.py"
+      run: bash -c 'python -m black $(git diff --cached --name-only --diff-filter=ACM | grep "^backend/.*\\.py$") && python -m isort $(git diff --cached --name-only --diff-filter=ACM | grep "^backend/.*\\.py$")'
+      skip: [merge-commit]
+
+    backend-lint:
+      glob: "backend/**/*.py"
+      run: bash -c 'python -m pylint $(git diff --cached --name-only --diff-filter=ACM | grep "^backend/.*\\.py$") || true'
+      skip: [merge-commit]
+
+    supabase-format:
+      glob: "supabase_project/**/*.ts"
+      run: bash -c "cd supabase_project && npx prettier --write \$(git diff --cached --name-only --diff-filter=ACM | grep -E '\\.(ts|js)$')"
+      skip: [merge-commit]
+
+    supabase-lint:
+      glob: "supabase_project/**/*.ts"
+      run: bash -c "cd supabase_project && npx eslint \$(git diff --cached --name-only --diff-filter=ACM | grep -E '\\.(ts|js)$') || true"
+      skip: [merge-commit]

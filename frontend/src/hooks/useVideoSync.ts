@@ -45,7 +45,9 @@ export const useVideoSync = ({
             if (el) {
               try { 
                 el.scrollIntoView({ behavior: 'smooth', block: 'center' }) 
-              } catch {}
+              } catch {
+                // ignore scroll errors
+              }
             }
           }
         }

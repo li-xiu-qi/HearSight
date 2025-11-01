@@ -2,15 +2,15 @@ import { toast } from "sonner"
 
 export const message = {
   success: (content: string) => {
-    toast.success(content)
+    toast.success(content, { dismissible: true })
   },
   error: (content: string) => {
-    toast.error(content)
+    toast.error(content, { dismissible: true })
   },
   warning: (content: string) => {
-    toast.warning(content)
+    toast.warning(content, { dismissible: true })
   },
   info: (content: string) => {
-    toast.info(content)
+    toast.info(content, { dismissible: true })
   },
 }

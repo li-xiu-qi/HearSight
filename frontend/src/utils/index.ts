@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ParseResult } from '../types'
 
 export const parseBilibiliUrl = (input: string): ParseResult => {
@@ -47,7 +48,7 @@ export const seekVideoTo = (videoElement: HTMLVideoElement | null, timeMs: numbe
   const v = videoElement
   if (!v) return
   
-  let targetMs = Math.max(0, Number(timeMs) || 0)
+  const targetMs = Math.max(0, Number(timeMs) || 0)
   let target = targetMs / 1000
   
   if (!Number.isFinite(v.duration) || v.readyState < 1) {

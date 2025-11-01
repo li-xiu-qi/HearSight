@@ -2,8 +2,6 @@
 from __future__ import annotations
 
 import os
-import glob
-import json
 from yt_dlp import YoutubeDL
 import logging
 from typing import Optional, Callable, TypedDict
@@ -37,6 +35,9 @@ class DownloadProgressTracker:
         self.progress_callback = progress_callback
         self.last_callback_time = 0
         self.callback_interval = 0.5  # 最多每0.5秒回调一次，避免过于频繁
+        # 追踪多个文件流的进度
+        self.streams_progress: dict[str, dict] = {}
+        self.current_status = "downloading"
 
     def _format_bytes(self, bytes_value: int) -> str:
         """格式化字节数为可读格式"""
@@ -63,20 +64,42 @@ class DownloadProgressTracker:
         basename = os.path.basename(filename) if filename else "unknown"
 
         if status == "downloading":
+            # 对于多流下载（视频+音频），计算总体进度
             downloaded = d.get("downloaded_bytes", 0)
             total = d.get("total_bytes", 0)
-            progress_percent = (downloaded / total * 100) if total > 0 else 0
+            
+            # 记录这个流的进度
+            stream_key = basename
+            if stream_key not in self.streams_progress:
+                self.streams_progress[stream_key] = {"downloaded": 0, "total": 0}
+            self.streams_progress[stream_key]["downloaded"] = downloaded
+            self.streams_progress[stream_key]["total"] = total
+            
+            # 计算所有流的总体进度
+            total_downloaded = sum(s["downloaded"] for s in self.streams_progress.values())
+            total_bytes = sum(s["total"] for s in self.streams_progress.values())
+            
+            if total_bytes > 0:
+                progress_percent = (total_downloaded / total_bytes * 100)
+            else:
+                progress_percent = 0
+            
             return {
                 "status": "downloading",
                 "progress_percent": round(progress_percent, 1),
-                "downloaded_bytes": downloaded,
-                "total_bytes": total,
+                "downloaded_bytes": total_downloaded,
+                "total_bytes": total_bytes,
                 "speed": d.get("speed") or 0,
                 "eta_seconds": d.get("eta"),
                 "filename": basename,
                 "timestamp": datetime.now().isoformat(),
             }
         elif status == "finished":
+            # 清空已完成流的进度记录
+            basename = os.path.basename(d.get("filename", "unknown")) if d.get("filename") else "unknown"
+            if basename in self.streams_progress:
+                del self.streams_progress[basename]
+            
             return {
                 "status": "finished",
                 "progress_percent": 100.0,
@@ -123,25 +146,6 @@ class DownloadProgressTracker:
                 logger.error(f"进度回调执行出错: {e}")
 
 
-def _clean_temp_files(out_dir: str, title: str):
-    """清理可能存在的临时文件"""
-    try:
-        temp_patterns = [
-            os.path.join(out_dir, f"{title}.*.part"),
-            os.path.join(out_dir, f"{title}.*.tmp"),
-            os.path.join(out_dir, f"{title}.*.part-Frag*"),
-            os.path.join(out_dir, f"{title}.*.temp.*"),
-        ]
-
-        for pattern in temp_patterns:
-            for temp_file in glob.glob(pattern):
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
-                    logger.info(f"已清理临时文件: {temp_file}")
-    except Exception as e:
-        logger.warning(f"清理临时文件时出错: {e}")
-
-
 def _build_ydl_options(
     quality: str,
     out_dir: str,
@@ -152,16 +156,22 @@ def _build_ydl_options(
     tracker: DownloadProgressTracker,
 ) -> dict:
     """构建 yt-dlp 选项"""
-    fmt = "bv*+ba/best" if quality == "best" else quality
+    # 使用 'best' 格式会同时下载视频和音频，导致进度显示混乱
+    # 改为 'bestvideo*+bestaudio/best' 确保下载最优质量的已合并格式
+    if quality == "best":
+        fmt = "bestvideo*+bestaudio/best"
+    else:
+        fmt = quality
     outtmpl = os.path.join(out_dir, "%(title)s.%(ext)s") if simple_filename else os.path.join(out_dir, "%(title)s [%(id)s][P%(playlist_index)02d].%(ext)s")
 
     opts = {
         "format": fmt,
         "outtmpl": outtmpl,
         "merge_output_format": "mp4",
+        "keepvideo": False,
         "quiet": False,
-        "overwrites": True,
         "windowsfilenames": True,
+        "nopart": use_nopart,
         "retries": 3,
         "fragment_retries": 3,
         "skip_unavailable_fragments": True,
@@ -177,8 +187,6 @@ def _build_ydl_options(
 
     if http_headers:
         opts["http_headers"] = http_headers
-    if use_nopart:
-        opts["nopart"] = True
 
     return opts
 
@@ -235,11 +243,12 @@ def download_bilibili_with_progress(
     """支持进度回调的 Bilibili 下载函数"""
     os.makedirs(out_dir, exist_ok=True)
 
-    if use_nopart is None:
-        use_nopart = os.name == "nt"
-
     http_headers = {"Cookie": f"SESSDATA={sessdata}"} if sessdata else None
     tracker = DownloadProgressTracker(progress_callback)
+
+    # Windows 环境下默认使用 nopart=True 避免文件锁定问题
+    if use_nopart is None:
+        use_nopart = os.name == 'nt'
 
     ydl_opts = _build_ydl_options(
         quality,
@@ -255,13 +264,6 @@ def download_bilibili_with_progress(
     results: list[str] = []
     try:
         with YoutubeDL(ydl_opts) as ydl:
-            try:
-                info_dict = ydl.extract_info(url, download=False)
-                title = info_dict.get("title", "unknown") if isinstance(info_dict, dict) else "unknown"
-                _clean_temp_files(out_dir, title)
-            except Exception as e:
-                logger.warning(f"获取视频信息时出错: {e}")
-
             info = ydl.extract_info(url, download=True)
             results = _extract_file_paths(ydl, info)
     except Exception as e:

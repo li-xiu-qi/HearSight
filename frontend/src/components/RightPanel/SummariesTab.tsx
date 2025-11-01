@@ -73,7 +73,7 @@ export default function SummariesTab({
     }
 
     loadAllThumbnails()
-  }, [imageModeEnabled, summaries, transcriptId])
+  }, [imageModeEnabled, summaries, transcriptId, frameCache])
   const handleCopySummaries = async () => {
     const text = summaries
       .map((sum) => `${sum.topic}\n${sum.summary}`)

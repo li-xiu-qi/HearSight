@@ -1,14 +1,20 @@
 import { Button } from "@/components/ui/button"
-import { ChevronDown, ChevronUp, Search, Target, Copy } from "lucide-react"
+import { ChevronDown, ChevronUp, Search, Target, Copy, Languages } from "lucide-react"
 import { toast } from "sonner"
 import type { Segment } from "../../types"
+import LanguageSwitcher from "./LanguageSwitcher"
 
 interface TabToolbarProps {
   readonly onScrollUp: () => void
   readonly onScrollDown: () => void
   readonly onCenterActive: () => void
   readonly onOpenSearch: () => void
+  readonly onOpenTranslate: () => void
   readonly segments: Segment[]
+  readonly displayLanguage?: string
+  readonly availableLanguages?: string[]
+  readonly onLanguageChange?: (language: string) => void
+  readonly getLanguageName?: (code: string) => string
 }
 
 export default function TabToolbar({
@@ -16,7 +22,12 @@ export default function TabToolbar({
   onScrollDown,
   onCenterActive,
   onOpenSearch,
+  onOpenTranslate,
   segments,
+  displayLanguage = 'original',
+  availableLanguages = ['original'],
+  onLanguageChange,
+  getLanguageName = (code: string) => code,
 }: Readonly<TabToolbarProps>) {
   const handleCopyText = async () => {
     const text = segments.map(seg => seg.sentence || "").join(" ")
@@ -43,9 +54,22 @@ export default function TabToolbar({
       <Button variant="ghost" size="sm" onClick={onOpenSearch}>
         <Search className="h-4 w-4" />
       </Button>
+      <Button variant="ghost" size="sm" onClick={onOpenTranslate}>
+        <Languages className="h-4 w-4" />
+      </Button>
       <Button variant="ghost" size="sm" onClick={handleCopyText}>
         <Copy className="h-4 w-4" />
       </Button>
+      <div className="ml-auto">
+        {onLanguageChange && (
+          <LanguageSwitcher
+            displayLanguage={displayLanguage}
+            availableLanguages={availableLanguages}
+            onLanguageChange={onLanguageChange}
+            getLanguageName={getLanguageName}
+          />
+        )}
+      </div>
     </div>
   )
 }

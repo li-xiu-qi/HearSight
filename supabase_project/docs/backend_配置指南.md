@@ -1,0 +1,308 @@
+# 配置指南
+
+Supabase 服务通过环境变量配置。
+
+## 环境变量
+
+创建 `backend/supabase/.env` 文件配置环境变量。
+
+### 必需配置
+
+```bash
+# 数据库
+POSTGRES_PASSWORD=postgres
+
+# JWT（Edge Functions 认证使用）
+JWT_SECRET=your_jwt_secret_key_here
+
+# AIbackend 集成
+AIBACKEND_URL=http://host.docker.internal:8001
+
+# Supabase 配置
+ANON_KEY=your_anon_key
+SERVICE_ROLE_KEY=your_service_role_key
+```
+
+### 其他配置
+
+```bash
+# 组织和项目名称
+STUDIO_DEFAULT_ORGANIZATION=My Organization
+STUDIO_DEFAULT_PROJECT=My Project
+
+# 数据库备份
+POSTGRES_INITDB_ARGS=-c shared_preload_libraries=pgextwlist
+```
+
+## 环境特定配置
+
+### 本地开发
+
+```bash
+SUPABASE_PUBLIC_URL=http://localhost:8000
+AIBACKEND_URL=http://host.docker.internal:8001
+```
+
+### 生产环境
+
+```bash
+SUPABASE_PUBLIC_URL=https://your-domain.supabase.co
+AIBACKEND_URL=https://aibackend.your-domain.com
+## 完整的环境变量示例
+
+以下是汉化的 Supabase 自托管环境变量示例文件，包含详细注释和说明：
+
+```bash
+############
+# Supabase 自托管环境变量示例文件
+#
+# 使用说明：
+# 1. 复制此文件为 .env（在同一目录下）
+# 2. 替换所有占位符值为真实的密钥和配置
+# 3. 不要将 .env 文件提交到版本库（确保 .gitignore 包含 .env）
+# 4. 生成密钥的命令示例：
+#    - JWT_SECRET: openssl rand -hex 32
+#    - ANON_KEY 和 SERVICE_ROLE_KEY: 在 Supabase 控制台生成，或使用 supabase CLI
+#    - POSTGRES_PASSWORD: 使用强随机密码生成器
+# 5. 生产环境前务必更改所有默认值
+############
+
+############
+# 密钥
+# 在生产环境前必须更改这些
+############
+
+# PostgreSQL 数据库的超级用户密码
+# 用途：数据库容器使用此密码连接和初始化
+# 生成：使用强随机密码，至少 16 字符，包含大小写字母、数字、符号
+POSTGRES_PASSWORD=your-super-secret-and-long-postgres-password
+# 用于签名和验证 JWT 的密钥（至少 32 字符长）
+# 用途：GoTrue 服务用此密钥签发和校验用户 JWT token
+# 生成：openssl rand -hex 32（生成 64 字符的十六进制字符串）
+# 安全：泄露会导致 token 被伪造，定期轮换
+JWT_SECRET=your-super-secret-jwt-token-with-at-least-32-characters-long
+# 匿名客户端公钥（用于前端公开操作）
+# 用途：前端使用此密钥进行公开的认证操作，如登录、注册、读取公开数据
+# 权限：受限，不能执行管理操作
+# 安全：可公开给客户端，但不要在仓库提交生产 key
+ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE
+# 服务端超级权限密钥（用于管理操作）
+# 用途：后端使用此密钥执行管理员操作，如创建用户、绕过行级安全规则
+# 权限：最大权限，可直接操作数据库
+# 安全：绝对不要放到前端或公开仓库，只在受信后端使用
+SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q
+# Supabase Studio 管理界面的用户名
+# 用途：登录管理面板的用户名
+# 默认：supabase（生产中更改）
+DASHBOARD_USERNAME=supabase
+# Supabase Studio 管理界面的密码（不安全，需要更新）
+# 用途：登录管理面板的密码
+# 默认：不安全（生产中更改为强密码）
+DASHBOARD_PASSWORD=this_password_is_insecure_and_should_be_updated
+# 全局加密/签名密钥（用于会话和加密操作）
+# 用途：用于会话、cookie 或其他加密操作的种子
+# 生成：openssl rand -hex 32
+SECRET_KEY_BASE=UpNVntn3cDxHJpq99YMc1T1AQgQpc8kfYTuRgBiYa15BLrx8etQoXz3gZv1/u2oq
+# 用于加密 Vault 的密钥（至少 32 字符）
+# 用途：加密敏感数据存储（如 Vault）
+# 生成：openssl rand -hex 32
+VAULT_ENC_KEY=your-encryption-key-32-chars-min
+
+
+############
+# 数据库 - 可以更改为任何启用逻辑复制的 PostgreSQL 数据库
+############
+
+# PostgreSQL 主机地址
+# 默认：db（Docker 容器名）
+POSTGRES_HOST=db
+# PostgreSQL 数据库名
+# 默认：postgres
+POSTGRES_DB=postgres
+# PostgreSQL 端口
+# 默认：5432
+POSTGRES_PORT=5432
+# 默认用户是 postgres
+
+
+############
+# Supavisor -- 数据库连接池
+############
+# Supavisor 监听事务池连接的端口
+POOLER_PROXY_PORT_TRANSACTION=6543
+# Supavisor 为每个池打开的最大 PostgreSQL 连接数
+POOLER_DEFAULT_POOL_SIZE=20
+# Supavisor 为每个池接受的最大客户端连接数
+POOLER_MAX_CLIENT_CONN=100
+# 唯一租户标识符
+POOLER_TENANT_ID=your-tenant-id
+# Supavisor 内部元数据存储的池大小
+# 这与客户端连接分开，仅由 Supavisor 本身使用
+POOLER_DB_POOL_SIZE=5
+
+
+############
+# API 代理 - Kong 反向代理的配置
+############
+
+# Kong HTTP 端口
+# 用途：Kong 监听 HTTP 请求的端口
+KONG_HTTP_PORT=8000
+# Kong HTTPS 端口
+# 用途：Kong 监听 HTTPS 请求的端口
+KONG_HTTPS_PORT=8443
+
+
+############
+# API - PostgREST 的配置
+############
+
+# PostgREST 数据库模式
+# 用途：指定 PostgREST 暴露的数据库模式
+PGRST_DB_SCHEMAS=public,storage,graphql_public
+
+
+############
+# 认证 - GoTrue 认证服务的配置
+############
+
+## 通用
+# 站点 URL
+# 用途：认证服务的外部 URL，用于重定向和链接
+SITE_URL=http://localhost:3000
+# 额外重定向 URL
+# 用途：允许的额外重定向 URL（逗号分隔）
+ADDITIONAL_REDIRECT_URLS=
+# JWT 过期时间（秒）
+# 用途：JWT token 的有效期
+JWT_EXPIRY=3600
+# 禁用注册
+# 用途：是否禁用新用户注册
+DISABLE_SIGNUP=false
+# API 外部 URL
+# 用途：认证 API 的外部访问 URL
+API_EXTERNAL_URL=http://localhost:8000
+
+## 邮件配置
+# 确认邮件路径
+# 用途：邮箱确认邮件中的验证链接路径
+MAILER_URLPATHS_CONFIRMATION="/auth/v1/verify"
+# 邀请邮件路径
+# 用途：用户邀请邮件中的验证链接路径
+MAILER_URLPATHS_INVITE="/auth/v1/verify"
+# 恢复邮件路径
+# 用途：密码恢复邮件中的验证链接路径
+MAILER_URLPATHS_RECOVERY="/auth/v1/verify"
+# 邮箱更改邮件路径
+# 用途：邮箱更改邮件中的验证链接路径
+MAILER_URLPATHS_EMAIL_CHANGE="/auth/v1/verify"
+
+## 邮箱认证
+# 启用邮箱注册
+# 用途：是否允许通过邮箱注册新用户
+ENABLE_EMAIL_SIGNUP=true
+# 启用邮箱自动确认
+# 用途：注册后是否自动确认邮箱（生产中通常设为 false）
+# 详细说明：
+#   - true: 用户注册后邮箱自动确认，无需点击邮件链接，可立即登录
+#   - false: 用户注册后需通过邮件确认链接验证邮箱，确保邮箱真实性
+# 安全建议：生产环境设为 false，防止垃圾注册
+ENABLE_EMAIL_AUTOCONFIRM=false
+# SMTP 管理员邮箱
+# 用途：发送邮件的管理员邮箱地址
+SMTP_ADMIN_EMAIL=admin@example.com
+# SMTP 主机
+# 用途：SMTP 服务器地址
+SMTP_HOST=supabase-mail
+# SMTP 端口
+# 用途：SMTP 服务器端口
+SMTP_PORT=2500
+# SMTP 用户名
+# 用途：SMTP 认证用户名
+SMTP_USER=fake_mail_user
+# SMTP 密码
+# 用途：SMTP 认证密码
+SMTP_PASS=fake_mail_password
+# SMTP 发送者名称
+# 用途：邮件发送者显示名称
+SMTP_SENDER_NAME=fake_sender
+# 启用匿名用户
+# 用途：是否允许匿名用户访问
+ENABLE_ANONYMOUS_USERS=false
+
+## 电话认证
+# 启用电话注册
+# 用途：是否允许通过电话号码注册新用户
+ENABLE_PHONE_SIGNUP=true
+# 启用电话自动确认
+# 用途：电话注册后是否自动确认
+ENABLE_PHONE_AUTOCONFIRM=true
+
+
+############
+# Studio - 管理面板的配置
+############
+
+# 默认组织
+# 用途：Studio 管理面板的默认组织名称
+STUDIO_DEFAULT_ORGANIZATION=Default Organization
+# 默认项目
+# 用途：Studio 管理面板的默认项目名称
+STUDIO_DEFAULT_PROJECT=Default Project
+
+# Studio 端口
+# 用途：Studio 管理面板监听的端口
+STUDIO_PORT=3000
+# 如果要在 localhost 外使用 Studio，请替换此项
+# 用途：Studio 的公共访问 URL
+SUPABASE_PUBLIC_URL=http://localhost:8000
+
+# 启用 webp 支持
+# 用途：是否启用图片代理的 webp 格式检测
+IMGPROXY_ENABLE_WEBP_DETECTION=true
+
+# 添加 OpenAI API 密钥以启用 SQL 编辑器助手
+# 用途：用于 SQL 编辑器的 AI 助手功能
+OPENAI_API_KEY=
+
+
+############
+# Functions - 边缘函数的配置
+############
+# 注意：VERIFY_JWT 适用于所有函数。暂不支持按函数的 VERIFY_JWT。
+# 用途：是否对所有边缘函数强制 JWT 验证
+FUNCTIONS_VERIFY_JWT=false
+
+
+############
+# 日志 - 分析的配置
+# 请参考 https://supabase.com/docs/reference/self-hosting-analytics/introduction
+############
+
+# 更改 vector.toml sinks 以反映此更改
+# 这些值不能相同
+# 用途：Logflare 公共访问令牌，用于日志收集
+LOGFLARE_PUBLIC_ACCESS_TOKEN=your-super-secret-and-long-logflare-key-public
+# 用途：Logflare 私有访问令牌，用于日志收集
+LOGFLARE_PRIVATE_ACCESS_TOKEN=your-super-secret-and-long-logflare-key-private
+
+# Docker socket 位置 - 根据操作系统而异
+# 用途：Docker daemon socket 路径，用于日志收集
+DOCKER_SOCKET_LOCATION=/var/run/docker.sock
+
+# Google Cloud 项目详情
+# 用途：Google Cloud 项目 ID 和编号，用于云集成
+GOOGLE_PROJECT_ID=GOOGLE_PROJECT_ID
+GOOGLE_PROJECT_NUMBER=GOOGLE_PROJECT_NUMBER
+```
+
+## 配置管理
+
+- `.env` 文件存放在 `backend/supabase/` 目录
+- 不提交 `.env` 到版本控制，使用 `.env.example` 模板
+- 敏感信息（密钥、密码）仅通过环境变量传入
+
+## 相关文档
+
+- [快速开始](backend_快速开始指南.md)
+- [Docker 部署指南](backend_Docker_部署指南.md)

@@ -5,6 +5,7 @@ export interface Segment {
   sentence: string
   start_time: number
   end_time: number
+  translation?: { [language: string]: string } | null
 }
 
 // 转写记录元数据
@@ -15,16 +16,33 @@ export interface TranscriptMeta {
   segment_count: number
 }
 
+// 下载/处理进度信息
+export interface ProgressInfo {
+  stage: 'waiting' | 'upload' | 'download' | 'downloading' | 'asr' | 'processing' | 'completed'
+  status: 'idle' | 'ready' | 'in-progress' | 'completed' | 'failed' | 'success'
+  progress_percent: number
+  current_bytes?: number
+  total_bytes?: number
+  speed?: number
+  eta_seconds?: number | null
+  filename: string
+  message?: string
+  error?: string
+  timestamp?: string
+  job_id?: number
+}
+
 // 任务项类型
 export interface JobItem {
   id: number
   url: string
-  status: 'pending' | 'running' | 'success' | 'failed' | string
+  status: 'downloading' | 'processing' | 'success' | 'failed' | string
   created_at?: string | null
   started_at?: string | null
   finished_at?: string | null
-  result?: any
+  result?: unknown
   error?: string | null
+  progress?: ProgressInfo
 }
 
 // URL解析结果类型

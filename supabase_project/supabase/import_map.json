@@ -1,0 +1,5 @@
+{
+    "imports": {
+        "std/": "https://jsr.io/std@0.177.1/"
+    }
+}

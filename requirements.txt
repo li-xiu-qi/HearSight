@@ -15,3 +15,9 @@ python-dotenv
 # 备用视频截图方案
 opencv-python 
 pillow
+# 用于重试机制，处理超时和限速
+tenacity
+
+black
+isort
+pylint

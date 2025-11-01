@@ -99,5 +99,20 @@ tests/downloads
 tests/results
 tests/datas
 
+# Supabase 相关忽略规则
+# others
+.github/instructions/
+supabase_project/supabase/docker-compose-xuanyuan.yml
+# Supabase volumes: 仅忽略运行时 postgres 数据目录 data
+# 其余模板、源码、配置文件仍可被版本控制
+
+# 只忽略具体的运行时数据目录
+supabase_project/supabase/volumes/db/data/
+supabase_project/supabase/volumes/storage/
+
+# 账户到 supabase logs 配置文件，repo 中全局有 logs/ 忽略规则，
+# 但我们需要保留 supabase 的 logs 配置以便版本控制，故在此放行
+!supabase_project/supabase/volumes/logs/
+
 docs/architecture
 docker-compose-xuanyuan.yml
