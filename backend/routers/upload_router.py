@@ -11,8 +11,10 @@ from fastapi.responses import JSONResponse
 from backend.db.job_store import update_job_result_paths
 from backend.db.pg_store import create_job
 from backend.db.transcript_crud import update_transcript_media_path
-from backend.services.upload_service import (create_audio_placeholder,
-                                             get_unique_filename)
+from backend.services.upload_service import (
+    create_audio_placeholder,
+    get_unique_filename,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["upload"])

@@ -10,12 +10,20 @@ from pathlib import Path
 from fastapi import FastAPI
 
 from backend.audio2text.asr_sentence_segments import process as asr_process
-from backend.db.pg_store import (claim_next_pending_job, finish_job_failed,
-                                 finish_job_success, get_job, save_transcript,
-                                 update_job_result, update_job_status)
+from backend.db.pg_store import (
+    claim_next_pending_job,
+    finish_job_failed,
+    finish_job_success,
+    get_job,
+    save_transcript,
+    update_job_result,
+    update_job_status,
+)
 from backend.routers.progress_router import set_task_progress
 from backend.utils.vedio_utils.download_video.download_bilibili_with_progress import (
-    ProgressInfo, download_bilibili_with_progress)
+    ProgressInfo,
+    download_bilibili_with_progress,
+)
 
 
 def job_worker(app: FastAPI, db_url: str | None) -> None:

@@ -4,14 +4,29 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from .job_store import (claim_next_pending_job, create_job, finish_job_failed,
-                        finish_job_success, get_job, init_job_table, list_jobs,
-                        update_job_result, update_job_status)
-from .transcript_crud import (delete_transcript, get_transcript_by_id,
-                              save_transcript, update_transcript)
+from .job_store import (
+    claim_next_pending_job,
+    create_job,
+    finish_job_failed,
+    finish_job_success,
+    get_job,
+    init_job_table,
+    list_jobs,
+    update_job_result,
+    update_job_status,
+)
+from .transcript_crud import (
+    delete_transcript,
+    get_transcript_by_id,
+    save_transcript,
+    update_transcript,
+)
 from .transcript_init import init_transcript_table
-from .transcript_query import (count_transcripts, get_latest_transcript,
-                               list_transcripts_meta)
+from .transcript_query import (
+    count_transcripts,
+    get_latest_transcript,
+    list_transcripts_meta,
+)
 
 
 def init_db(db_url: Optional[str] = None) -> None:

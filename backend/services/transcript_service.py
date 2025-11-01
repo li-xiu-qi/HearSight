@@ -7,8 +7,12 @@ import logging
 from pathlib import Path
 from typing import Any, Dict
 
-from backend.db.pg_store import (count_transcripts, delete_transcript,
-                                 get_transcript_by_id, list_transcripts_meta)
+from backend.db.pg_store import (
+    count_transcripts,
+    delete_transcript,
+    get_transcript_by_id,
+    list_transcripts_meta,
+)
 
 
 async def list_transcripts_async(
