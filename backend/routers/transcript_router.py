@@ -7,11 +7,15 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
-from backend.services.transcript_service import (delete_transcript_async,
-                                                 get_transcript_async,
-                                                 list_transcripts_async)
-from backend.services.translate_service import (get_translate_progress,
-                                                start_translate_task)
+from backend.services.transcript_service import (
+    delete_transcript_async,
+    get_transcript_async,
+    list_transcripts_async,
+)
+from backend.services.translate_service import (
+    get_translate_progress,
+    start_translate_task,
+)
 from config import settings
 
 
