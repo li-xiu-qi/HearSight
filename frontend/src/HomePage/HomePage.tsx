@@ -40,7 +40,7 @@ function HomePage() {
         {/* 首屏区域 */}
         <section className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground py-20 px-6 text-center">
           <h1 className="text-5xl font-bold mb-4">HearSight</h1>
-          <h3 className="text-2xl font-medium mb-6 text-primary-foreground/90">智能视频内容分析与理解平台</h3>
+          <h3 className="text-2xl font-medium mb-6 text-primary-foreground/90">智能视频内容分析与理解工具</h3>
           <p className="text-lg max-w-3xl mx-auto mb-8 text-primary-foreground/85 leading-relaxed">
             HearSight 是一个强大的视频和音频内容分析工具，支持在线视频链接和本地文件上传，
             能够自动识别其中的语音内容，将其转换为文本，并提供智能分句、内容总结和智能问答功能，
@@ -159,57 +159,12 @@ function HomePage() {
           </div>
         </section>
 
-        {/* 常见问题区域 */}
-        <section className="py-16 px-6 bg-muted/30">
-          <div className="max-w-7xl mx-auto">
-            <Separator className="mb-8" />
-            <h2 className="text-3xl font-bold text-center mb-12 text-foreground">常见问题</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>HearSight支持哪些视频平台和文件格式？</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">支持Bilibili平台的视频链接分析，同时支持本地上传视频文件(MP4、AVI、MOV、MKV等)和音频文件(MP3、WAV、M4A、AAC等)。</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>转写准确率如何？</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">我们使用了先进的语音识别技术，对于清晰的普通话音频，准确率可达95%以上。
-                  对于有背景音乐、杂音或方言的情况，准确率可能会有所下降。</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>处理一个视频需要多长时间？</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">处理时间取决于视频的长度和当前系统负载，通常5-10分钟的视频需要2-5分钟处理时间。</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>是否支持导出转写结果？</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">是的，您可以在分析完成后导出文本内容，支持多种格式包括TXT、SRT等。</p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
       </main>
 
       {/* 底部信息 */}
       <footer className="bg-card border-t text-muted-foreground text-center py-8 px-6 mt-auto">
         <div className="max-w-7xl mx-auto">
-          <p className="m-0">HearSight &copy; {new Date().getFullYear()} - 智能视频内容分析平台</p>
+          <p className="m-0">HearSight &copy; {new Date().getFullYear()} - 智能视频内容分析工具</p>
         </div>
       </footer>
     </div>

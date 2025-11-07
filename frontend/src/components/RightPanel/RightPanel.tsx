@@ -60,8 +60,6 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
       handleRetryTranslate,
       segmentsScrollRef,
       transcriptScrollRef,
-      scrollUp,
-      scrollDown,
       centerActiveSegment,
     } = useRightPanelController({
       segments,
@@ -101,8 +99,6 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
 
           {(activeTab === "segments" || activeTab === "transcript") && (
             <TabToolbar
-              onScrollUp={() => scrollUp(activeTab)}
-              onScrollDown={() => scrollDown(activeTab)}
               onCenterActive={() => centerActiveSegment(activeSegIndex, activeTab)}
               onOpenSearch={() => setSearchModalOpen(true)}
               onOpenTranslate={() => setTranslateDialogOpen(true)}

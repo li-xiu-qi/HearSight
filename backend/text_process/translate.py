@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from typing import Any, Callable, Dict, List, Optional
 
 import tiktoken
@@ -57,8 +58,6 @@ def _split_segments_by_output_tokens(
             final_batches.append(batch)
         else:
             # 否则进一步拆分为更小的批次
-            import logging
-
             logging.warning(
                 f"批次 token 数 ({total_tokens}) 超过限制 ({max_tokens})，"
                 f"将 {len(batch)} 句拆分为更小的批次"
@@ -108,25 +107,42 @@ def _build_translate_prompt(
 4. 使用目标语言最自然的表达方式，避免生硬翻译
 5. 不同语言的翻译长度可能差异很大，这是完全正常的（例如英文"Hello"可能翻译为中文"你好"）
 
+关键要求 - 索引对应规则（必须严格遵守）：
+- 【重要】每个翻译结果的 index 必须与【待翻译句子】中的 index 完全相同
+- 【重要】每句话都有唯一的 index 标识符，返回的翻译必须一一对应
+- 【重要】绝不能漏掉任何一句，绝不能改变顺序，绝不能重复
+- 【重要】如果你注意到 index 不是连续的（如 0, 1, 3, 5），这是正常的，保持原样即可
+
 工作流程：
 1. 首先阅读【前文上下文】和【后文上下文】以了解语境（但这些内容本身不需要翻译）
 2. 然后专注于翻译【待翻译句子】中的所有句子（只翻译这一部分）
-3. 确保每个句子都有唯一的翻译结果
+3. 逐一确认每个句子都有唯一的翻译结果，index 必须完全对应
 
 返回要求：
 - 返回结果必须严格包含 START_TRANSLATIONS 和 END_TRANSLATIONS 边界标记
 - 边界标记之间只能包含纯JSON数组格式
-- JSON 数组必须包含所有待翻译句子的翻译结果
-- 每个待翻译句子都必须有一个翻译条目，格式为 {{"index": N, "translation": "翻译内容"}}
+- JSON 数组必须包含所有待翻译句子的翻译结果（一个都不能少）
+- 每个待翻译句子都必须有一个翻译条目，格式必须是（注意是单个大括号）: {"index": N, "translation": "翻译内容"}
 - 严禁混入前文上下文或后文上下文的内容
 - 禁止使用Markdown、代码块（```）、加粗、列表、编号等特殊格式
 
-格式示例：
+格式示例1（注意：假设待翻译句子的 index 是 0, 1, 2）：
 
 START_TRANSLATIONS
 [
-  {{"index": 0, "translation": "翻译后的句子"}},
-  {{"index": 1, "translation": "翻译后的句子"}}
+  {"index": 0, "translation": "翻译后的句子0"},
+  {"index": 1, "translation": "翻译后的句子1"},
+  {"index": 2, "translation": "翻译后的句子2"}
+]
+END_TRANSLATIONS
+
+格式示例2（假设输入 index 是 5, 7, 9）：
+
+START_TRANSLATIONS
+[
+  {"index": 5, "translation": "翻译后的句子"},
+  {"index": 7, "translation": "翻译后的句子"},
+  {"index": 9, "translation": "翻译后的句子"}
 ]
 END_TRANSLATIONS
 """.strip()
@@ -156,13 +172,14 @@ END_TRANSLATIONS
             context_lines.append("")
 
     # 添加待翻译句子（这是唯一需要翻译的部分）
-    context_lines.append("【待翻译句子】")
+    context_lines.append("【待翻译句子】（必须逐一翻译，index必须一一对应）")
     for seg in segments:
         index = seg.get("index", 0)
         sentence = seg.get("sentence", "").strip()
         if sentence:
             context_lines.append(f"{index}: {sentence}")
     context_lines.append("")
+    context_lines.append(f"（共 {len(segments)} 个句子需要翻译，检查：是否一个都没漏，是否顺序没乱，是否 index 完全对应）")
 
     # 添加后文上下文（后两句，如果存在）
     max_idx = max((seg.get("index", 0) for seg in all_segments), default=0)
@@ -189,6 +206,8 @@ def _extract_translations(response_text: str) -> Dict[int, str]:
     2. translation_content: 标志 + ```json markdown 格式（向后兼容）
     3. 直接的 ```json markdown 格式（向后兼容）
     4. 纯 JSON 数组（向后兼容）
+    
+    返回一个字典，key 为 index，value 为翻译文本。
     """
     translations = {}
 
@@ -246,8 +265,6 @@ def _extract_translations(response_text: str) -> Dict[int, str]:
 
         # 如果仍然没有找到 JSON，尝试更激进的清理
         if not cleaned.startswith("[") or not cleaned.endswith("]"):
-            import logging
-
             logging.warning(f"无法识别JSON数组边界，原始响应: {response_text[:300]}")
             return translations
 
@@ -261,9 +278,12 @@ def _extract_translations(response_text: str) -> Dict[int, str]:
                     if isinstance(trans, str) and trans.strip():
                         translations[item["index"]] = trans.strip()
     except (json.JSONDecodeError, IndexError, KeyError, ValueError) as e:
-        import logging
-
         logging.warning(f"翻译结果解析失败: {e}，原始响应: {response_text[:300]}")
+
+    # 诊断日志：检查 index 的顺序是否一致
+    if translations:
+        sorted_indices = sorted(translations.keys())
+        logging.debug(f"提取的翻译 indices（顺序）: {sorted_indices}")
 
     return translations
 
@@ -304,8 +324,6 @@ async def translate_segments_async(
     if force_retranslate:
         # 强制重新翻译：所有分句都需要重新翻译
         untranslated_segments = segments
-        import logging
-
         logging.info(f"强制重新翻译模式启用，将重新翻译所有 {len(segments)} 个分句")
     else:
         # 正常模式：只翻译未翻译的分句（检查目标语言是否已有翻译）
@@ -315,8 +333,6 @@ async def translate_segments_async(
             if not seg.get("translation")
             or target_language not in (seg.get("translation") or {})
         ]
-
-    import logging
 
     logging.info(
         f"翻译分析: 总分句数={len(segments)}, 待翻译={len(untranslated_segments)}, 目标语言={target_language}, 强制重译={force_retranslate}"
@@ -342,12 +358,10 @@ async def translate_segments_async(
     }
 
     # 使用提供的语言名称或默认映射
-    source_name = source_lang_name or lang_names.get(
-        target_language.replace("_to_", "_").split("_")[0], "原文"
-    )
     target_name = target_lang_name or lang_names.get(
         target_language.split("_")[-1], target_language
     )
+    source_name = source_lang_name or "原文"
 
     # 按输出token分批（只对未翻译的分句）
     batches = _split_segments_by_output_tokens(untranslated_segments, max_tokens)
@@ -397,8 +411,27 @@ async def translate_segments_async(
                 failed_indices.append(seg.get("index", 0))
             continue
 
-        # 质量检查：验证翻译的有效性
+        # 质量检查：验证翻译的有效性和完整性
         quality_checked = {}
+        expected_indices = {seg.get("index", 0) for seg in batch}
+        received_indices = set(batch_translations.keys())
+        
+        # 检查是否有漏掉的句子
+        missing_indices = expected_indices - received_indices
+        if missing_indices:
+            logging.error(
+                f"第 {batch_idx + 1} 批：LLM 漏掉了以下句子的翻译，indices: {sorted(missing_indices)}"
+            )
+            for idx in missing_indices:
+                failed_indices.append(idx)
+        
+        # 检查是否有多余的翻译（可能是 LLM 误解了提示词）
+        extra_indices = received_indices - expected_indices
+        if extra_indices:
+            logging.warning(
+                f"第 {batch_idx + 1} 批：LLM 返回了额外的翻译，indices: {sorted(extra_indices)}（将被忽略）"
+            )
+        
         for seg in batch:
             index = seg.get("index", 0)
             if index in batch_translations:
@@ -419,15 +452,14 @@ async def translate_segments_async(
 
         # 回调进度
         if progress_callback:
-            translated_count = sum(
-                1
-                for seg in segments
-                if seg.get("translation") or seg.get("index") in all_translations
-            )
+            translated_count = len([
+                seg for seg in untranslated_segments
+                if seg.get("index") in all_translations
+            ])
             if asyncio.iscoroutinefunction(progress_callback):
-                await progress_callback(translated_count, len(segments))
+                await progress_callback(translated_count, len(untranslated_segments))
             else:
-                progress_callback(translated_count, len(segments))
+                progress_callback(translated_count, len(untranslated_segments))
 
         # 让出控制权，允许其他任务执行
         await asyncio.sleep(0)
@@ -488,6 +520,20 @@ async def translate_segments_async(
 
             except Exception as e:
                 logging.error(f"重试批次失败 (indices: {retry_indices}): {e}")
+
+    # 最终验证：检查是否有未翻译的句子
+    still_failed = [
+        seg.get("index", 0) 
+        for seg in untranslated_segments 
+        if seg.get("index", 0) not in all_translations
+    ]
+    
+    if still_failed:
+        logging.error(
+            f"⚠️ 最终检查：仍有 {len(still_failed)} 个分句未能成功翻译，indices: {still_failed[:20]}{'...' if len(still_failed) > 20 else ''}"
+        )
+    else:
+        logging.info(f"✅ 所有 {len(untranslated_segments)} 个待翻译分句都已成功翻译")
 
     # 更新结果，保留原有翻译
     result = []

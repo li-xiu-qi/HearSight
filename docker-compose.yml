@@ -42,8 +42,8 @@ services:
 
   frontend:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: hearsight-frontend
     restart: unless-stopped
     ports:

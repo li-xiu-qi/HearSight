@@ -39,8 +39,6 @@ export const useRightPanelController = ({
   const {
     segmentsScrollRef,
     transcriptScrollRef,
-    scrollUp,
-    scrollDown,
     centerActiveSegment,
   } = useScrollHandlers()
   const { handleSegmentClick } = useSegmentHandlers(onActiveSegmentChange, onSeekTo)
@@ -145,8 +143,6 @@ export const useRightPanelController = ({
     loadSavedTranslations,
     segmentsScrollRef,
     transcriptScrollRef,
-    scrollUp,
-    scrollDown,
     centerActiveSegment,
     handleLoadSavedSummaries,
   }

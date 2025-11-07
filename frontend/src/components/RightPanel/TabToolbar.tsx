@@ -1,12 +1,10 @@
 import { Button } from "@/components/ui/button"
-import { ChevronDown, ChevronUp, Search, Target, Copy, Languages } from "lucide-react"
+import { Search, Target, Copy, Languages } from "lucide-react"
 import { toast } from "sonner"
 import type { Segment } from "../../types"
 import LanguageSwitcher from "./LanguageSwitcher"
 
 interface TabToolbarProps {
-  readonly onScrollUp: () => void
-  readonly onScrollDown: () => void
   readonly onCenterActive: () => void
   readonly onOpenSearch: () => void
   readonly onOpenTranslate: () => void
@@ -18,8 +16,6 @@ interface TabToolbarProps {
 }
 
 export default function TabToolbar({
-  onScrollUp,
-  onScrollDown,
   onCenterActive,
   onOpenSearch,
   onOpenTranslate,
@@ -42,22 +38,36 @@ export default function TabToolbar({
 
   return (
     <div className="flex items-center gap-2 px-3 py-2 border-b bg-slate-50 flex-shrink-0">
-      <Button variant="ghost" size="sm" onClick={onScrollUp}>
-        <ChevronUp className="h-4 w-4" />
-      </Button>
-      <Button variant="ghost" size="sm" onClick={onScrollDown}>
-        <ChevronDown className="h-4 w-4" />
-      </Button>
-      <Button variant="ghost" size="sm" onClick={onCenterActive}>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onCenterActive}
+        title="定位到当前字幕"
+      >
         <Target className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="sm" onClick={onOpenSearch}>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onOpenSearch}
+        title="搜索"
+      >
         <Search className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="sm" onClick={onOpenTranslate}>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onOpenTranslate}
+        title="翻译"
+      >
         <Languages className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="sm" onClick={handleCopyText}>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleCopyText}
+        title="复制全文"
+      >
         <Copy className="h-4 w-4" />
       </Button>
       <div className="ml-auto">
