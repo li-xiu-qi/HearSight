@@ -10,7 +10,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 import tiktoken
 
-from backend.chat_utils.chat_client import chat_text, chat_text_async
+from backend.chat_utils.chat_client import chat_text_async
 from backend.utils.typing_defs import Segment
 
 
@@ -145,7 +145,7 @@ translation_content:
             seg_idx = seg.get("index", 0)
             if seg_idx < first_idx:
                 prev_segments.append((seg_idx, seg))
-        
+
         if prev_segments:
             for seg_idx, seg in prev_segments[-2:]:
                 context_lines.append(f"{seg_idx}: {seg.get('sentence', '').strip()}")
@@ -169,7 +169,7 @@ translation_content:
             seg_idx = seg.get("index", 0)
             if seg_idx > last_idx:
                 next_segments.append((seg_idx, seg))
-        
+
         if next_segments:
             for seg_idx, seg in next_segments[:2]:
                 context_lines.append(f"{seg_idx}: {seg.get('sentence', '').strip()}")

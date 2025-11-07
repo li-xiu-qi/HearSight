@@ -116,3 +116,11 @@ export interface SummarizeResponse {
 export interface ChatResponse {
   answer: string
 }
+
+// Chat消息类型
+export interface ChatMessage {
+  id: string
+  type: "user" | "ai"
+  content: string
+  timestamp: number
+}

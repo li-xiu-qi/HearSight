@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Send, PlayCircle, Trash2, Loader2, Copy } from "lucide-react"
 import { toast } from "sonner"
 import type { Segment, ChatResponse } from "../../types"
-import { chatWithSegments, fetchThumbnail } from "../../services/api"
+import { chatWithSegments, fetchThumbnail, getChatMessages, saveChatMessages, clearChatMessages } from "../../services/api"
 import { formatTime } from "../../utils"
 import MarkdownRenderer from "../MarkdownRenderer"
 import { Switch } from "@/components/ui/switch"
@@ -71,6 +71,29 @@ export default function ChatView({
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // 加载已保存的chat消息
+  useEffect(() => {
+    if (!transcriptId) return
+
+    const loadSavedMessages = async () => {
+      try {
+        const result = await getChatMessages(transcriptId)
+        if (result.messages && result.messages.length > 0) {
+          setMessages(result.messages)
+        } else {
+          // 新视频没有保存的消息，清空旧消息
+          setMessages([])
+        }
+      } catch (error) {
+        console.error('加载chat消息失败:', error)
+        // 不显示错误提示，因为这可能是第一次使用
+        setMessages([])
+      }
+    }
+
+    loadSavedMessages()
+  }, [transcriptId, setMessages])
 
   // 加载所有时间戳的截图
   useEffect(() => {
@@ -143,6 +166,16 @@ export default function ChatView({
       }
 
       setMessages([...newMessages, aiMessage])
+
+      // 自动保存chat消息到数据库
+      if (transcriptId) {
+        try {
+          await saveChatMessages(transcriptId, [...newMessages, aiMessage])
+        } catch (error) {
+          console.error('保存chat消息失败:', error)
+          // 不显示错误提示，避免影响用户体验
+        }
+      }
     } catch (err: unknown) {
       setError((err as Error)?.message || "聊天失败，请稍后重试")
       const errorMessage: ChatMessage = {
@@ -230,9 +263,19 @@ export default function ChatView({
     })
   }
 
-  const handleClearChat = () => {
+  const handleClearChat = async () => {
     setMessages([])
     setError(null)
+
+    // 同时清除数据库中的chat消息
+    if (transcriptId) {
+      try {
+        await clearChatMessages(transcriptId)
+      } catch (error) {
+        console.error('清除chat消息失败:', error)
+        // 不显示错误提示，避免影响用户体验
+      }
+    }
   }
 
   const handleCopyMessage = async (content: string, messageType: "user" | "ai") => {
@@ -261,7 +304,7 @@ export default function ChatView({
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8 text-slate-500">
             <p className="text-base mb-2">欢迎使用视频内容问答功能</p>
-            <p className="text-sm">请输入您的问题，AI 将基于视频字幕内容为您解答</p>
+            <p className="text-sm">请输入您的问题，AI 将基于视频内容为您解答</p>
           </div>
         ) : (
           <div className="space-y-4">

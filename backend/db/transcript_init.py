@@ -22,6 +22,7 @@ def init_transcript_table(db_url: Optional[str] = None) -> None:
                         segments_json TEXT NOT NULL,
                         summaries_json TEXT,
                         translations_json TEXT,
+                        chat_messages_json TEXT,
                         created_at TIMESTAMP NOT NULL DEFAULT (now()),
                         updated_at TIMESTAMP NOT NULL DEFAULT (now())
                     );
@@ -41,4 +42,3 @@ def init_transcript_table(db_url: Optional[str] = None) -> None:
                 )
     finally:
         conn.close()
-

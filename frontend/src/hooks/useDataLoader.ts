@@ -136,7 +136,7 @@ export const useDataLoader = (): UseDataLoaderReturn => {
     // 之后每 1 秒轮询一次，以获得实时的进度更新
     const timer = setInterval(pollJobsProgress, 1000)
     return () => clearInterval(timer)
-  }, [])
+  }, [loadTranscripts])
 
   return {
     segments,

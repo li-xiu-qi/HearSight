@@ -16,10 +16,13 @@ from .job_store import (
     update_job_status,
 )
 from .transcript_crud import (
+    clear_chat_messages,
     delete_transcript,
+    get_chat_messages,
     get_summaries,
     get_transcript_by_id,
     get_translations,
+    save_chat_messages,
     save_summaries,
     save_transcript,
     save_translations,
@@ -56,6 +59,10 @@ __all__ = [
     # 翻译相关
     "save_translations",
     "get_translations",
+    # chat消息相关
+    "save_chat_messages",
+    "get_chat_messages",
+    "clear_chat_messages",
     # 任务相关
     "create_job",
     "get_job",

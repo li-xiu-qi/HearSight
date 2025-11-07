@@ -7,7 +7,8 @@ import json
 import logging
 from typing import Any, Callable, Dict, Optional
 
-from backend.db.pg_store import get_translations, save_translations, update_transcript
+from backend.db.pg_store import (get_translations, save_translations,
+                                 update_transcript)
 from backend.text_process.translate import translate_segments_async
 
 translate_tasks: Dict[int, Dict[str, Any]] = {}
@@ -125,18 +126,20 @@ async def _background_translate(
         for seg in translated_segments:
             translation_data = seg.get("translation") or {}
             if target_language in translation_data:
-                translations_dict[target_language].append({
-                    "index": seg.get("index"),
-                    "sentence": seg.get("sentence"),
-                    "translation": translation_data[target_language],
-                    "start_time": seg.get("start_time"),
-                    "end_time": seg.get("end_time"),
-                })
+                translations_dict[target_language].append(
+                    {
+                        "index": seg.get("index"),
+                        "sentence": seg.get("sentence"),
+                        "translation": translation_data[target_language],
+                        "start_time": seg.get("start_time"),
+                        "end_time": seg.get("end_time"),
+                    }
+                )
 
         # 获取现有翻译（如果有）
-        existing_translations = await asyncio.to_thread(
-            get_translations, db_url, transcript_id
-        ) or {}
+        existing_translations = (
+            await asyncio.to_thread(get_translations, db_url, transcript_id) or {}
+        )
 
         # 合并翻译结果
         existing_translations[target_language] = translations_dict[target_language]
