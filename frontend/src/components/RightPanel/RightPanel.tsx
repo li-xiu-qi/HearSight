@@ -40,6 +40,7 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
       summariesLoading,
       summariesError,
       triggerSummaryGeneration,
+      hasSavedSummaries,
       chatMessages,
       setChatMessages,
       chatLoading,
@@ -66,6 +67,7 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
       segments,
       onActiveSegmentChange,
       onSeekTo,
+      transcriptId,
       onTranslateComplete,
     })
 
@@ -141,6 +143,7 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
                 onGenerate={triggerSummaryGeneration}
                 onSeekTo={onSeekTo}
                 transcriptId={transcriptId}
+                hasSavedSummaries={hasSavedSummaries}
               />
             </TabsContent>
 
@@ -153,6 +156,7 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
                 onMessagesChange={setChatMessages}
                 onLoadingChange={setChatLoading}
                 onErrorChange={setChatError}
+                onSeekTo={onSeekTo}
                 transcriptId={transcriptId}
               />
             </TabsContent>

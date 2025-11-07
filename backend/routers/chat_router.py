@@ -5,7 +5,9 @@ import os
 from typing import Any, Dict
 
 from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel
 
+from backend.db.pg_store import get_summaries, save_summaries
 from backend.text_process.chat_with_segment import chat_with_segments
 from backend.text_process.summarize import summarize_segments
 from config import settings
@@ -140,3 +142,67 @@ def api_chat_with_segments(payload: Dict[str, Any], request: Request) -> Dict[st
         raise HTTPException(status_code=500, detail=f"chat failed: {e}")
 
     return {"answer": answer}
+
+
+class SaveSummariesRequest(BaseModel):
+    """保存总结的请求体"""
+    transcript_id: int
+    summaries: list
+
+
+@router.post("/transcripts/{transcript_id}/summaries")
+def api_save_summaries(
+    transcript_id: int, payload: Dict[str, Any], request: Request
+) -> Dict[str, Any]:
+    """保存生成的总结到数据库。
+
+    请求 body 字段：
+        - summaries: List[Dict] （必需）总结内容
+
+    返回：{"success": bool, "message": str, "saved": bool}
+    """
+    db_url = request.app.state.db_url
+    summaries = payload.get("summaries")
+
+    if not summaries or not isinstance(summaries, list):
+        raise HTTPException(status_code=400, detail="summaries (list) is required")
+
+    try:
+        success = save_summaries(db_url, transcript_id, summaries)
+        if success:
+            return {
+                "success": True,
+                "message": "总结已保存",
+                "saved": True,
+                "transcript_id": transcript_id,
+            }
+        else:
+            raise HTTPException(
+                status_code=404, detail=f"Transcript {transcript_id} not found"
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to save summaries: {str(e)}"
+        )
+
+
+@router.get("/transcripts/{transcript_id}/summaries")
+def api_get_summaries(transcript_id: int, request: Request) -> Dict[str, Any]:
+    """获取已保存的总结。
+
+    返回：{"summaries": List[Dict] | null, "has_summaries": bool}
+    """
+    db_url = request.app.state.db_url
+
+    try:
+        summaries = get_summaries(db_url, transcript_id)
+        return {
+            "summaries": summaries,
+            "has_summaries": summaries is not None and len(summaries) > 0,
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get summaries: {str(e)}"
+        )

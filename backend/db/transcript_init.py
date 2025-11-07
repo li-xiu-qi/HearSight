@@ -13,13 +13,17 @@ def init_transcript_table(db_url: Optional[str] = None) -> None:
     try:
         with conn:
             with conn.cursor() as cur:
+                # 创建表时直接包含所有字段
                 cur.execute(
                     """
                     CREATE TABLE IF NOT EXISTS transcripts (
                         id SERIAL PRIMARY KEY,
                         media_path TEXT NOT NULL,
                         segments_json TEXT NOT NULL,
-                        created_at TIMESTAMP NOT NULL DEFAULT (now())
+                        summaries_json TEXT,
+                        translations_json TEXT,
+                        created_at TIMESTAMP NOT NULL DEFAULT (now()),
+                        updated_at TIMESTAMP NOT NULL DEFAULT (now())
                     );
                     """
                 )
@@ -29,5 +33,12 @@ def init_transcript_table(db_url: Optional[str] = None) -> None:
                     ON transcripts(media_path);
                     """
                 )
+                cur.execute(
+                    """
+                    CREATE INDEX IF NOT EXISTS idx_transcripts_updated_at
+                    ON transcripts(updated_at DESC);
+                    """
+                )
     finally:
         conn.close()
+

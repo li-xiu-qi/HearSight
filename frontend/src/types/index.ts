@@ -72,8 +72,40 @@ export interface JobsResponse {
 }
 
 export interface TranscriptDetailResponse {
+  id?: number
   media_path: string
   segments: Segment[]
+  summaries?: Summary[] | null
+  translations?: Record<string, Translation[]> | null
+}
+
+// 翻译数据类型
+export interface Translation {
+  index: number
+  sentence: string
+  translation: string
+  start_time?: number
+  end_time?: number
+}
+
+// 保存总结响应类型
+export interface SaveSummariesResponse {
+  success: boolean
+  message: string
+  saved: boolean
+  transcript_id: number
+}
+
+// 获取已保存总结响应类型
+export interface GetSummariesResponse {
+  summaries?: Summary[] | null
+  has_summaries: boolean
+}
+
+// 获取已保存翻译响应类型
+export interface GetTranslationsResponse {
+  translations?: Record<string, Translation[]> | null
+  has_translations: boolean
 }
 
 export interface SummarizeResponse {

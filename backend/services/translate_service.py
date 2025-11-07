@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from typing import Any, Callable, Dict, Optional
 
-from backend.db.pg_store import update_transcript
+from backend.db.pg_store import get_translations, save_translations, update_transcript
 from backend.text_process.translate import translate_segments_async
 
 translate_tasks: Dict[int, Dict[str, Any]] = {}
@@ -112,19 +113,43 @@ async def _background_translate(
         )
         logging.info(f"翻译完成，开始保存到数据库")
 
-        # 保存到数据库
-        logging.info(f"保存翻译结果到数据库")
-        success = await asyncio.to_thread(
+        # 更新segments中的翻译内容
+        logging.info(f"更新segments中的翻译内容")
+        success_update_segments = await asyncio.to_thread(
             update_transcript, db_url, transcript_id, translated_segments
         )
-        logging.info(f"数据库保存结果: success={success}")
+        logging.info(f"Segments数据库保存结果: success={success_update_segments}")
 
-        if success:
-            translated_count = sum(
-                1
-                for seg in translated_segments
-                if target_language in (seg.get("translation") or {})
-            )
+        # 构建翻译结果对象并保存
+        translations_dict = {target_language: []}
+        for seg in translated_segments:
+            translation_data = seg.get("translation") or {}
+            if target_language in translation_data:
+                translations_dict[target_language].append({
+                    "index": seg.get("index"),
+                    "sentence": seg.get("sentence"),
+                    "translation": translation_data[target_language],
+                    "start_time": seg.get("start_time"),
+                    "end_time": seg.get("end_time"),
+                })
+
+        # 获取现有翻译（如果有）
+        existing_translations = await asyncio.to_thread(
+            get_translations, db_url, transcript_id
+        ) or {}
+
+        # 合并翻译结果
+        existing_translations[target_language] = translations_dict[target_language]
+
+        # 保存到数据库
+        logging.info(f"保存翻译结果到translations_json")
+        success_save_trans = await asyncio.to_thread(
+            save_translations, db_url, transcript_id, existing_translations
+        )
+        logging.info(f"翻译结果保存结果: success={success_save_trans}")
+
+        if success_update_segments and success_save_trans:
+            translated_count = len(translations_dict[target_language])
             logging.info(f"最终统计: {translated_count}/{total_count} 个分句已翻译")
             translate_tasks[transcript_id] = {
                 "status": "completed",

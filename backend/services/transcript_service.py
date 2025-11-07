@@ -10,7 +10,9 @@ from typing import Any, Dict
 from backend.db.pg_store import (
     count_transcripts,
     delete_transcript,
+    get_summaries,
     get_transcript_by_id,
+    get_translations,
     list_transcripts_meta,
 )
 
@@ -27,8 +29,18 @@ async def list_transcripts_async(
 
 
 async def get_transcript_async(db_url: str, transcript_id: int) -> Dict[str, Any]:
-    """获取转写记录详情"""
+    """获取转写记录详情及已保存的总结和翻译"""
     data = await asyncio.to_thread(get_transcript_by_id, db_url, transcript_id)
+    
+    if data:
+        # 获取已保存的总结
+        summaries = await asyncio.to_thread(get_summaries, db_url, transcript_id)
+        # 获取已保存的翻译
+        translations = await asyncio.to_thread(get_translations, db_url, transcript_id)
+        
+        data["summaries"] = summaries
+        data["translations"] = translations
+    
     return data
 
 

@@ -64,6 +64,8 @@ def generate_thumbnail_ffmpeg(
             cmd,
             capture_output=True,
             text=True,
+            encoding='utf-8',
+            errors='ignore',
             timeout=10  # 10秒超时
         )
         

@@ -5,7 +5,8 @@ import type {
   TranscriptDetailResponse, 
   SummarizeResponse,
   Segment,
-  ChatResponse
+  ChatResponse,
+  Summary
 } from '../types'
 
 export const createJob = async (url: string): Promise<JobResponse> => {
@@ -207,43 +208,52 @@ export const translateTranscriptStream = async (
   onProgress: (event: TranslateProgressEvent) => void,
   forceRetranslate: boolean = false
 ): Promise<void> => {
-  // 启动翻译任务
-  await startTranslate(transcriptId, targetLanguage, maxTokens, forceRetranslate)
-  
-  // 轮询获取进度（每 5 秒查询一次）
-  const pollInterval = setInterval(async () => {
-    try {
-      const progress = await getTranslateProgress(transcriptId)
-      
-      if (progress.status === 'translating') {
-        onProgress({
-          type: 'progress',
-          progress: progress.progress,
-          translated_count: progress.translated_count,
-          total_count: progress.total_count
-        })
-      } else if (progress.status === 'completed') {
-        onProgress({
-          type: 'complete',
-          status: 'completed',
-          translated_count: progress.translated_count,
-          total_count: progress.total_count,
-          is_complete: true,
-          message: progress.message
-        })
-        clearInterval(pollInterval)
-      } else if (progress.status === 'error') {
-        onProgress({
-          type: 'error',
-          message: progress.message
-        })
-        clearInterval(pollInterval)
+  return new Promise((resolve, reject) => {
+    (async () => {
+      try {
+        await startTranslate(transcriptId, targetLanguage, maxTokens, forceRetranslate)
+
+        const pollInterval = setInterval(async () => {
+          try {
+            const progress = await getTranslateProgress(transcriptId)
+
+            if (progress.status === 'translating') {
+              onProgress({
+                type: 'progress',
+                progress: progress.progress,
+                translated_count: progress.translated_count,
+                total_count: progress.total_count
+              })
+            } else if (progress.status === 'completed') {
+              onProgress({
+                type: 'complete',
+                status: 'completed',
+                translated_count: progress.translated_count,
+                total_count: progress.total_count,
+                is_complete: true,
+                message: progress.message
+              })
+              clearInterval(pollInterval)
+              resolve()
+            } else if (progress.status === 'error') {
+              onProgress({
+                type: 'error',
+                message: progress.message
+              })
+              clearInterval(pollInterval)
+              reject(new Error(progress.message))
+            }
+          } catch (err) {
+            console.error('轮询进度时出错:', err)
+            clearInterval(pollInterval)
+            reject(err)
+          }
+        }, 5000)
+      } catch (err) {
+        reject(err)
       }
-    } catch (err) {
-      console.error('轮询进度时出错:', err)
-      clearInterval(pollInterval)
-    }
-  }, 5000) // 每 5 秒查询一次进度
+    })()
+  })
 }
 
 export const fetchThumbnail = async (
@@ -314,3 +324,49 @@ export const startDownload = async (
   
   return response.json()
 }
+
+// 总结相关API
+
+export const saveSummaries = async (
+  transcriptId: number,
+  summaries: Summary[]
+): Promise<{ success: boolean; message: string; saved: boolean; transcript_id: number }> => {
+  const response = await fetch(`/api/transcripts/${transcriptId}/summaries`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ summaries })
+  })
+
+  if (!response.ok) {
+    throw new Error(`保存总结失败：${response.status}`)
+  }
+
+  return response.json()
+}
+
+export const getSummaries = async (
+  transcriptId: number
+): Promise<{ summaries: Summary[] | null; has_summaries: boolean }> => {
+  const response = await fetch(`/api/transcripts/${transcriptId}/summaries`)
+
+  if (!response.ok) {
+    throw new Error(`获取已保存总结失败：${response.status}`)
+  }
+
+  return response.json()
+}
+
+// 翻译相关API
+
+export const getTranslations = async (
+  transcriptId: number
+): Promise<{ translations: Record<string, Segment[]> | null; has_translations: boolean }> => {
+  const response = await fetch(`/api/transcripts/${transcriptId}/translations`)
+
+  if (!response.ok) {
+    throw new Error(`获取已保存翻译失败：${response.status}`)
+  }
+
+  return response.json()
+}
+

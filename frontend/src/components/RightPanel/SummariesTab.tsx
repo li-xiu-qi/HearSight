@@ -24,6 +24,7 @@ interface SummariesTabProps {
   readonly onGenerate: () => void
   readonly onSeekTo: (timeMs: number) => void
   readonly transcriptId?: number
+  readonly hasSavedSummaries: boolean
 }
 
 export default function SummariesTab({
@@ -33,9 +34,25 @@ export default function SummariesTab({
   onGenerate,
   onSeekTo,
   transcriptId,
+  hasSavedSummaries,
 }: Readonly<SummariesTabProps>) {
-  const [imageModeEnabled, setImageModeEnabled] = useState(false)
+  const [imageModeEnabled, setImageModeEnabled] = useState(true)
   const [frameCache, setFrameCache] = useState<Record<string, string>>({})
+  const [refreshConfirmOpen, setRefreshConfirmOpen] = useState(false)
+
+  // 处理刷新总结，需要用户确认
+  const handleRefreshClick = () => {
+    if (hasSavedSummaries) {
+      setRefreshConfirmOpen(true)
+    } else {
+      onGenerate()
+    }
+  }
+
+  const handleConfirmRefresh = () => {
+    setRefreshConfirmOpen(false)
+    onGenerate()
+  }
 
   // 加载所有总结的时间戳截图
   useEffect(() => {
@@ -74,6 +91,7 @@ export default function SummariesTab({
 
     loadAllThumbnails()
   }, [imageModeEnabled, summaries, transcriptId, frameCache])
+
   const handleCopySummaries = async () => {
     const text = summaries
       .map((sum) => `${sum.topic}\n${sum.summary}`)
@@ -90,21 +108,22 @@ export default function SummariesTab({
   return (
     <div className="h-full flex flex-col">
       <div className="p-3 border-b flex-shrink-0">
-        <div className="flex gap-2 justify-between items-center">
-          <div className="flex gap-2">
-            <Button onClick={onGenerate} disabled={loading} size="sm">
+        <div className="flex gap-2 justify-between items-center mb-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button onClick={handleRefreshClick} disabled={loading} size="sm">
               {loading && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
-              生成总结
+              {hasSavedSummaries ? '刷新总结' : '生成总结'}
             </Button>
-            <Button
-              onClick={handleCopySummaries}
-              disabled={summaries.length === 0}
-              variant="outline"
-              size="sm"
-            >
-              <Copy className="mr-1 h-3 w-3" />
-              复制总结
-            </Button>
+            {summaries.length > 0 && (
+              <Button
+                onClick={handleCopySummaries}
+                variant="outline"
+                size="sm"
+              >
+                <Copy className="mr-1 h-3 w-3" />
+                复制总结
+              </Button>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Switch
@@ -124,7 +143,7 @@ export default function SummariesTab({
             {error}
           </div>
         )}
-        {loading && (
+        {loading && summaries.length === 0 && (
           <div className="flex items-center justify-center h-40">
             <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
           </div>
@@ -197,6 +216,28 @@ export default function SummariesTab({
           </div>
         )}
       </ScrollArea>
+
+      {/* 刷新总结确认对话框 */}
+      <Dialog open={refreshConfirmOpen} onOpenChange={setRefreshConfirmOpen}>
+        <DialogContent>
+          <DialogTitle>重新生成总结</DialogTitle>
+          <DialogDescription>
+            确定要重新生成总结吗？这将覆盖之前保存的总结内容。
+          </DialogDescription>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setRefreshConfirmOpen(false)}
+            >
+              取消
+            </Button>
+            <Button onClick={handleConfirmRefresh}>
+              确认重新生成
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
+

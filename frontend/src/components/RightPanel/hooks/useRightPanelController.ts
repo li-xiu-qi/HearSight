@@ -15,6 +15,7 @@ interface UseRightPanelControllerParams {
   readonly segments: Segment[]
   readonly onActiveSegmentChange: (index: number) => void
   readonly onSeekTo: (timeMs: number) => void
+  readonly transcriptId?: number
   readonly onTranslateComplete?: () => void
 }
 
@@ -22,6 +23,7 @@ export const useRightPanelController = ({
   segments,
   onActiveSegmentChange,
   onSeekTo,
+  transcriptId,
   onTranslateComplete,
 }: UseRightPanelControllerParams) => {
   const [activeTab, setActiveTab] = useState("segments")
@@ -48,6 +50,8 @@ export const useRightPanelController = ({
     summariesLoading,
     summariesError,
     handleGenerateSummary,
+    handleLoadSavedSummaries,
+    hasSavedSummaries,
   } = useSummaryHandlers()
   const {
     displayLanguage,
@@ -62,6 +66,9 @@ export const useRightPanelController = ({
     setShowProgressPanel,
     handleStartTranslate,
     handleRetryTranslate,
+    hasSavedTranslations,
+    savedLanguages,
+    loadSavedTranslations,
   } = useTranslateHandlers(
     onTranslateComplete,
     (updatedSegments, targetLanguage) => {
@@ -77,6 +84,14 @@ export const useRightPanelController = ({
     setDisplaySegments(segments)
   }, [segments])
 
+  // 当 transcriptId 变化时自动加载已保存的总结
+  useEffect(() => {
+    if (!transcriptId) {
+      return
+    }
+    handleLoadSavedSummaries(transcriptId)
+  }, [transcriptId, handleLoadSavedSummaries])
+
   useTranslationLanguages({ segments, addLanguage })
 
   const executeSearch = () => {
@@ -85,7 +100,11 @@ export const useRightPanelController = ({
   }
 
   const triggerSummaryGeneration = () => {
-    handleGenerateSummary(displaySegments)
+    if (!transcriptId) {
+      console.warn('Transcript ID is missing')
+      return
+    }
+    handleGenerateSummary(displaySegments, transcriptId)
   }
 
   return {
@@ -103,6 +122,7 @@ export const useRightPanelController = ({
     summariesLoading,
     summariesError,
     triggerSummaryGeneration,
+    hasSavedSummaries,
     chatMessages,
     setChatMessages,
     chatLoading,
@@ -120,10 +140,14 @@ export const useRightPanelController = ({
     setShowProgressPanel,
     handleStartTranslate,
     handleRetryTranslate,
+    hasSavedTranslations,
+    savedLanguages,
+    loadSavedTranslations,
     segmentsScrollRef,
     transcriptScrollRef,
     scrollUp,
     scrollDown,
     centerActiveSegment,
+    handleLoadSavedSummaries,
   }
 }

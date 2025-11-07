@@ -37,7 +37,10 @@ HearSight 系统使用 PostgreSQL 数据库存储任务处理和转写结果信�
 | id | SERIAL | PRIMARY KEY | 转写记录唯一标识 |
 | media_path | TEXT | NOT NULL | 媒体文件路径 |
 | segments_json | TEXT | NOT NULL | 句子片段数据（JSON格式） |
+| summaries_json | TEXT | NULL | 总结数据（JSON格式） |
+| translations_json | TEXT | NULL | 翻译结果（JSON格式，按语言代码组织） |
 | created_at | TIMESTAMP | NOT NULL DEFAULT now() | 创建时间 |
+| updated_at | TIMESTAMP | NOT NULL DEFAULT now() | 更新时间 |
 
 ## 表间关系
 
@@ -60,7 +63,10 @@ erDiagram
         integer id PK
         text media_path "媒体文件路径"
         text segments_json "句子片段JSON"
+        text summaries_json "总结数据JSON"
+        text translations_json "翻译结果JSON"
         timestamp created_at "创建时间"
+        timestamp updated_at "更新时间"
     }
 ```
 
@@ -84,6 +90,10 @@ erDiagram
 
 - **transcripts.media_path**: 指向实际的媒体文件
 - **transcripts.segments_json**: 存储ASR处理后的句子片段数据
+- **transcripts.summaries_json**: 存储生成的总结数据（主题、摘要、时间范围）
+- **transcripts.translations_json**: 存储翻译结果，按语言代码组织
+  - 结构: `{ "zh": [...], "en": [...] }`
+  - 每个翻译项包含：index、sentence、translation、start_time、end_time
 
 ## 索引设计
 
@@ -122,6 +132,11 @@ erDiagram
 3. **数据一致性**:
    - `result_json` 中的 `transcript_id` 必须对应有效的 `transcripts` 记录
    - `media_path` 必须指向实际存在的文件
+
+4. **总结和翻译**:
+   - 总结和翻译结果通过后端自动保存
+   - 重新生成总结或翻译时，自动覆盖旧数据
+   - `updated_at` 字段记录最后一次更新时间
 
 ### 并发处理
 

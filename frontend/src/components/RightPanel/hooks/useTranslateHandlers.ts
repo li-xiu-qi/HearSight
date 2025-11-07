@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { translateTranscriptStream, fetchTranscriptDetail } from '../../../services/api'
+import { translateTranscriptStream, fetchTranscriptDetail, getTranslations } from '../../../services/api'
 import { toast } from 'sonner'
 import type { TranslateProgress } from '../types'
 import type { Segment } from '../../../types'
@@ -14,6 +14,8 @@ export const useTranslateHandlers = (
     message: '',
   })
   const [showProgressPanel, setShowProgressPanel] = useState(false)
+  const [hasSavedTranslations, setHasSavedTranslations] = useState(false)
+  const [savedLanguages, setSavedLanguages] = useState<string[]>([])
 
   const handleStartTranslate = useCallback(
     async (transcriptId: number | undefined, targetLanguage: string, forceRetranslate: boolean = false) => {
@@ -50,7 +52,17 @@ export const useTranslateHandlers = (
                 message: event.message || '翻译完成',
                 targetLanguage,
               }))
-              toast.success(event.message || '翻译完成')
+              
+              // 更新已保存翻译状态
+              setHasSavedTranslations(true)
+              setSavedLanguages(prev => {
+                if (!prev.includes(targetLanguage)) {
+                  return [...prev, targetLanguage]
+                }
+                return prev
+              })
+              
+              toast.success(event.message || '翻译已保存')
 
               try {
                 const detail = await fetchTranscriptDetail(transcriptId)
@@ -97,12 +109,29 @@ export const useTranslateHandlers = (
     [translateProgress.targetLanguage, handleStartTranslate]
   )
 
+  const loadSavedTranslations = useCallback(async (transcriptId: number) => {
+    try {
+      const result = await getTranslations(transcriptId)
+      setHasSavedTranslations(result.has_translations)
+      if (result.translations) {
+        setSavedLanguages(Object.keys(result.translations))
+      } else {
+        setSavedLanguages([])
+      }
+    } catch (err) {
+      console.error('加载已保存翻译失败', err)
+    }
+  }, [])
+
   return {
     translateProgress,
     showProgressPanel,
     setShowProgressPanel,
     handleStartTranslate,
     handleRetryTranslate,
+    hasSavedTranslations,
+    savedLanguages,
+    loadSavedTranslations,
   }
 }
 

@@ -26,6 +26,7 @@ interface ChatViewProps {
   readonly onMessagesChange?: (messages: ChatMessage[]) => void
   readonly onLoadingChange?: (loading: boolean) => void
   readonly onErrorChange?: (error: string | null) => void
+  readonly onSeekTo: (timeMs: number) => void
   readonly transcriptId?: number
 }
 
@@ -44,13 +45,14 @@ export default function ChatView({
   onMessagesChange,
   onLoadingChange,
   onErrorChange,
+  onSeekTo,
   transcriptId,
 }: Readonly<ChatViewProps>) {
   const [inputValue, setInputValue] = useState("")
   const [internalMessages, setInternalMessages] = useState<ChatMessage[]>([])
   const [internalLoading, setInternalLoading] = useState(false)
   const [internalError, setInternalError] = useState<string | null>(null)
-  const [imageModeEnabled, setImageModeEnabled] = useState(false)
+  const [imageModeEnabled, setImageModeEnabled] = useState(true)
   const [frameCache, setFrameCache] = useState<Record<string, string>>({})
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -210,11 +212,7 @@ export default function ChatView({
             )}
             <button
               type="button"
-              onClick={() => {
-                globalThis.dispatchEvent(
-                  new CustomEvent("seekToTime", { detail: startTime / 1000 })
-                )
-              }}
+              onClick={() => onSeekTo(startTime)}
               className="inline-flex items-center gap-1 text-blue-600 hover:underline text-sm"
               title={`时间: ${formatTime(startTime)} ~ ${formatTime(endTime)}`}
             >

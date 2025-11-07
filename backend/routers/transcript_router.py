@@ -16,6 +16,7 @@ from backend.services.translate_service import (
     get_translate_progress,
     start_translate_task,
 )
+from backend.db.pg_store import get_translations
 from config import settings
 
 
@@ -136,3 +137,29 @@ async def api_get_translate_progress(
     }
     """
     return get_translate_progress(transcript_id)
+
+
+@router.get("/transcripts/{transcript_id}/translations")
+async def api_get_translations(
+    transcript_id: int, request: Request
+) -> Dict[str, Any]:
+    """获取已保存的翻译结果。
+
+    返回: {
+        "translations": Dict[str, List] | null,
+        "has_translations": bool
+    }
+    """
+    db_url = request.app.state.db_url
+
+    try:
+        translations = get_translations(db_url, transcript_id)
+        return {
+            "translations": translations,
+            "has_translations": translations is not None and len(translations) > 0,
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get translations: {str(e)}"
+        )
+

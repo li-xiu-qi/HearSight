@@ -108,18 +108,23 @@ def _build_translate_prompt(
 4. 使用目标语言最自然的表达方式，避免生硬翻译
 5. 不同语言的翻译长度可能差异很大，这是完全正常的（例如英文"Hello"可能翻译为中文"你好"）
 
-重要说明：
-- 【前文上下文】和【后文上下文】仅供参考，帮助理解语境，无需翻译
-- 你只需要翻译【待翻译句子】中的句子
-- 返回结果必须包含特殊标志 translation_content: 后跟 ```json 格式的JSON数组
-- 格式示例：
+工作流程：
+1. 首先阅读【前文上下文】和【后文上下文】以了解语境（但这些内容本身不需要翻译）
+2. 然后专注于翻译【待翻译句子】中的所有句子（只翻译这一部分）
+3. 确保每个句子都有唯一的翻译结果
+
+返回要求：
+- 返回结果必须严格包含 translation_content: 标志，后跟 ```json 格式的JSON数组
+- JSON 数组必须包含所有待翻译句子的翻译结果
+- 每个待翻译句子都必须有一个翻译条目，格式为 {{"index": N, "translation": "翻译内容"}}
+- 严禁混入前文上下文或后文上下文的内容
+
+格式示例：
 
 translation_content:
 ```json
 [{{"index": 0, "translation": "翻译后的句子"}}, {{"index": 1, "translation": "翻译后的句子"}}]
 ```
-
-严格要求：必须包含 translation_content: 标志和 ```json markdown 包装，这样便于系统解析。
 """.strip()
 
     # 构建上下文部分
@@ -135,13 +140,15 @@ translation_content:
     # 添加前文上下文（前两句，如果存在）
     if first_idx > 0:
         context_lines.append("【前文上下文（仅供参考）】")
-        found_context = False
+        prev_segments = []
         for seg in all_segments:
             seg_idx = seg.get("index", 0)
-            if first_idx - 2 <= seg_idx < first_idx:
+            if seg_idx < first_idx:
+                prev_segments.append((seg_idx, seg))
+        
+        if prev_segments:
+            for seg_idx, seg in prev_segments[-2:]:
                 context_lines.append(f"{seg_idx}: {seg.get('sentence', '').strip()}")
-                found_context = True
-        if found_context:
             context_lines.append("")
 
     # 添加待翻译句子（这是唯一需要翻译的部分）
@@ -157,13 +164,15 @@ translation_content:
     max_idx = max((seg.get("index", 0) for seg in all_segments), default=0)
     if last_idx < max_idx:
         context_lines.append("【后文上下文（仅供参考）】")
-        found_context = False
+        next_segments = []
         for seg in all_segments:
             seg_idx = seg.get("index", 0)
-            if last_idx < seg_idx <= last_idx + 2:
+            if seg_idx > last_idx:
+                next_segments.append((seg_idx, seg))
+        
+        if next_segments:
+            for seg_idx, seg in next_segments[:2]:
                 context_lines.append(f"{seg_idx}: {seg.get('sentence', '').strip()}")
-                found_context = True
-        if found_context:
             context_lines.append("")
 
     return "\n".join(context_lines)

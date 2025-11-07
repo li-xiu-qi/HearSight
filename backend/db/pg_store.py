@@ -17,8 +17,12 @@ from .job_store import (
 )
 from .transcript_crud import (
     delete_transcript,
+    get_summaries,
     get_transcript_by_id,
+    get_translations,
+    save_summaries,
     save_transcript,
+    save_translations,
     update_transcript,
 )
 from .transcript_init import init_transcript_table
@@ -46,6 +50,12 @@ __all__ = [
     "count_transcripts",
     "get_transcript_by_id",
     "delete_transcript",
+    # 总结相关
+    "save_summaries",
+    "get_summaries",
+    # 翻译相关
+    "save_translations",
+    "get_translations",
     # 任务相关
     "create_job",
     "get_job",

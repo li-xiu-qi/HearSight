@@ -88,13 +88,8 @@ export const useDataLoader = (): UseDataLoaderReturn => {
 
         for (const jobId of currentSuccessJobs) {
           if (!prevSuccessfulJobs.has(jobId)) {
-            try {
-              const transcriptData = await fetchTranscripts()
-              setTranscripts(Array.isArray(transcriptData.items) ? transcriptData.items : [])
-            } catch (err: unknown) {
-              const errorMessage = err instanceof Error ? err.message : String(err)
-              console.error('加载转写记录失败:', errorMessage)
-            }
+            // 任务新完成时，重新加载转录列表
+            loadTranscripts()
             break
           }
         }
