@@ -53,8 +53,8 @@ def generate_thumbnail_ffmpeg(
             "1",  # 只提取一帧
             "-vf",
             f"scale={width}:-1",  # 缩放，保持宽高比
-            "-q:v",
-            str(quality),  # JPEG 质量
+            "-c:v",
+            "png",  # 用PNG编码器代替MJPEG
             "-y",  # 覆盖输出文件
             tmp_path,
         ]
@@ -89,7 +89,7 @@ def generate_thumbnail_ffmpeg(
 
         # 转换为 base64
         base64_data = base64.b64encode(image_data).decode("utf-8")
-        data_url = f"data:image/jpeg;base64,{base64_data}"
+        data_url = f"data:image/png;base64,{base64_data}"
 
         logger.info(f"缩略图生成成功，大小: {len(image_data)} bytes")
         return data_url

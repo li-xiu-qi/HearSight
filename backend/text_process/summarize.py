@@ -68,21 +68,27 @@ def _split_segments_by_output_tokens(
 def _build_prompt(segments: List[Segment]) -> str:
 
     header = """
-你是一个专业的内容总结助手。请：
-1) 仔细分析下面的对话/内容，从中提炼出多个清晰的主题（topic）。
-2) 为每个主题生成一段简明中文总结（summary），准确涵盖该主题的主要信息点，避免流水账与冗余重复。
-3) 为每个主题指定对应的时间范围，使用该主题相关句子的起始和结束时间戳。
-4) 严格按以下格式输出，使用Python代码块语法包围输出结果：
+你是一个专业的内容总结助手。请遵循以下格式要求（必须严格遵守）：
 
-```python
+# 格式要求
+1. 禁止使用Markdown、代码块（```）、加粗、列表、编号等特殊格式
+2. 禁止输出任何与总结无关的文字或说明
+3. 只能输出纯文本格式的JSON数组
+
+# 输出格式（必须严格遵守，不要多也不要少）
+START_SUMMARIES
 [
-    {"topic": "<主题短句>", "summary": "<中文总结，允许换行，但不要包含额外的元信息或标签>", "start_time": <起始时间戳>, "end_time": <结束时间戳>},
-    {"topic": "<另一个主题短句>", "summary": "<另一个中文总结>", "start_time": <起始时间戳>, "end_time": <结束时间戳>}
+  {"topic": "<主题短句>", "summary": "<中文总结，允许换行但不包含引号>", "start_time": <起始时间戳>, "end_time": <结束时间戳>},
+  {"topic": "<主题短句>", "summary": "<中文总结>", "start_time": <起始时间戳>, "end_time": <结束时间戳>}
 ]
-```
+END_SUMMARIES
 
-5) 请根据内容的复杂度和信息量，合理确定主题数量，通常在2-5个之间。
-6) 不要包含任何额外说明、前后文本或其他格式。
+# 要求说明
+1. 仔细分析下面的对话/内容，从中提炼出2-5个清晰的主题
+2. 为每个主题生成一段简明中文总结，准确涵盖主要信息点，避免流水账
+3. 为每个主题指定对应的时间范围，使用该主题相关句子的起始和结束时间戳
+4. 总结中如果需要换行，使用\n表示，不要真实换行
+5. 根据内容复杂度和信息量合理确定主题数量
 
 下面是带时间戳的句子片段：
 """.strip()
@@ -97,7 +103,7 @@ def _build_prompt(segments: List[Segment]) -> str:
 
     footer = """
 
-请仔细分析内容，按指定格式输出，确保每个主题的时间范围准确反映其对应的句子时间。
+请仔细分析内容，严格按上述格式输出，只输出START_SUMMARIES到END_SUMMARIES之间的内容。
 """.strip(
         "\n"
     )
@@ -105,9 +111,9 @@ def _build_prompt(segments: List[Segment]) -> str:
     return "\n".join([header, *body_lines, "", footer])
 
 
-def _extract_python_summaries(response_text: str) -> List[Dict[str, str]]:
+def _extract_summaries(response_text: str) -> List[Dict[str, str]]:
     """
-    从模型响应中提取Python代码块格式的总结数据。
+    从模型响应中提取总结数据。
 
     参数:
     - response_text: 模型返回的原始文本
@@ -117,38 +123,38 @@ def _extract_python_summaries(response_text: str) -> List[Dict[str, str]]:
     """
     summaries = []
 
-    # 只处理```python代码块格式
     try:
-        if "```python" in response_text:
-            parts = response_text.split("```python")
-            if len(parts) > 1:
-                # 获取第一个Python代码块
-                block = parts[1].split("```")[0].strip()
-                if block:
-                    # 使用eval安全地执行Python代码（仅限列表和字典）
-                    parsed_summaries = eval(block, {"__builtins__": {}}, {})
-                    if isinstance(parsed_summaries, list):
-                        for item in parsed_summaries:
-                            if (
-                                isinstance(item, dict)
-                                and "topic" in item
-                                and "summary" in item
-                            ):
-                                # 提取主题、总结和时间戳信息
-                                summary_item = {
-                                    "topic": str(item["topic"]).strip(),
-                                    "summary": str(item["summary"]).strip(),
-                                }
-                                # 尝试提取时间戳信息
-                                if "start_time" in item:
-                                    summary_item["start_time"] = str(
-                                        float(item["start_time"])
-                                    )
-                                if "end_time" in item:
-                                    summary_item["end_time"] = str(
-                                        float(item["end_time"])
-                                    )
-                                summaries.append(summary_item)
+        # 提取START_SUMMARIES到END_SUMMARIES之间的内容
+        if "START_SUMMARIES" in response_text and "END_SUMMARIES" in response_text:
+            start_idx = response_text.find("START_SUMMARIES") + len("START_SUMMARIES")
+            end_idx = response_text.find("END_SUMMARIES")
+            block = response_text[start_idx:end_idx].strip()
+
+            if block:
+                # 直接解析JSON数组
+                parsed_summaries = json.loads(block)
+                if isinstance(parsed_summaries, list):
+                    for item in parsed_summaries:
+                        if (
+                            isinstance(item, dict)
+                            and "topic" in item
+                            and "summary" in item
+                        ):
+                            # 提取主题、总结和时间戳信息
+                            summary_item = {
+                                "topic": str(item["topic"]).strip(),
+                                "summary": str(item["summary"])
+                                .strip()
+                                .replace("\\n", "\n"),
+                            }
+                            # 尝试提取时间戳信息
+                            if "start_time" in item:
+                                summary_item["start_time"] = str(
+                                    float(item["start_time"])
+                                )
+                            if "end_time" in item:
+                                summary_item["end_time"] = str(float(item["end_time"]))
+                            summaries.append(summary_item)
     except Exception:
         pass  # 解析失败
 
@@ -211,8 +217,8 @@ def summarize_segments(
     overall_start_time = min(s.get("start_time", 0.0) for s in segments)
     overall_end_time = max(s.get("end_time", overall_start_time) for s in segments)
 
-    # 使用新函数提取Python代码块总结
-    extracted_summaries = _extract_python_summaries(topic_and_summary)
+    # 使用新函数提取总结
+    extracted_summaries = _extract_summaries(topic_and_summary)
 
     # 为每个提取到的主题创建SummaryItem
     for item in extracted_summaries:

@@ -7,9 +7,13 @@ from typing import Any, Dict
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
-from backend.db.pg_store import (clear_chat_messages, get_chat_messages,
-                                 get_summaries, save_chat_messages,
-                                 save_summaries)
+from backend.db.pg_store import (
+    clear_chat_messages,
+    get_chat_messages,
+    get_summaries,
+    save_chat_messages,
+    save_summaries,
+)
 from backend.text_process.chat_with_segment import chat_with_segments
 from backend.text_process.summarize import summarize_segments
 from config import settings

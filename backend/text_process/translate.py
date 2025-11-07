@@ -114,17 +114,21 @@ def _build_translate_prompt(
 3. 确保每个句子都有唯一的翻译结果
 
 返回要求：
-- 返回结果必须严格包含 translation_content: 标志，后跟 ```json 格式的JSON数组
+- 返回结果必须严格包含 START_TRANSLATIONS 和 END_TRANSLATIONS 边界标记
+- 边界标记之间只能包含纯JSON数组格式
 - JSON 数组必须包含所有待翻译句子的翻译结果
 - 每个待翻译句子都必须有一个翻译条目，格式为 {{"index": N, "translation": "翻译内容"}}
 - 严禁混入前文上下文或后文上下文的内容
+- 禁止使用Markdown、代码块（```）、加粗、列表、编号等特殊格式
 
 格式示例：
 
-translation_content:
-```json
-[{{"index": 0, "translation": "翻译后的句子"}}, {{"index": 1, "translation": "翻译后的句子"}}]
-```
+START_TRANSLATIONS
+[
+  {{"index": 0, "translation": "翻译后的句子"}},
+  {{"index": 1, "translation": "翻译后的句子"}}
+]
+END_TRANSLATIONS
 """.strip()
 
     # 构建上下文部分
@@ -181,16 +185,38 @@ translation_content:
 def _extract_translations(response_text: str) -> Dict[int, str]:
     """
     从LLM响应中提取翻译结果，支持以下格式：
-    1. translation_content: 标志 + ```json markdown 格式
-    2. 直接的 ```json markdown 格式
-    3. 纯 JSON 数组
+    1. START_TRANSLATIONS 和 END_TRANSLATIONS 边界标记
+    2. translation_content: 标志 + ```json markdown 格式（向后兼容）
+    3. 直接的 ```json markdown 格式（向后兼容）
+    4. 纯 JSON 数组（向后兼容）
     """
     translations = {}
 
     try:
         cleaned = response_text.strip()
 
-        # 首先尝试提取 translation_content: 后的内容
+        # 首先尝试提取 START_TRANSLATIONS 到 END_TRANSLATIONS 之间的内容
+        if "START_TRANSLATIONS" in cleaned and "END_TRANSLATIONS" in cleaned:
+            start_idx = cleaned.find("START_TRANSLATIONS") + len("START_TRANSLATIONS")
+            end_idx = cleaned.find("END_TRANSLATIONS")
+            block = cleaned[start_idx:end_idx].strip()
+
+            if block:
+                # 直接解析JSON数组
+                data = json.loads(block)
+                if isinstance(data, list):
+                    for item in data:
+                        if (
+                            isinstance(item, dict)
+                            and "index" in item
+                            and "translation" in item
+                        ):
+                            trans = item["translation"]
+                            if isinstance(trans, str) and trans.strip():
+                                translations[item["index"]] = trans.strip()
+                return translations
+
+        # 向后兼容：尝试提取 translation_content: 后的内容
         if "translation_content:" in cleaned:
             translation_start = cleaned.find("translation_content:")
             cleaned = cleaned[translation_start + len("translation_content:") :].strip()
