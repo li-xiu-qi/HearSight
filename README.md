@@ -4,6 +4,8 @@
 
 HearSight 是一个企业级的视频内容智能分析工具。通过集成先进的语音识别、自然语言处理和大语言模型技术，HearSight 能够自动将视频音频转化为结构化的文本内容，并在此基础上进行多维度的智能分析和交互。无论您是进行学术研究、内容创作还是知识管理，HearSight 都能帮助您深度挖掘视频内容的价值。
 
+**HearSight介绍视频**：<https://meeting.tencent.com/crm/Nbnzm4a52c>
+
 项目地址：<https://github.com/li-xiu-qi/HearSight>
 
 ## ✨ 核心能力

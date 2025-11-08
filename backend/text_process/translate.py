@@ -179,7 +179,9 @@ END_TRANSLATIONS
         if sentence:
             context_lines.append(f"{index}: {sentence}")
     context_lines.append("")
-    context_lines.append(f"（共 {len(segments)} 个句子需要翻译，检查：是否一个都没漏，是否顺序没乱，是否 index 完全对应）")
+    context_lines.append(
+        f"（共 {len(segments)} 个句子需要翻译，检查：是否一个都没漏，是否顺序没乱，是否 index 完全对应）"
+    )
 
     # 添加后文上下文（后两句，如果存在）
     max_idx = max((seg.get("index", 0) for seg in all_segments), default=0)
@@ -206,7 +208,7 @@ def _extract_translations(response_text: str) -> Dict[int, str]:
     2. translation_content: 标志 + ```json markdown 格式（向后兼容）
     3. 直接的 ```json markdown 格式（向后兼容）
     4. 纯 JSON 数组（向后兼容）
-    
+
     返回一个字典，key 为 index，value 为翻译文本。
     """
     translations = {}
@@ -415,7 +417,7 @@ async def translate_segments_async(
         quality_checked = {}
         expected_indices = {seg.get("index", 0) for seg in batch}
         received_indices = set(batch_translations.keys())
-        
+
         # 检查是否有漏掉的句子
         missing_indices = expected_indices - received_indices
         if missing_indices:
@@ -424,14 +426,14 @@ async def translate_segments_async(
             )
             for idx in missing_indices:
                 failed_indices.append(idx)
-        
+
         # 检查是否有多余的翻译（可能是 LLM 误解了提示词）
         extra_indices = received_indices - expected_indices
         if extra_indices:
             logging.warning(
                 f"第 {batch_idx + 1} 批：LLM 返回了额外的翻译，indices: {sorted(extra_indices)}（将被忽略）"
             )
-        
+
         for seg in batch:
             index = seg.get("index", 0)
             if index in batch_translations:
@@ -452,10 +454,13 @@ async def translate_segments_async(
 
         # 回调进度
         if progress_callback:
-            translated_count = len([
-                seg for seg in untranslated_segments
-                if seg.get("index") in all_translations
-            ])
+            translated_count = len(
+                [
+                    seg
+                    for seg in untranslated_segments
+                    if seg.get("index") in all_translations
+                ]
+            )
             if asyncio.iscoroutinefunction(progress_callback):
                 await progress_callback(translated_count, len(untranslated_segments))
             else:
@@ -523,11 +528,11 @@ async def translate_segments_async(
 
     # 最终验证：检查是否有未翻译的句子
     still_failed = [
-        seg.get("index", 0) 
-        for seg in untranslated_segments 
+        seg.get("index", 0)
+        for seg in untranslated_segments
         if seg.get("index", 0) not in all_translations
     ]
-    
+
     if still_failed:
         logging.error(
             f"⚠️ 最终检查：仍有 {len(still_failed)} 个分句未能成功翻译，indices: {still_failed[:20]}{'...' if len(still_failed) > 20 else ''}"

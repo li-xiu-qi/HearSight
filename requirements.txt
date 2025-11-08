@@ -17,6 +17,8 @@ opencv-python
 pillow
 # 用于重试机制，处理超时和限速
 tenacity
+aiohttp
+requests
 
 black
 isort
