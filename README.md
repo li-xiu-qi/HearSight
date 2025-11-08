@@ -14,10 +14,10 @@ HearSight 是一个企业级的视频内容智能分析工具。通过集成先�
 
 - 📹 集成式媒体导入：直接从哔哩哔哩获取内容，同时支持本地上传视频和音频，支持 MP4、AVI、MOV、MKV、MP3、WAV、M4A、AAC 等多种格式
 - 🎯 精准语音转写：采用业界领先的 ASR 技术，支持热词识别和实时精确时间戳，自动分句并生成可交互式的文本档案
-- � 智能内容分析：基于大语言模型生成段落级和全文级的结构化摘要，支持持久化保存和迭代优化
+- 🧠 智能内容分析：基于大语言模型生成段落级和全文级的结构化摘要，支持持久化保存和迭代优化
 - 💬 对话式内容理解：支持基于原文的深度问答交互，准确把握关键信息和核心观点
 - 🖼️ 多模态信息展示：在问答和总结中融入视频关键帧，实现图文融合的高效表达
-- � 多语言内容转换：支持自动翻译为多种语言，翻译结果完整保存，便于国际化应用
+- 🌐 多语言内容转换：支持自动翻译为多种语言，翻译结果完整保存，便于国际化应用
 <!-- 效果展示 -->
 ## 🔧 效果展示
 
@@ -51,9 +51,9 @@ HearSight 采用现代化的微服务架构设计。后端基于 FastAPI 构建�
 
 ![架构图](https://oss-liuchengtu.hudunsoft.com/userimg/b5/b54f2ca20885a98aa90ec0557b8354e1.png)
 
-## 🎯 应用场景
+## 🎯 适用场景
 
-HearSight 适用于需要大量处理视频/音频内容的各类场景。学术研究人员可以快速索引和整理讲座视频；教育工作者能够便捷生成教学素材；内容创作者可以自动化处理视频文案和脚本；企业知识管理团队则可以建立结构化的视频知识库。总之，只要涉及从非结构化视频内容中提取和分析信息的场景，HearSight 都能显著提升工作效率。
+学术研究：快速整理讲座视频，建立参考文献档案库。教育培训：自动生成教学讲义和习题解析。内容创作：批量处理视频脚本和文案素材。企业培训：构建结构化的内部知识库与学习平台。客户服务：分析客服录音提取关键问题与解决方案。市场研究：监测竞品视频内容并自动生成分析报告。
 
 ## 🚀 快速开始
 
@@ -66,32 +66,32 @@ cd HearSight
 
 ### ⚙️ 环境配置
 
-在项目根目录创建 `.env` 文件，配置必要的参数：
+在项目根目录创建 `.env` 文件，按需配置以下参数：
 
 ```bash
-# PostgreSQL 数据库配置（生产环境建议修改密码）
+# PostgreSQL 数据库（必需）
 POSTGRES_USER=hearsight
 POSTGRES_PASSWORD=hearsight_pass
 POSTGRES_DB=hearsight
 POSTGRES_PORT=5432
 
-# 应用服务端口（可选，生产环境建议配置）
+# 服务端口（可选）
 BACKEND_PORT=9999
 FRONTEND_PORT=10000
 
-# 大语言模型配置（必填）
+# 大语言模型（必需，仅需任选一个配置）
 OPENAI_API_KEY=your_api_key_here
 OPENAI_BASE_URL=https://api.siliconflow.cn/v1
-OPENAI_CHAT_MODEL=baidu/ERNIE-4.5-300B-A47B # 文心4.5多模态系列模型
+OPENAI_CHAT_MODEL=baidu/ERNIE-4.5-300B-A47B
 
-# 会话上下文大小（可选，默认 1000000）
+# 对话上下文窗口（可选）
 CHAT_MAX_WINDOWS=1000000
 
-# 哔哩哔哩登录凭证（可选，用于访问需要登录的高清视频）
+# 哔哩哔哩登录凭证（可选，用于获取会员视频）
 BILIBILI_SESSDATA=
 ```
 
-💡 **快速提示**：仅需配置 `OPENAI_API_KEY` 即可启动。我们默认使用硅基流动的 OpenAI 兼容 API 服务。免费额度申请：<https://cloud.siliconflow.cn/i/FcjKykMn>，平台提供免费的大语言模型如 `THUDM/GLM-4-9B-0414`，此外硅基流动上也支持文心4.5多模态系列模型中的ERNIE-4.5-300B-A47B调用。你也可以去[千帆大模型平台-企业级一站式大模型开发及应用开发平台](https://cloud.baidu.com/product-s/qianfan_home)调用ERNIE-4.5-300B-A47B。
+**快速提示**：仅配置 `OPENAI_API_KEY` 即可启动全部功能。我们默认使用硅基流动的 OpenAI 兼容 API。免费额度申请：<https://cloud.siliconflow.cn/i/FcjKykMn>，平台免费提供包括文心 4.5 多模态模型的大语言模型调用。
 
 ### 🐳 方案一：容器化部署（推荐）
 
@@ -109,11 +109,11 @@ docker compose up -d --build
 
 #### 前置要求
 
-PostgreSQL 数据库必须处于运行状态。可以选择通过 Docker 启动，也可以本地安装。
+需要 PostgreSQL 数据库运行。可通过 Docker 启动也可本地安装。
 
 #### 后端服务启动
 
-1. 安装 Python 依赖包
+1. 安装依赖
 
    ```bash
    pip install -r requirements.txt
@@ -121,60 +121,58 @@ PostgreSQL 数据库必须处于运行状态。可以选择通过 Docker 启动�
 
 2. 安装 PyTorch
 
-   根据你的硬件选择对应版本，访问 <https://pytorch.org/get-started/locally/>
+   访问 <https://pytorch.org/get-started/locally/> 选择对应硬件版本
 
-3. 启动后端服务
+3. 启动服务
 
    ```bash
    python main.py
    ```
 
-   后端服务默认运行在 `http://localhost:9999`。
+   后端运行在 `http://localhost:9999`
 
 #### 前端应用启动
 
-1. 进入前端目录并安装依赖
+1. 安装依赖
 
    ```bash
    cd frontend
    npm install
    ```
 
-2. 启动前端开发服务器
+2. 启动开发服务器
 
    ```bash
    npm run dev
    ```
 
-前端默认在 <http://localhost:5173> 启动。
+前端在 `http://localhost:5173` 启动
 
 ## 📡 API 参考
 
-后端集成了 FastAPI 自动文档生成功能，启动后端服务后访问 <http://localhost:9999/docs> 可查看完整的交互式 API 文档。
+后端使用 FastAPI 框架，启动后访问 `http://localhost:9999/docs` 查看完整交互式文档。
 
-### 核心接口概览
+### 媒体操作
 
-#### 媒体管理
+- `POST /api/download` 启动下载任务
+- `POST /api/upload` 上传媒体文件
+- `GET /api/transcripts` 列出所有媒体
+- `GET /api/transcripts/{id}` 获取媒体详情及转写内容
+- `DELETE /api/transcripts/{id}` 删除媒体
 
-- `POST /api/download` 启动视频下载任务
-- `POST /api/upload` 上传本地媒体文件
-- `GET /api/transcripts` 查看所有已处理的媒体列表
-- `GET /api/transcripts/{transcript_id}` 获取指定媒体的详细信息及转写内容
-- `DELETE /api/transcripts/{transcript_id}` 删除媒体记录及相关数据
+### 内容处理
 
-#### 内容处理
+- `POST /api/asr/segments` 执行语音识别与分句
+- `POST /api/summarize` 生成摘要
+- `POST /api/transcripts/{id}/summaries` 保存摘要
+- `GET /api/transcripts/{id}/summaries` 查看摘要历史
+- `POST /api/transcripts/{id}/translate` 启动翻译
+- `GET /api/transcripts/{id}/translate-progress` 查询翻译进度
+- `GET /api/transcripts/{id}/translations` 查看翻译结果
 
-- `POST /api/asr/segments` 执行语音识别并分句处理
-- `POST /api/summarize` 生成内容摘要
-- `POST /api/transcripts/{transcript_id}/summaries` 保存生成的摘要
-- `GET /api/transcripts/{transcript_id}/summaries` 查看已保存的摘要历史
-- `POST /api/transcripts/{transcript_id}/translate` 启动多语言翻译任务
-- `GET /api/transcripts/{transcript_id}/translate-progress` 查询翻译进度
-- `GET /api/transcripts/{transcript_id}/translations` 查看已保存的翻译结果
+### 交互
 
-#### 交互分析
-
-- `POST /api/chat` 基于内容进行问答交互
+- `POST /api/chat` 问答交互
 
 ## 📂 项目架构
 
@@ -233,41 +231,27 @@ HearSight/
 
 ### 1. 多源媒体导入
 
-支持从哔哩哔哩直接导入视频（包含登录视频），同时接受本地上传的各种格式媒体。系统自动管理文件存储和元数据，无需手动处理。
+集成哔哩哔哩接口可直接获取视频（含登录内容），同时支持本地上传多种格式媒体。系统自动处理文件管理和元数据存储，用户无需手动处理繁琐的文件操作。
 
-### 2. 精准语音识别与智能分句
+### 2. 精准语音识别与时间戳分句
 
-采用先进的语音识别模型将音频转化为文本，支持热词识别以提高垂直领域准确度。系统自动按语义进行分句处理，每个句子片段都关联精确的时间戳，支持点击跳转到视频对应位置。
+采用行业前沿的 ASR 模型，支持热词识别优化垂直领域准确度。系统自动按句义分割，每个分句精确对应音频时间戳，支持点击即跳转到视频位置，打破传统文案的线性查看方式。
 
-### 3. 结构化内容摘要
+### 3. 分层级摘要生成与版本管理
 
-基于大语言模型为内容生成多层次的摘要。支持段落级摘要快速获取关键信息，以及全文级总结把握内容全貌。摘要结果完整保存到数据库，支持查看历史版本，支持重新生成并自动覆盖。
+集成大语言模型生成分层级摘要，既能快速获取段落关键信息，也能完整掌握全文内容脉络。摘要自动入库，支持查看历史版本与迭代对比，支持强制重新生成自动覆盖，让内容分析全过程可追溯。
 
-**核心特性**：
+### 4. 多语言翻译与存储
 
-- ✅ 摘要自动存储，便于追踪演变
-- ✅ 支持强制重新生成，自动覆盖旧数据
-- ✅ 前端展示"已保存"标记
-- ✅ 可随时查看以往的摘要版本
+支持一键翻译为多种目标语言，后台异步处理不阻塞主流程，支持实时查看翻译进度。翻译结果完整持久化，多语言内容共存于一个项目中，轻松管理国际化内容。
 
-### 4. 多语言内容转换
+### 5. 深度问答交互
 
-支持自动将内容翻译为多种目标语言。翻译过程在后台异步进行，支持实时进度查看。翻译结果完整持久化，便于多语言内容管理和复用。
+基于原始转写内容进行上下文感知的问答。支持多轮追问与对话历史完整保留，系统能准确把握内容脉络，给出针对性的分析答案。
 
-**核心特性**：
+### 6. 图文融合呈现
 
-- ✅ 翻译结果完整保存，支持多语言同时存储
-- ✅ 支持强制重新翻译，自动更新数据库
-- ✅ 前端展示已保存的语言种类
-- ✅ 可随时查阅历史翻译内容
-
-### 5. 交互式问答分析
-
-用户可以针对视频内容提出自由形式的问题，系统基于原始转写内容进行深度分析并给出精准答案。支持追问和多轮对话，完整保留对话历史。
-
-### 6. 图文融合展示
-
-在摘要和问答中自动关联视频关键帧，实现图文结合的高效表达。支持点击查看大图，帮助用户更直观地理解内容。
+自动关联视频关键帧到摘要和问答结果中。用户可点击查看大图，实现图文结合的直观表达，让复杂概念更容易理解。
 
 ## 🤝 参与贡献
 
