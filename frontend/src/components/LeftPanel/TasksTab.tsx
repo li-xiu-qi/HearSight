@@ -45,7 +45,7 @@ function TasksTab({ jobs }: TasksTabProps) {
         <Clock className="h-12 w-12 text-slate-300 mb-4" />
         <div className="text-base font-medium text-slate-700 mb-2">暂无处理任务</div>
         <div className="text-sm text-slate-500">
-          当前没有正在处理的视频。提交视频URL后，处理进度会显示在这里。
+          当前没有正在处理的媒体内容。提交视频或音频URL后，处理进度会显示在这里。
         </div>
       </div>
     )

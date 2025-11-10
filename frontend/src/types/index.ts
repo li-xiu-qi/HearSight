@@ -12,6 +12,7 @@ export interface Segment {
 export interface TranscriptMeta {
   id: number
   media_path: string
+  media_type?: string
   created_at: string
   segment_count: number
 }
@@ -48,6 +49,7 @@ export interface JobItem {
 // URL解析结果类型
 export type ParseResult = 
   | { kind: 'BV' | 'av' | 'ep' | 'ss' | 'md'; id: string }
+  | { kind: 'url'; id: string; platform: string }
   | { error: string }
 
 // 总结数据类型
@@ -74,6 +76,7 @@ export interface JobsResponse {
 export interface TranscriptDetailResponse {
   id?: number
   media_path: string
+  media_type?: string
   segments: Segment[]
   summaries?: Summary[] | null
   translations?: Record<string, Translation[]> | null

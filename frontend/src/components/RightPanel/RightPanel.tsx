@@ -20,11 +20,12 @@ interface RightPanelProps {
   readonly onSeekTo: (timeMs: number) => void
   readonly onActiveSegmentChange: (index: number) => void
   readonly transcriptId?: number
+  readonly mediaType?: string
   readonly onTranslateComplete?: () => void
 }
 
 const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
-  ({ segments, activeSegIndex, autoScroll, onSeekTo, onActiveSegmentChange, transcriptId, onTranslateComplete }, ref) => {
+  ({ segments, activeSegIndex, autoScroll, onSeekTo, onActiveSegmentChange, transcriptId, mediaType, onTranslateComplete }, ref) => {
     const {
       activeTab,
       setActiveTab,
@@ -140,6 +141,7 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
                 onSeekTo={onSeekTo}
                 transcriptId={transcriptId}
                 hasSavedSummaries={hasSavedSummaries}
+                mediaType={mediaType}
               />
             </TabsContent>
 
@@ -154,6 +156,7 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
                 onErrorChange={setChatError}
                 onSeekTo={onSeekTo}
                 transcriptId={transcriptId}
+                mediaType={mediaType}
               />
             </TabsContent>
           </div>

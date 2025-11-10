@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { message } from '../utils/message'
 import { createJob, startDownload } from '../services/api'
-import { parseBilibiliUrl } from '../utils'
+import { parseUrl } from '../utils'
 import type { ParseResult } from '../types'
 
 interface UseUrlHandlerReturn {
@@ -26,7 +26,7 @@ export const useUrlHandler = (): UseUrlHandlerReturn => {
     setUrlError(null)
     setUrlResult(null)
     
-    const parsed = parseBilibiliUrl(urlToSubmit)
+    const parsed = parseUrl(urlToSubmit)
     if ('error' in parsed) {
       setUrlError(parsed.error)
       setUrlResult(parsed)

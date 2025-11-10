@@ -10,9 +10,9 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from backend.db.pg_store import update_job_result
-from backend.routers.progress_router import set_download_progress
-from backend.utils.vedio_utils.download_video.download_bilibili_with_progress import (
-    download_bilibili_with_progress,
+from backend.routers.progress_router import set_task_progress
+from backend.utils.vedio_utils.download_video.multi_platform_downloader import (
+    MultiPlatformDownloader,
 )
 
 logger = logging.getLogger(__name__)
@@ -22,10 +22,6 @@ def _download_worker(
     job_id: int,
     url: str,
     out_dir: str,
-    sessdata: str,
-    playlist: bool,
-    quality: str,
-    workers: int,
     db_url: str | None,
 ) -> None:
     """后台下载任务"""
@@ -35,7 +31,7 @@ def _download_worker(
         progress_data = {
             "stage": "downloading",
             "job_id": job_id,
-            "status": "in-progress",
+            "status": "in-progress" if progress_info["status"] == "downloading" else progress_info["status"],
             "progress_percent": progress_info.get("progress_percent", 0),
             "filename": progress_info.get("filename", ""),
             "current_bytes": progress_info.get("downloaded_bytes", 0),
@@ -44,7 +40,7 @@ def _download_worker(
             "eta_seconds": progress_info.get("eta_seconds"),
             "timestamp": progress_info.get("timestamp", ""),
         }
-        set_download_progress(job_id, progress_data)
+        set_task_progress(job_id, progress_data)
         try:
             pct = float(progress_info.get("progress_percent", 0))
         except Exception:
@@ -53,17 +49,12 @@ def _download_worker(
 
     try:
         logger.info(f"开始下载任务 (job_id={job_id}): {url}")
-        files: List[str] = download_bilibili_with_progress(
+        downloader = MultiPlatformDownloader(
             url=url,
             out_dir=out_dir,
             progress_callback=progress_hook,
-            sessdata=sessdata,
-            playlist=playlist,
-            quality=quality,
-            workers=workers,
-            use_nopart=True,
-            simple_filename=True,
         )
+        files: List[str] = downloader.download()
 
         logger.info(f"下载完成 (job_id={job_id}): {len(files)} 个文件")
 
@@ -79,7 +70,7 @@ def _download_worker(
                 }
             )
 
-        set_download_progress(
+        set_task_progress(
             job_id,
             {
                 "status": "completed",
@@ -102,7 +93,7 @@ def _download_worker(
 
     except Exception as e:
         logger.error(f"下载任务失败 (job_id={job_id}): {e}", exc_info=True)
-        set_download_progress(
+        set_task_progress(
             job_id,
             {
                 "status": "error",
@@ -124,16 +115,12 @@ def start_download(
     job_id: int,
     url: str,
     out_dir: str,
-    sessdata: str | None,
-    playlist: bool,
-    quality: str,
-    workers: int,
     db_url: str | None,
 ) -> None:
     """启动后台下载线程"""
     t = threading.Thread(
         target=_download_worker,
-        args=(job_id, url, out_dir, sessdata or "", playlist, quality, workers, db_url),
+        args=(job_id, url, out_dir, db_url),
         daemon=True,
     )
     t.start()

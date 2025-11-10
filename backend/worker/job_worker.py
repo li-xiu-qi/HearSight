@@ -6,6 +6,7 @@ from __future__ import annotations
 import threading
 import time
 from pathlib import Path
+from typing import Dict
 
 from fastapi import FastAPI
 
@@ -20,9 +21,8 @@ from backend.db.pg_store import (
     update_job_status,
 )
 from backend.routers.progress_router import set_task_progress
-from backend.utils.vedio_utils.download_video.download_bilibili_with_progress import (
-    ProgressInfo,
-    download_bilibili_with_progress,
+from backend.utils.vedio_utils.download_video.multi_platform_downloader import (
+    MultiPlatformDownloader,
 )
 
 
@@ -104,7 +104,7 @@ def _process_job(db_url: str | None, job_id: int, url: str, static_dir: Path) ->
         else:
             update_job_status(db_url, job_id, "downloading")
 
-            def on_progress(info: ProgressInfo) -> None:
+            def on_progress(info: Dict) -> None:
                 """下载进度回调"""
                 set_task_progress(
                     job_id,
@@ -121,13 +121,12 @@ def _process_job(db_url: str | None, job_id: int, url: str, static_dir: Path) ->
                     },
                 )
 
-            files = download_bilibili_with_progress(
+            downloader = MultiPlatformDownloader(
                 url=url,
                 out_dir=str(static_dir),
                 progress_callback=on_progress,
-                use_nopart=True,
-                simple_filename=True,
             )
+            files = downloader.download()
             if not files:
                 raise RuntimeError("下载结果为空")
 
@@ -167,6 +166,11 @@ def _process_job(db_url: str | None, job_id: int, url: str, static_dir: Path) ->
     else:
         basename = Path(str(media_path)).name
 
+    # 检测媒体类型
+    media_ext = Path(str(media_path)).suffix.lower()
+    audio_extensions = {'.m4a', '.mp3', '.wav', '.flac', '.aac', '.ogg', '.wma'}
+    media_type = 'audio' if media_ext in audio_extensions else 'video'
+
     # Step B: ASR 阶段
     if not res.get("transcript_id"):
         update_job_status(db_url, job_id, "processing")
@@ -197,9 +201,9 @@ def _process_job(db_url: str | None, job_id: int, url: str, static_dir: Path) ->
             },
         )
 
-        transcript_id = save_transcript(db_url, str(media_path), segs)
-        res.update({"transcript_id": transcript_id})
-        update_job_result(db_url, job_id, {"transcript_id": transcript_id})
+        transcript_id = save_transcript(db_url, str(media_path), segs, media_type)
+        res.update({"transcript_id": transcript_id, "media_type": media_type})
+        update_job_result(db_url, job_id, {"transcript_id": transcript_id, "media_type": media_type})
 
         set_task_progress(
             job_id,

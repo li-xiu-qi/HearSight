@@ -36,21 +36,10 @@ def set_task_progress(job_id: int, progress: Dict[str, Any]) -> None:
     )
 
 
-# 保留旧名称以兼容现有代码
-def get_download_progress(job_id: int) -> Dict[str, Any]:
-    """获取下载进度（兼容旧接口）"""
-    return get_task_progress(job_id)
-
-
-def set_download_progress(job_id: int, progress: Dict[str, Any]) -> None:
-    """设置下载进度（兼容旧接口）"""
-    set_task_progress(job_id, progress)
-
-
 @router.get("/progress/download/{job_id}")
 def api_get_download_progress(job_id: int) -> Dict[str, Any]:
     """查询下载进度"""
-    return get_download_progress(job_id)
+    return get_task_progress(job_id)
 
 
 @router.get("/progress/task/{job_id}")

@@ -4,15 +4,18 @@ import { Loader2, Play } from 'lucide-react'
 
 interface VideoPlayerProps {
   videoSrc: string | null
+  mediaType?: string
   loading: boolean
 }
 
-const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({ videoSrc, loading }, ref) => {
+const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({ videoSrc, mediaType, loading }, ref) => {
+  const isAudio = mediaType === 'audio' || (videoSrc && /\.(m4a|mp3|wav|flac|aac)$/i.test(videoSrc))
+  const playerTitle = isAudio ? '音频播放器' : '视频播放器'
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center justify-between">
-          <span>视频播放器</span>
+          <span>{playerTitle}</span>
           {videoSrc && (
             <span className="text-xs font-normal text-green-600 bg-green-50 px-2 py-1 rounded">
               可播放

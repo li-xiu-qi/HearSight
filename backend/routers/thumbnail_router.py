@@ -49,6 +49,11 @@ async def get_thumbnail(
         if not transcript:
             raise HTTPException(status_code=404, detail=f"转写记录不存在: {transcript_id}")
         
+        # 检查是否为音频文件
+        media_type = transcript.get("media_type", "video")
+        if media_type == "audio":
+            raise HTTPException(status_code=400, detail="音频文件不支持缩略图生成")
+        
         # 获取视频路径
         video_path = transcript.get("media_path")
         if not video_path:

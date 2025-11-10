@@ -19,6 +19,7 @@ def init_transcript_table(db_url: Optional[str] = None) -> None:
                     CREATE TABLE IF NOT EXISTS transcripts (
                         id SERIAL PRIMARY KEY,
                         media_path TEXT NOT NULL,
+                        media_type TEXT NOT NULL DEFAULT 'video',
                         segments_json TEXT NOT NULL,
                         summaries_json TEXT,
                         translations_json TEXT,

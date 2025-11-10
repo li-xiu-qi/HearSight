@@ -12,7 +12,7 @@ from .conn_utils import connect_db
 
 
 def save_transcript(
-    db_url: Optional[str], media_path: str, segments: List[Dict[str, Any]]
+    db_url: Optional[str], media_path: str, segments: List[Dict[str, Any]], media_type: str = "video"
 ) -> int:
     """保存转写记录。
 
@@ -20,6 +20,7 @@ def save_transcript(
         db_url: 数据库连接 URL
         media_path: 媒体文件路径
         segments: 转写片段列表
+        media_type: 媒体类型（'video' 或 'audio'）
 
     Returns:
         新创建的转写记录 ID
@@ -30,8 +31,8 @@ def save_transcript(
         with conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "INSERT INTO transcripts (media_path, segments_json) VALUES (%s, %s) RETURNING id",
-                    (media_path, data),
+                    "INSERT INTO transcripts (media_path, media_type, segments_json) VALUES (%s, %s, %s) RETURNING id",
+                    (media_path, media_type, data),
                 )
                 row = cur.fetchone()
                 if not row:
@@ -103,6 +104,7 @@ def get_transcript_by_id(
                 return {
                     "id": int(row["id"]),
                     "media_path": str(row["media_path"]),
+                    "media_type": str(row.get("media_type", "video")),
                     "created_at": str(row["created_at"]),
                     "segments": segs,
                 }

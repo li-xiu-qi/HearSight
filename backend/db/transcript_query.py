@@ -65,7 +65,7 @@ def list_transcripts_meta(
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
                     """
-                    SELECT id, media_path, segments_json, created_at
+                    SELECT id, media_path, media_type, segments_json, created_at
                     FROM transcripts
                     ORDER BY id DESC
                     LIMIT %s OFFSET %s
@@ -88,6 +88,7 @@ def list_transcripts_meta(
                         {
                             "id": int(rid),
                             "media_path": str(media_path),
+                            "media_type": str(r.get("media_type", "video")),
                             "created_at": str(created_at),
                             "segment_count": int(seg_count),
                         }

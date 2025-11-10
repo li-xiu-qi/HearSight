@@ -50,7 +50,7 @@ function HomePage() {
           <form onSubmit={handleUrlSubmit} className="max-w-2xl mx-auto mb-8 flex gap-3 flex-wrap justify-center">
             <Input
               type="text"
-              placeholder="请输入 bilibili.com 视频链接或上传本地文件"
+              placeholder="请输入 B站、YouTube、小宇宙播客等平台的视频链接或上传本地文件"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               className="flex-1 min-w-[300px] h-12 bg-background text-foreground"
@@ -88,7 +88,7 @@ function HomePage() {
               <CardContent>
                 <CardTitle className="mb-3">语音转文字</CardTitle>
                 <CardDescription className="text-base">
-                  高精度语音识别技术，将视频中的语音内容准确转换为文字
+                  高精度语音识别技术，将媒体内容中的语音准确转换为文字
                 </CardDescription>
               </CardContent>
             </Card>
@@ -116,7 +116,7 @@ function HomePage() {
               <CardContent>
                 <CardTitle className="mb-3">智能问答</CardTitle>
                 <CardDescription className="text-base">
-                  基于AI技术的智能问答系统，可针对视频内容进行提问和交互
+                  基于AI技术的智能问答系统，可针对媒体内容进行提问和交互
                 </CardDescription>
               </CardContent>
             </Card>

@@ -24,6 +24,7 @@ interface SummariesTabProps {
   readonly onGenerate: () => void
   readonly onSeekTo: (timeMs: number) => void
   readonly transcriptId?: number
+  readonly mediaType?: string
   readonly hasSavedSummaries: boolean
 }
 
@@ -34,9 +35,11 @@ export default function SummariesTab({
   onGenerate,
   onSeekTo,
   transcriptId,
+  mediaType,
   hasSavedSummaries,
 }: Readonly<SummariesTabProps>) {
-  const [imageModeEnabled, setImageModeEnabled] = useState(true)
+  const isAudio = mediaType === 'audio'
+  const [imageModeEnabled, setImageModeEnabled] = useState(!isAudio)
   const [frameCache, setFrameCache] = useState<Record<string, string>>({})
   const [refreshConfirmOpen, setRefreshConfirmOpen] = useState(false)
 
@@ -130,8 +133,13 @@ export default function SummariesTab({
               id="image-mode-summaries"
               checked={imageModeEnabled}
               onCheckedChange={setImageModeEnabled}
+              disabled={isAudio}
             />
-            <Label htmlFor="image-mode-summaries" className="text-sm cursor-pointer">
+            <Label 
+              htmlFor="image-mode-summaries" 
+              className={`text-sm cursor-pointer ${isAudio ? 'text-slate-400' : ''}`}
+              title={isAudio ? '音频文件不支持图文展示' : ''}
+            >
               图文展示
             </Label>
           </div>

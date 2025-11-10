@@ -28,6 +28,7 @@ interface ChatViewProps {
   readonly onErrorChange?: (error: string | null) => void
   readonly onSeekTo: (timeMs: number) => void
   readonly transcriptId?: number
+  readonly mediaType?: string
 }
 
 export interface ChatMessage {
@@ -47,12 +48,14 @@ export default function ChatView({
   onErrorChange,
   onSeekTo,
   transcriptId,
+  mediaType,
 }: Readonly<ChatViewProps>) {
   const [inputValue, setInputValue] = useState("")
   const [internalMessages, setInternalMessages] = useState<ChatMessage[]>([])
   const [internalLoading, setInternalLoading] = useState(false)
   const [internalError, setInternalError] = useState<string | null>(null)
-  const [imageModeEnabled, setImageModeEnabled] = useState(true)
+  const isAudio = mediaType === 'audio'
+  const [imageModeEnabled, setImageModeEnabled] = useState(!isAudio)
   const [frameCache, setFrameCache] = useState<Record<string, string>>({})
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -366,8 +369,13 @@ export default function ChatView({
               id="image-mode"
               checked={imageModeEnabled}
               onCheckedChange={setImageModeEnabled}
+              disabled={isAudio}
             />
-            <Label htmlFor="image-mode" className="text-sm cursor-pointer">
+            <Label 
+              htmlFor="image-mode" 
+              className={`text-sm cursor-pointer ${isAudio ? 'text-slate-400' : ''}`}
+              title={isAudio ? '音频文件不支持图文展示' : ''}
+            >
               图文展示
             </Label>
           </div>

@@ -9,12 +9,14 @@ interface UseDataLoaderReturn {
   transcripts: TranscriptMeta[]
   jobs: JobItem[]
   videoSrc: string | null
+  mediaType: string
   activeTranscriptId: number | null
   loadTranscripts: () => Promise<void>
   loadJobs: () => Promise<void>
   loadTranscriptDetail: (id: number) => Promise<void>
   setSegments: (segments: Segment[]) => void
   setVideoSrc: (src: string | null) => void
+  setMediaType: (type: string) => void
   setActiveTranscriptId: (id: number | null) => void
 }
 
@@ -24,6 +26,7 @@ export const useDataLoader = (): UseDataLoaderReturn => {
   const [transcripts, setTranscripts] = useState<TranscriptMeta[]>([])
   const [jobs, setJobs] = useState<JobItem[]>([])
   const [videoSrc, setVideoSrc] = useState<string | null>(null)
+  const [mediaType, setMediaType] = useState<string>('video')
   const [activeTranscriptId, setActiveTranscriptId] = useState<number | null>(null)
 
   const loadTranscripts = useCallback(async () => {
@@ -54,6 +57,7 @@ export const useDataLoader = (): UseDataLoaderReturn => {
       if (basename) {
         setVideoSrc(`/static/${basename}`)
       }
+      setMediaType(data.media_type || 'video')
       setSegments(Array.isArray(data.segments) ? data.segments : [])
       setActiveTranscriptId(id)
     } catch (err: unknown) {
@@ -144,12 +148,14 @@ export const useDataLoader = (): UseDataLoaderReturn => {
     transcripts,
     jobs,
     videoSrc,
+    mediaType,
     activeTranscriptId,
     loadTranscripts,
     loadJobs,
     loadTranscriptDetail,
     setSegments,
     setVideoSrc,
+    setMediaType,
     setActiveTranscriptId
   }
 }

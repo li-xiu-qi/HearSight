@@ -37,6 +37,7 @@ function AppPage() {
     transcripts,
     jobs,
     videoSrc,
+    mediaType,
     activeTranscriptId,
     loadTranscriptDetail,
     loadTranscripts,
@@ -159,6 +160,7 @@ function AppPage() {
           <VideoPlayer
             ref={videoRef}
             videoSrc={videoSrc}
+            mediaType={mediaType}
             loading={loading}
           />
         }
@@ -171,6 +173,7 @@ function AppPage() {
             onSeekTo={handleSeekTo}
             onActiveSegmentChange={setActiveSegIndex}
             transcriptId={activeTranscriptId ?? undefined}
+            mediaType={mediaType}
             onTranslateComplete={() => {
               if (activeTranscriptId) {
                 loadTranscriptDetail(activeTranscriptId)
