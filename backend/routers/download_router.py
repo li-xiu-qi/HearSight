@@ -79,9 +79,7 @@ def api_download(payload: Dict[str, Any], request: Request) -> Dict[str, Any]:
     )
 
     # 启动后台下载
-    start_download(
-        job_id, url, out_dir, db_url
-    )
+    start_download(job_id, url, out_dir, db_url)
 
     return {
         "status": "started",

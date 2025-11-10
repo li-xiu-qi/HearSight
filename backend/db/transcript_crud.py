@@ -12,7 +12,10 @@ from .conn_utils import connect_db
 
 
 def save_transcript(
-    db_url: Optional[str], media_path: str, segments: List[Dict[str, Any]], media_type: str = "video"
+    db_url: Optional[str],
+    media_path: str,
+    segments: List[Dict[str, Any]],
+    media_type: str = "video",
 ) -> int:
     """保存转写记录。
 

@@ -31,7 +31,11 @@ def _download_worker(
         progress_data = {
             "stage": "downloading",
             "job_id": job_id,
-            "status": "in-progress" if progress_info["status"] == "downloading" else progress_info["status"],
+            "status": (
+                "in-progress"
+                if progress_info["status"] == "downloading"
+                else progress_info["status"]
+            ),
             "progress_percent": progress_info.get("progress_percent", 0),
             "filename": progress_info.get("filename", ""),
             "current_bytes": progress_info.get("downloaded_bytes", 0),

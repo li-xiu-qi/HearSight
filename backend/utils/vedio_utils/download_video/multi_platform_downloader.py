@@ -12,7 +12,13 @@ logger = logging.getLogger(__name__)
 class MultiPlatformDownloader:
     """多平台媒体下载器，支持B站、YouTube、小宇宙播客等"""
 
-    def __init__(self, url: str, out_dir: str = "downloads", progress_callback: Optional[Callable[[Dict], None]] = None, **kwargs):
+    def __init__(
+        self,
+        url: str,
+        out_dir: str = "downloads",
+        progress_callback: Optional[Callable[[Dict], None]] = None,
+        **kwargs,
+    ):
         self.url = url
         self.out_dir = out_dir
         self.progress_callback = progress_callback
@@ -49,23 +55,23 @@ class MultiPlatformDownloader:
         """构建 yt-dlp 选项"""
         # 小宇宙是纯音频，不需要合并
         merge_format = "mp4" if self.platform != "xiaoyuzhou" else None
-        
+
         opts = {
             "outtmpl": os.path.join(self.out_dir, "%(title)s.%(ext)s"),
             "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
             "keepvideo": False,
             "quiet": False,
             "windowsfilenames": True,
-            "nopart": os.name == 'nt',
+            "nopart": os.name == "nt",
             "retries": 3,
             "fragment_retries": 3,
             "skip_unavailable_fragments": True,
             "continuedl": False,
         }
-        
+
         if merge_format:
             opts["merge_output_format"] = merge_format
-        
+
         if self.progress_callback:
             opts["progress_hooks"] = [self._progress_hook]
         return opts
@@ -76,7 +82,11 @@ class MultiPlatformDownloader:
             status = d.get("status", "unknown")
             progress_info = {
                 "status": status,
-                "progress_percent": d.get("downloaded_bytes", 0) / d.get("total_bytes", 1) * 100 if d.get("total_bytes") else 0,
+                "progress_percent": (
+                    d.get("downloaded_bytes", 0) / d.get("total_bytes", 1) * 100
+                    if d.get("total_bytes")
+                    else 0
+                ),
                 "downloaded_bytes": d.get("downloaded_bytes", 0),
                 "total_bytes": d.get("total_bytes", 0),
                 "speed": d.get("speed", 0),
@@ -101,7 +111,7 @@ class MultiPlatformDownloader:
             try:
                 filename = ydl.prepare_filename(info)
                 merge_fmt = ydl.params.get("merge_output_format")
-                
+
                 # 如果配置了输出格式，尝试这个格式的文件
                 if merge_fmt:
                     base, _ = os.path.splitext(filename)
@@ -109,7 +119,7 @@ class MultiPlatformDownloader:
                     if os.path.exists(merged_filename):
                         results.append(merged_filename)
                         return results
-                
+
                 # 否则使用原始文件名（可能是纯音频如m4a）
                 if os.path.exists(filename):
                     results.append(filename)
@@ -121,6 +131,11 @@ class MultiPlatformDownloader:
     @classmethod
     def supports_url(cls, url: str) -> bool:
         """检查是否支持该URL"""
-        platforms = ["bilibili.com", "b23.tv", "youtube.com", "youtu.be", "xiaoyuzhoufm.com"]
+        platforms = [
+            "bilibili.com",
+            "b23.tv",
+            "youtube.com",
+            "youtu.be",
+            "xiaoyuzhoufm.com",
+        ]
         return any(platform in url for platform in platforms)
-
