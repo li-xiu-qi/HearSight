@@ -4,17 +4,59 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
+from typing_extensions import TypedDict
 
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 
 from backend.db.job_store import update_job_result_paths
-from backend.db.pg_store import create_job
+from backend.db.job_store import create_job
 from backend.db.transcript_crud import update_transcript_media_path
 from backend.services.upload_service import (
     create_audio_placeholder,
     get_unique_filename,
 )
+
+# 数据结构定义
+class UploadResult(TypedDict):
+    """文件上传结果数据结构"""
+    path: str  # 文件绝对路径
+    basename: str  # 文件名
+    static_url: str  # 静态文件URL
+    size: int  # 文件大小（字节）
+    is_audio: bool  # 是否为音频文件
+    job_id: int  # 创建的任务ID
+    placeholder_url: Optional[str]  # 音频文件的占位图URL（可选）
+
+
+class UploadResponse(TypedDict):
+    """文件上传响应数据结构"""
+    success: bool  # 是否成功
+    message: str  # 响应消息
+    data: UploadResult  # 上传结果数据
+
+
+class RenameFileRequest(TypedDict):
+    """重命名文件请求数据结构"""
+    old_filename: str  # 原始文件名
+    new_filename: str  # 新文件名
+
+
+class RenameFileResult(TypedDict, total=False):
+    """重命名文件结果数据结构"""
+    old_filename: str  # 原始文件名
+    new_filename: str  # 新文件名
+    static_url: str  # 静态文件URL
+    placeholder_url: str  # 占位图URL（音频文件可选）
+
+
+class RenameFileResponse(TypedDict):
+    """重命名文件响应数据结构"""
+    success: bool  # 是否成功
+    message: str  # 响应消息
+    data: RenameFileResult  # 重命名结果数据
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["upload"])
@@ -104,7 +146,7 @@ async def upload_file(
 @router.post("/upload/rename")
 async def rename_file(
     request: Request,
-    payload: dict,
+    payload: RenameFileRequest,
 ) -> JSONResponse:
     """重命名已上传的文件"""
     try:

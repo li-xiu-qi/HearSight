@@ -11,15 +11,15 @@ from typing import Dict
 from fastapi import FastAPI
 
 from backend.audio2text.asr_sentence_segments import process as asr_process
-from backend.db.pg_store import (
+from backend.db.job_store import (
     claim_next_pending_job,
     finish_job_failed,
     finish_job_success,
     get_job,
-    save_transcript,
     update_job_result,
     update_job_status,
 )
+from backend.db.transcript_crud import save_transcript
 from backend.routers.progress_router import set_task_progress
 from backend.utils.vedio_utils.download_video.multi_platform_downloader import (
     MultiPlatformDownloader,

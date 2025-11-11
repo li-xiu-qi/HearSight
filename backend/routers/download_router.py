@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional, Union
+from typing_extensions import TypedDict
 
 from fastapi import APIRouter, HTTPException, Request
 
@@ -11,12 +12,45 @@ from backend.db.job_store import check_duplicate_url
 from backend.routers.progress_router import set_task_progress
 from backend.services.download_service import start_download
 
+# 数据结构定义
+class DownloadRequest(TypedDict, total=False):
+    """下载请求数据结构"""
+    url: str  # 下载URL
+    out_dir: str  # 输出目录（可选）
+    job_id: int  # 任务ID
+
+
+class DownloadResultItem(TypedDict):
+    """下载结果项数据结构"""
+    path: str  # 文件绝对路径
+    basename: str  # 文件名
+    static_url: str  # 静态文件URL
+
+
+class DownloadDuplicateResponse(TypedDict):
+    """重复下载响应数据结构"""
+    status: str  # "duplicate"
+    job_id: int  # 当前任务ID
+    original_job_id: int  # 原始任务ID
+    message: str  # 提示消息
+    items: List[DownloadResultItem]  # 下载结果项
+
+
+class DownloadStartedResponse(TypedDict):
+    """下载启动响应数据结构"""
+    status: str  # "started"
+    job_id: int  # 任务ID
+    message: str  # 提示消息
+
+
+DownloadResponse = Union[DownloadDuplicateResponse, DownloadStartedResponse]
+
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["download"])
 
 
 @router.post("/download")
-def api_download(payload: Dict[str, Any], request: Request) -> Dict[str, Any]:
+def api_download(payload: DownloadRequest, request: Request) -> DownloadResponse:
     """启动视频下载任务"""
     url = payload.get("url")
     if not url:

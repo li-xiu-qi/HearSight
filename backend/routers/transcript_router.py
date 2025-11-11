@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
+from typing_extensions import TypedDict
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
-from backend.db.pg_store import get_translations
+from backend.db.transcript_crud import get_translations
 from backend.services.transcript_service import (
     delete_transcript_async,
     get_transcript_async,
@@ -18,6 +19,80 @@ from backend.services.translate_service import (
     start_translate_task,
 )
 from config import settings
+
+# 数据结构定义
+class TranscriptItem(TypedDict, total=False):
+    """转写记录项数据结构"""
+    id: int  # 转写记录ID
+    media_path: str  # 媒体文件路径
+    created_at: str  # 创建时间
+    segment_count: int  # 句子片段数量
+
+
+class ListTranscriptsResponse(TypedDict):
+    """列出转写记录响应数据结构"""
+    total: int  # 总数量
+    items: List[TranscriptItem]  # 转写记录列表
+
+
+class TranscriptSegment(TypedDict):
+    """转写句子片段数据结构"""
+    start: float  # 开始时间（秒）
+    end: float  # 结束时间（秒）
+    text: str  # 句子文本
+
+
+class TranscriptData(TypedDict, total=False):
+    """转写记录详情数据结构。
+    
+    媒体类型来自数据库的 transcripts 表中的 media_type 字段。
+    在转写记录创建时根据文件扩展名自动判断：
+    - 音频扩展名（.m4a, .mp3, .wav, .flac, .aac, .ogg, .wma）-> 'audio'
+    - 其他扩展名 -> 'video'
+    """
+    id: int  # 转写记录ID
+    media_path: str  # 媒体文件路径
+    created_at: str  # 创建时间
+    segments: List[TranscriptSegment]  # 句子片段列表
+    media_type: str  # 媒体类型（'audio' 或 'video'）
+
+
+class DeleteTranscriptResponse(TypedDict):
+    """删除转写记录响应数据结构"""
+    success: bool  # 是否成功
+    message: str  # 响应消息
+    transcript_id: int  # 转写记录ID
+
+
+class TranslateRequestData(TypedDict, total=False):
+    """翻译请求数据结构"""
+    target_language: str  # 目标语言
+    confirmed: bool  # 是否确认
+    max_tokens: int  # 最大token数
+    source_lang_name: str  # 源语言名称
+    target_lang_name: str  # 目标语言名称
+    force_retranslate: bool  # 是否强制重新翻译
+
+
+class StartTranslateResponse(TypedDict):
+    """开始翻译响应数据结构"""
+    status: str  # 状态
+    transcript_id: int  # 转写记录ID
+
+
+class TranslateProgressResponse(TypedDict):
+    """翻译进度响应数据结构"""
+    status: str  # 翻译状态
+    progress: int  # 进度百分比
+    translated_count: int  # 已翻译数量
+    total_count: int  # 总数
+    message: str  # 状态消息
+
+
+class GetTranslationsResponse(TypedDict):
+    """获取翻译结果响应数据结构"""
+    translations: Optional[Dict[str, List[Any]]]  # 翻译结果字典
+    has_translations: bool  # 是否有翻译结果
 
 
 class TranslateRequest(BaseModel):
@@ -35,7 +110,7 @@ router = APIRouter(prefix="/api", tags=["transcripts"])
 @router.get("/transcripts")
 async def api_list_transcripts(
     request: Request, limit: int = 50, offset: int = 0
-) -> Dict[str, Any]:
+) -> ListTranscriptsResponse:
     """列出已转写的媒体列表（按id倒序）。
     Query:
       - limit: 返回数量（默认50）
@@ -47,7 +122,7 @@ async def api_list_transcripts(
 
 
 @router.get("/transcripts/{transcript_id}")
-async def api_get_transcript(transcript_id: int, request: Request) -> Dict[str, Any]:
+async def api_get_transcript(transcript_id: int, request: Request) -> TranscriptData:
     """获取指定转写记录的详情（包含 segments）。"""
     db_url = request.app.state.db_url
     data = await get_transcript_async(db_url, transcript_id)
@@ -61,7 +136,7 @@ async def api_get_transcript(transcript_id: int, request: Request) -> Dict[str, 
 @router.delete("/transcripts/{transcript_id}")
 async def api_delete_transcript_complete(
     transcript_id: int, request: Request
-) -> Dict[str, Any]:
+) -> DeleteTranscriptResponse:
     """删除指定的转写记录及其对应的视频文件。
     该操作会同时删除视频文件和数据库记录，不可恢复。
     """
@@ -77,7 +152,7 @@ async def api_delete_transcript_complete(
 @router.post("/transcripts/{transcript_id}/translate")
 async def api_translate(
     transcript_id: int, request: Request, body: TranslateRequest
-) -> Dict[str, Any]:
+) -> StartTranslateResponse:
     """翻译转写内容。后台异步翻译，使用轮询查询进度。
 
     请求体: {
@@ -125,7 +200,7 @@ async def api_translate(
 @router.get("/transcripts/{transcript_id}/translate-progress")
 async def api_get_translate_progress(
     transcript_id: int, request: Request
-) -> Dict[str, Any]:
+) -> TranslateProgressResponse:
     """获取翻译进度。
 
     返回: {
@@ -140,7 +215,7 @@ async def api_get_translate_progress(
 
 
 @router.get("/transcripts/{transcript_id}/translations")
-async def api_get_translations(transcript_id: int, request: Request) -> Dict[str, Any]:
+async def api_get_translations(transcript_id: int, request: Request) -> GetTranslationsResponse:
     """获取已保存的翻译结果。
 
     返回: {
