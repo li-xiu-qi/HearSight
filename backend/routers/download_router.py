@@ -4,9 +4,9 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
-from typing_extensions import TypedDict
 
 from fastapi import APIRouter, HTTPException, Request
+from typing_extensions import TypedDict
 
 from backend.db.job_store import check_duplicate_url
 from backend.routers.progress_router import set_task_progress

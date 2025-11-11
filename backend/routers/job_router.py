@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
-from typing_extensions import TypedDict
 
 from fastapi import APIRouter, HTTPException, Request
+from typing_extensions import TypedDict
 
 from backend.db.job_store import create_job, get_job, list_jobs
 

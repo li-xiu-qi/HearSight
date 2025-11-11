@@ -5,18 +5,15 @@ import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-from typing_extensions import TypedDict
 
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
+from typing_extensions import TypedDict
 
-from backend.db.job_store import update_job_result_paths
-from backend.db.job_store import create_job
+from backend.db.job_store import create_job, update_job_result_paths
 from backend.db.transcript_crud import update_transcript_media_path
-from backend.services.upload_service import (
-    create_audio_placeholder,
-    get_unique_filename,
-)
+from backend.services.upload_service import (create_audio_placeholder,
+                                             get_unique_filename)
 
 
 # 数据结构定义

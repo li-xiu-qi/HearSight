@@ -5,10 +5,10 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Dict
-from typing_extensions import TypedDict
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
+from typing_extensions import TypedDict
 
 from backend.db.transcript_crud import get_transcript_by_id
 from backend.services.thumbnail_service import generate_thumbnail

@@ -7,13 +7,10 @@ import logging
 from pathlib import Path
 from typing import Any, Dict
 
-from backend.db.transcript_crud import (
-    delete_transcript,
-    get_summaries,
-    get_transcript_by_id,
-    get_translations,
-)
-from backend.db.transcript_query import count_transcripts, list_transcripts_meta
+from backend.db.transcript_crud import (delete_transcript, get_summaries,
+                                        get_transcript_by_id, get_translations)
+from backend.db.transcript_query import (count_transcripts,
+                                         list_transcripts_meta)
 
 
 async def list_transcripts_async(

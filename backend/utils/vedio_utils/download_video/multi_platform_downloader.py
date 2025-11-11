@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-import os
 import logging
-from typing import Optional, Callable, List, Dict
+import os
+from typing import Callable, Dict, List, Optional
+
 from yt_dlp import YoutubeDL
 
 logger = logging.getLogger(__name__)

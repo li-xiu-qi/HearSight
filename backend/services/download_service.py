@@ -64,9 +64,8 @@ class ResultItem(TypedDict):
 
 from backend.db.job_store import update_job_result
 from backend.routers.progress_router import set_task_progress
-from backend.utils.vedio_utils.download_video.multi_platform_downloader import (
-    MultiPlatformDownloader,
-)
+from backend.utils.vedio_utils.download_video.multi_platform_downloader import \
+    MultiPlatformDownloader
 
 logger = logging.getLogger(__name__)
 

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Dict, List, Optional
-from typing_extensions import TypedDict
 
 from fastapi import APIRouter
+from typing_extensions import TypedDict
 
 
 # 数据结构定义
