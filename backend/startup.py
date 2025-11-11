@@ -9,8 +9,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from backend.db.transcript_init import init_transcript_table
 from backend.db.job_store import init_job_table
+from backend.db.transcript_init import init_transcript_table
 from config import settings
 
 

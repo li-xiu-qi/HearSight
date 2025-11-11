@@ -19,9 +19,11 @@ from backend.text_process.chat_with_segment import chat_with_segments
 from backend.text_process.summarize import summarize_segments
 from config import settings
 
+
 # 数据结构定义
 class Segment(TypedDict):
     """句子片段数据结构"""
+
     start: float  # 开始时间（秒）
     end: float  # 结束时间（秒）
     text: str  # 句子文本
@@ -29,12 +31,14 @@ class Segment(TypedDict):
 
 class SummaryItem(TypedDict):
     """总结项数据结构"""
+
     title: str  # 总结标题
     content: str  # 总结内容
 
 
 class SummarizeRequest(TypedDict, total=False):
     """总结请求数据结构"""
+
     segments: List[Segment]  # 句子片段列表
     api_key: str  # OpenAI API密钥
     base_url: str  # OpenAI API基础URL
@@ -43,11 +47,13 @@ class SummarizeRequest(TypedDict, total=False):
 
 class SummarizeResponse(TypedDict):
     """总结响应数据结构"""
+
     summaries: List[SummaryItem]  # 总结项列表
 
 
 class ChatRequest(TypedDict, total=False):
     """聊天请求数据结构"""
+
     segments: List[Segment]  # 句子片段列表
     question: str  # 问题内容
     api_key: str  # OpenAI API密钥
@@ -57,16 +63,19 @@ class ChatRequest(TypedDict, total=False):
 
 class ChatResponse(TypedDict):
     """聊天响应数据结构"""
+
     answer: str  # 回答内容
 
 
 class SaveSummariesRequest(TypedDict):
     """保存总结请求数据结构"""
+
     summaries: List[SummaryItem]  # 总结项列表
 
 
 class SaveSummariesResponse(TypedDict):
     """保存总结响应数据结构"""
+
     success: bool  # 是否成功
     message: str  # 响应消息
     saved: bool  # 是否已保存
@@ -75,12 +84,14 @@ class SaveSummariesResponse(TypedDict):
 
 class GetSummariesResponse(TypedDict):
     """获取总结响应数据结构"""
+
     summaries: Optional[List[SummaryItem]]  # 总结项列表，可能为None
     has_summaries: bool  # 是否有总结
 
 
 class ChatMessage(TypedDict):
     """聊天消息数据结构"""
+
     role: str  # 消息角色 (user/assistant)
     content: str  # 消息内容
     timestamp: Optional[str]  # 时间戳
@@ -88,11 +99,13 @@ class ChatMessage(TypedDict):
 
 class SaveChatMessagesRequest(TypedDict):
     """保存聊天消息请求数据结构"""
+
     messages: List[ChatMessage]  # 聊天消息列表
 
 
 class SaveChatMessagesResponse(TypedDict):
     """保存聊天消息响应数据结构"""
+
     success: bool  # 是否成功
     message: str  # 响应消息
     transcript_id: int  # 转录ID
@@ -100,12 +113,14 @@ class SaveChatMessagesResponse(TypedDict):
 
 class GetChatMessagesResponse(TypedDict):
     """获取聊天消息响应数据结构"""
+
     messages: Optional[List[ChatMessage]]  # 聊天消息列表，可能为None
     has_messages: bool  # 是否有消息
 
 
 class ClearChatMessagesResponse(TypedDict):
     """清空聊天消息响应数据结构"""
+
     success: bool  # 是否成功
     message: str  # 响应消息
     transcript_id: int  # 转录ID
@@ -346,7 +361,9 @@ def api_save_chat_messages(
 
 
 @router.get("/transcripts/{transcript_id}/chat-messages")
-def api_get_chat_messages(transcript_id: int, request: Request) -> GetChatMessagesResponse:
+def api_get_chat_messages(
+    transcript_id: int, request: Request
+) -> GetChatMessagesResponse:
     """获取已保存的chat消息。
 
     返回：{"messages": List[Dict] | null, "has_messages": bool}
@@ -366,7 +383,9 @@ def api_get_chat_messages(transcript_id: int, request: Request) -> GetChatMessag
 
 
 @router.delete("/transcripts/{transcript_id}/chat-messages")
-def api_clear_chat_messages(transcript_id: int, request: Request) -> ClearChatMessagesResponse:
+def api_clear_chat_messages(
+    transcript_id: int, request: Request
+) -> ClearChatMessagesResponse:
     """清空chat消息。
 
     返回：{"success": bool, "message": str}

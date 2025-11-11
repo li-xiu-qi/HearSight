@@ -22,9 +22,11 @@ import threading
 from pathlib import Path
 from typing import Any, Dict, List, TypedDict
 
+
 # 数据结构定义
 class ProgressInfo(TypedDict):
     """下载进度信息结构，从下载器回调中接收的原始进度数据"""
+
     status: str  # 下载状态：'downloading', 'finished', 'error' 等
     progress_percent: float  # 下载进度百分比 (0-100)
     downloaded_bytes: int  # 已下载的字节数
@@ -37,6 +39,7 @@ class ProgressInfo(TypedDict):
 
 class ProgressData(TypedDict, total=False):
     """进度上报数据结构，发送给前端的标准化进度信息"""
+
     stage: str  # 处理阶段，如 'downloading'
     job_id: int  # 任务ID，用于标识具体任务
     status: str  # 任务状态：'in-progress', 'completed', 'error' 等
@@ -53,6 +56,7 @@ class ProgressData(TypedDict, total=False):
 
 class ResultItem(TypedDict):
     """下载结果项结构，表示单个下载完成的文件信息"""
+
     path: str  # 文件的绝对路径
     basename: str  # 文件的基本名称 (不含路径)
     static_url: str  # 静态文件服务的访问URL
@@ -75,10 +79,10 @@ def _download_worker(
 ) -> None:
     """
     后台下载工作函数，在单独线程中执行下载任务。
-    
+
     负责初始化下载器、执行下载、处理进度回调、
     更新任务状态和数据库记录。
-    
+
     Args:
         job_id: 任务ID，用于进度跟踪和数据库更新
         url: 要下载的媒体URL
@@ -89,10 +93,10 @@ def _download_worker(
     def progress_hook(progress_info: Dict[str, Any]):
         """
         下载进度回调钩子。
-        
+
         将下载器的进度信息转换为标准格式并上报给进度路由。
         同时记录调试日志。
-        
+
         Args:
             progress_info: 下载器提供的进度信息字典
         """
@@ -196,10 +200,10 @@ def start_download(
 ) -> None:
     """
     启动后台下载线程。
-    
+
     创建一个守护线程来执行下载任务，不阻塞调用者。
     线程将在后台异步执行下载工作。
-    
+
     Args:
         job_id: 任务ID
         url: 下载URL

@@ -12,12 +12,12 @@ logger = logging.getLogger(__name__)
 class MultiPlatformDownloader:
     """
     多平台媒体下载器，使用 yt-dlp 库支持多种视频和音频平台的下载。
-    
+
     支持的平台包括：
     - B站 (bilibili.com, b23.tv)
     - YouTube (youtube.com, youtu.be)
     - 小宇宙播客 (xiaoyuzhoufm.com)
-    
+
     主要功能：
     - 自动检测URL平台
     - 下载视频或音频文件
@@ -35,7 +35,7 @@ class MultiPlatformDownloader:
     ):
         """
         初始化下载器。
-        
+
         Args:
             url: 要下载的媒体URL
             out_dir: 输出目录，默认为'downloads'
@@ -50,13 +50,13 @@ class MultiPlatformDownloader:
     def _detect_platform(self, url: str) -> str:
         """
         根据URL检测媒体平台。
-        
+
         通过检查URL中是否包含特定域名来识别平台。
         如果不匹配任何已知平台，返回'default'。
-        
+
         Args:
             url: 要检测的URL
-            
+
         Returns:
             平台名称字符串：'bilibili', 'youtube', 'xiaoyuzhou', 或 'default'
         """
@@ -71,13 +71,13 @@ class MultiPlatformDownloader:
     def download(self) -> List[str]:
         """
         执行媒体下载并返回下载的文件路径列表。
-        
+
         使用 yt-dlp 进行下载，支持单个视频或播放列表。
         下载过程中会记录日志，并在出错时抛出异常。
-        
+
         Returns:
             下载成功的文件路径列表
-            
+
         Raises:
             Exception: 下载过程中发生的任何异常
         """
@@ -99,13 +99,13 @@ class MultiPlatformDownloader:
     def _build_ydl_options(self) -> dict:
         """
         构建 yt-dlp 的配置选项字典。
-        
+
         根据平台设置不同的选项：
         - 小宇宙播客为纯音频，不进行音视频合并
         - 其他平台合并为MP4格式
-        
+
         包含下载重试、格式选择、输出模板等配置。
-        
+
         Returns:
             yt-dlp 选项字典
         """
@@ -135,10 +135,10 @@ class MultiPlatformDownloader:
     def _progress_hook(self, d: Dict) -> None:
         """
         yt-dlp 进度回调钩子函数。
-        
+
         将 yt-dlp 的进度信息转换为标准格式并调用用户提供的回调函数。
         进度信息包括下载状态、百分比、字节数、速度、预计时间等。
-        
+
         Args:
             d: yt-dlp 提供的进度字典
         """
@@ -164,15 +164,15 @@ class MultiPlatformDownloader:
     def _extract_file_paths(ydl: YoutubeDL, info: dict) -> List[str]:
         """
         从 yt-dlp 的信息字典中提取实际下载的文件路径。
-        
+
         处理播放列表和单个视频的情况。
         优先检查合并后的文件（如果配置了合并格式），
         否则使用原始下载的文件。
-        
+
         Args:
             ydl: YoutubeDL 实例
             info: yt-dlp 提取的信息字典
-            
+
         Returns:
             文件路径列表
         """
@@ -209,13 +209,13 @@ class MultiPlatformDownloader:
     def supports_url(cls, url: str) -> bool:
         """
         检查是否支持下载给定的URL。
-        
+
         通过检查URL是否包含已知平台的域名来判断支持性。
         支持的平台包括B站、YouTube、小宇宙播客。
-        
+
         Args:
             url: 要检查的URL
-            
+
         Returns:
             如果支持该URL返回True，否则False
         """

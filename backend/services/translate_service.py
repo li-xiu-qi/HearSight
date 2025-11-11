@@ -7,7 +7,11 @@ import json
 import logging
 from typing import Any, Callable, Dict, Optional
 
-from backend.db.transcript_crud import get_translations, save_translations, update_transcript
+from backend.db.transcript_crud import (
+    get_translations,
+    save_translations,
+    update_transcript,
+)
 from backend.text_process.translate import translate_segments_async
 
 translate_tasks: Dict[int, Dict[str, Any]] = {}

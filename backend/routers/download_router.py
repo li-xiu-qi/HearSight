@@ -12,9 +12,11 @@ from backend.db.job_store import check_duplicate_url
 from backend.routers.progress_router import set_task_progress
 from backend.services.download_service import start_download
 
+
 # 数据结构定义
 class DownloadRequest(TypedDict, total=False):
     """下载请求数据结构"""
+
     url: str  # 下载URL
     out_dir: str  # 输出目录（可选）
     job_id: int  # 任务ID
@@ -22,6 +24,7 @@ class DownloadRequest(TypedDict, total=False):
 
 class DownloadResultItem(TypedDict):
     """下载结果项数据结构"""
+
     path: str  # 文件绝对路径
     basename: str  # 文件名
     static_url: str  # 静态文件URL
@@ -29,6 +32,7 @@ class DownloadResultItem(TypedDict):
 
 class DownloadDuplicateResponse(TypedDict):
     """重复下载响应数据结构"""
+
     status: str  # "duplicate"
     job_id: int  # 当前任务ID
     original_job_id: int  # 原始任务ID
@@ -38,6 +42,7 @@ class DownloadDuplicateResponse(TypedDict):
 
 class DownloadStartedResponse(TypedDict):
     """下载启动响应数据结构"""
+
     status: str  # "started"
     job_id: int  # 任务ID
     message: str  # 提示消息

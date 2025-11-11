@@ -18,9 +18,11 @@ from backend.services.upload_service import (
     get_unique_filename,
 )
 
+
 # 数据结构定义
 class UploadResult(TypedDict):
     """文件上传结果数据结构"""
+
     path: str  # 文件绝对路径
     basename: str  # 文件名
     static_url: str  # 静态文件URL
@@ -32,6 +34,7 @@ class UploadResult(TypedDict):
 
 class UploadResponse(TypedDict):
     """文件上传响应数据结构"""
+
     success: bool  # 是否成功
     message: str  # 响应消息
     data: UploadResult  # 上传结果数据
@@ -39,12 +42,14 @@ class UploadResponse(TypedDict):
 
 class RenameFileRequest(TypedDict):
     """重命名文件请求数据结构"""
+
     old_filename: str  # 原始文件名
     new_filename: str  # 新文件名
 
 
 class RenameFileResult(TypedDict, total=False):
     """重命名文件结果数据结构"""
+
     old_filename: str  # 原始文件名
     new_filename: str  # 新文件名
     static_url: str  # 静态文件URL
@@ -53,6 +58,7 @@ class RenameFileResult(TypedDict, total=False):
 
 class RenameFileResponse(TypedDict):
     """重命名文件响应数据结构"""
+
     success: bool  # 是否成功
     message: str  # 响应消息
     data: RenameFileResult  # 重命名结果数据

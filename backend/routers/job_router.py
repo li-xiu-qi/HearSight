@@ -8,19 +8,23 @@ from fastapi import APIRouter, HTTPException, Request
 
 from backend.db.job_store import create_job, get_job, list_jobs
 
+
 # 数据结构定义
 class CreateJobRequest(TypedDict):
     """创建任务请求数据结构"""
+
     url: str  # 任务URL
 
 
 class CreateJobResponse(TypedDict):
     """创建任务响应数据结构"""
+
     job_id: int  # 创建的任务ID
 
 
 class JobData(TypedDict, total=False):
     """任务数据结构"""
+
     id: int  # 任务ID
     url: str  # 任务URL
     status: str  # 任务状态
@@ -33,11 +37,13 @@ class JobData(TypedDict, total=False):
 
 class GetJobResponse(JobData):
     """获取任务响应数据结构"""
+
     pass
 
 
 class ListJobsQueryParams(TypedDict, total=False):
     """列出任务查询参数"""
+
     status: str  # 任务状态筛选
     limit: int  # 返回数量限制
     offset: int  # 偏移量
@@ -45,6 +51,7 @@ class ListJobsQueryParams(TypedDict, total=False):
 
 class ListJobsResponse(TypedDict):
     """列出任务响应数据结构"""
+
     items: List[JobData]  # 任务列表
 
 

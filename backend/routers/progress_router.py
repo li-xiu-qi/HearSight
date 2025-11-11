@@ -8,9 +8,11 @@ from typing_extensions import TypedDict
 
 from fastapi import APIRouter
 
+
 # 数据结构定义
 class ProgressData(TypedDict, total=False):
     """进度数据结构"""
+
     status: str  # 任务状态
     stage: str  # 处理阶段
     progress_percent: float  # 进度百分比

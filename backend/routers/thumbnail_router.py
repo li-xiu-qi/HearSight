@@ -13,9 +13,11 @@ from fastapi.responses import JSONResponse
 from backend.db.transcript_crud import get_transcript_by_id
 from backend.services.thumbnail_service import generate_thumbnail
 
+
 # 数据结构定义
 class ThumbnailQueryParams(TypedDict, total=False):
     """缩略图查询参数"""
+
     start_time: float  # 开始时间（毫秒）
     end_time: float  # 结束时间（毫秒）
     width: int  # 缩略图宽度，默认320
@@ -23,6 +25,7 @@ class ThumbnailQueryParams(TypedDict, total=False):
 
 class ThumbnailResponse(TypedDict):
     """缩略图响应数据结构"""
+
     success: bool  # 是否成功
     data: str  # base64编码的图片数据
 

@@ -20,9 +20,11 @@ from backend.services.translate_service import (
 )
 from config import settings
 
+
 # 数据结构定义
 class TranscriptItem(TypedDict, total=False):
     """转写记录项数据结构"""
+
     id: int  # 转写记录ID
     media_path: str  # 媒体文件路径
     created_at: str  # 创建时间
@@ -31,12 +33,14 @@ class TranscriptItem(TypedDict, total=False):
 
 class ListTranscriptsResponse(TypedDict):
     """列出转写记录响应数据结构"""
+
     total: int  # 总数量
     items: List[TranscriptItem]  # 转写记录列表
 
 
 class TranscriptSegment(TypedDict):
     """转写句子片段数据结构"""
+
     start: float  # 开始时间（秒）
     end: float  # 结束时间（秒）
     text: str  # 句子文本
@@ -44,12 +48,13 @@ class TranscriptSegment(TypedDict):
 
 class TranscriptData(TypedDict, total=False):
     """转写记录详情数据结构。
-    
+
     媒体类型来自数据库的 transcripts 表中的 media_type 字段。
     在转写记录创建时根据文件扩展名自动判断：
     - 音频扩展名（.m4a, .mp3, .wav, .flac, .aac, .ogg, .wma）-> 'audio'
     - 其他扩展名 -> 'video'
     """
+
     id: int  # 转写记录ID
     media_path: str  # 媒体文件路径
     created_at: str  # 创建时间
@@ -59,6 +64,7 @@ class TranscriptData(TypedDict, total=False):
 
 class DeleteTranscriptResponse(TypedDict):
     """删除转写记录响应数据结构"""
+
     success: bool  # 是否成功
     message: str  # 响应消息
     transcript_id: int  # 转写记录ID
@@ -66,6 +72,7 @@ class DeleteTranscriptResponse(TypedDict):
 
 class TranslateRequestData(TypedDict, total=False):
     """翻译请求数据结构"""
+
     target_language: str  # 目标语言
     confirmed: bool  # 是否确认
     max_tokens: int  # 最大token数
@@ -76,12 +83,14 @@ class TranslateRequestData(TypedDict, total=False):
 
 class StartTranslateResponse(TypedDict):
     """开始翻译响应数据结构"""
+
     status: str  # 状态
     transcript_id: int  # 转写记录ID
 
 
 class TranslateProgressResponse(TypedDict):
     """翻译进度响应数据结构"""
+
     status: str  # 翻译状态
     progress: int  # 进度百分比
     translated_count: int  # 已翻译数量
@@ -91,6 +100,7 @@ class TranslateProgressResponse(TypedDict):
 
 class GetTranslationsResponse(TypedDict):
     """获取翻译结果响应数据结构"""
+
     translations: Optional[Dict[str, List[Any]]]  # 翻译结果字典
     has_translations: bool  # 是否有翻译结果
 
@@ -215,7 +225,9 @@ async def api_get_translate_progress(
 
 
 @router.get("/transcripts/{transcript_id}/translations")
-async def api_get_translations(transcript_id: int, request: Request) -> GetTranslationsResponse:
+async def api_get_translations(
+    transcript_id: int, request: Request
+) -> GetTranslationsResponse:
     """获取已保存的翻译结果。
 
     返回: {
