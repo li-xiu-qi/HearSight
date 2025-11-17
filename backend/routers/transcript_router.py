@@ -34,12 +34,14 @@ class ListTranscriptsResponse(TypedDict):
     items: List[TranscriptItem]  # 转写记录列表
 
 
-class TranscriptSegment(TypedDict):
+class TranscriptSegment(TypedDict, total=False):
     """转写句子片段数据结构"""
 
-    start: float  # 开始时间（秒）
-    end: float  # 结束时间（秒）
-    text: str  # 句子文本
+    index: int  # 句子索引
+    spk_id: Optional[str]  # 说话人ID
+    sentence: str  # 句子文本
+    start_time: float  # 开始时间（秒）
+    end_time: float  # 结束时间（秒）
 
 
 class TranscriptData(TypedDict, total=False):
@@ -56,6 +58,8 @@ class TranscriptData(TypedDict, total=False):
     created_at: str  # 创建时间
     segments: List[TranscriptSegment]  # 句子片段列表
     media_type: str  # 媒体类型（'audio' 或 'video'）
+    summaries: Optional[List[Dict[str, Any]]]  # 总结列表
+    translations: Optional[Dict[str, List[Dict[str, Any]]]]  # 翻译结果字典
 
 
 class DeleteTranscriptResponse(TypedDict):
@@ -128,7 +132,7 @@ async def api_list_transcripts(
 
 
 @router.get("/transcripts/{transcript_id}")
-async def api_get_transcript(transcript_id: int, request: Request) -> TranscriptData:
+async def api_get_transcript(transcript_id: int, request: Request) -> Dict[str, Any]:
     """获取指定转写记录的详情（包含 segments）。"""
     db_url = request.app.state.db_url
     data = await get_transcript_async(db_url, transcript_id)

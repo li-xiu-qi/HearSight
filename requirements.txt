@@ -1,4 +1,5 @@
 torch
+torchaudio
 funasr
 yt-dlp
 # 用于HuggingFace风格分词器（AutoTokenizer）
@@ -6,6 +7,7 @@ modelscope
 # 用于OpenAI tiktoken分词
 tiktoken
 # pytorch安装请去https://pytorch.org/get-started/locally/
+# Windows：pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
 
 fastapi
 uvicorn

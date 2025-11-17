@@ -90,7 +90,7 @@ def get_transcript_by_id(
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
                     """
-                    SELECT id, media_path, segments_json, created_at
+                    SELECT id, media_path, media_type, segments_json, created_at
                     FROM transcripts
                     WHERE id = %s
                     LIMIT 1
@@ -107,7 +107,7 @@ def get_transcript_by_id(
                 return {
                     "id": int(row["id"]),
                     "media_path": str(row["media_path"]),
-                    "media_type": str(row.get("media_type", "video")),
+                    "media_type": str(row["media_type"]),
                     "created_at": str(row["created_at"]),
                     "segments": segs,
                 }
