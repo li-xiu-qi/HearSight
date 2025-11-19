@@ -6,7 +6,8 @@
 """
 from __future__ import annotations
 
-from typing import Dict, Optional, TypedDict
+from typing import Dict, Optional
+from typing_extensions import TypedDict
 
 
 class Segment(TypedDict, total=False):

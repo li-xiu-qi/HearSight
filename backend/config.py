@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     bilibili_sessdata: Optional[str] = None
     downloads_dir: str = os.path.join(os.path.dirname(os.path.dirname(__file__)), "app_datas", "download_videos")
 
+    # --- ASRBackend 服务 ---
+    asr_backend_url: str = "http://localhost:8003"
+
     model_config = ConfigDict(
         env_file=os.path.join(os.path.dirname(__file__), ".env"),
         env_file_encoding="utf-8",

@@ -6,7 +6,7 @@ from typing import List
 
 import tiktoken
 
-from backend.utils.typing_defs import Segment
+from backend.schemas import Segment
 
 
 def split_segments_by_output_tokens(

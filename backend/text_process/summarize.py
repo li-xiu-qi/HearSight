@@ -8,7 +8,7 @@ from typing import Dict, List
 import tiktoken
 
 from backend.chat_utils.chat_client import chat_text
-from backend.utils.typing_defs import Segment, SummaryItem
+from backend.schemas import Segment, SummaryItem
 
 
 def _count_tokens_for_segments(

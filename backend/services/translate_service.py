@@ -85,7 +85,7 @@ async def _background_translate(
 
         def progress_callback(translated_count: int, total: int):
             """更新翻译进度"""
-            progress = (translated_count / total * 100) if total > 0 else 0
+            progress = round(translated_count / total * 100) if total > 0 else 0
             translate_tasks[transcript_id] = {
                 "status": "translating",
                 "progress": progress,

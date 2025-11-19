@@ -14,7 +14,7 @@ env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
 load_dotenv(dotenv_path=env_path)
 
 from backend.text_process.chat_with_segment import _build_prompt, chat_with_segments
-from backend.utils.typing_defs import Segment
+from backend.schemas import Segment
 
 def test_build_prompt():
     """测试提示词构建功能"""

@@ -8,8 +8,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      asr-backend:
-        condition: service_healthy
     env_file: ./backend/.env
     # 生产环境使用命名卷持久化数据（由 Docker 管理）
     volumes:
@@ -40,8 +38,7 @@ services:
       - CHAT_MAX_WINDOWS=${CHAT_MAX_WINDOWS:-1000000}
       # Bilibili 配置
       - BILIBILI_SESSDATA=${BILIBILI_SESSDATA}
-      # ASRBackend 服务地址（Docker 环境）
-      - ASR_BACKEND_URL=http://asr-backend:8003
+    deploy: {}
     gpus: all
 
   frontend:
@@ -81,14 +78,17 @@ services:
   asr-backend:
     build:
       context: ./ASRBackend
-      dockerfile: Dockerfile.local
+      dockerfile: Dockerfile.cloud
     container_name: hearsight-asr-backend
     restart: unless-stopped
     env_file: ./ASRBackend/.env
     ports:
       - "${ASR_BACKEND_PORT:-8003}:8003"
     environment:
-      - ASR_MODE=local
+      - ASR_MODE=cloud
+      # DashScope API 配置
+      - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY}
+      - DASHSCOPE_BASE_URL=${DASHSCOPE_BASE_URL:-https://dashscope.aliyuncs.com/api/v1}
       # Supabase 配置（如果需要）
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}

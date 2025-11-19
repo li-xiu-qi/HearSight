@@ -3,7 +3,8 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Any, Callable, Dict, List, Literal, Optional, TypedDict, Union, cast
+from typing import Any, Callable, Dict, List, Literal, Optional, Union, cast
+from typing_extensions import TypedDict
 
 import aiohttp
 import requests

@@ -14,22 +14,7 @@ from backend.db.transcript_crud import (clear_chat_messages, get_chat_messages,
 from backend.text_process.chat_with_segment import chat_with_segments
 from backend.text_process.summarize import summarize_segments
 from backend.config import settings
-
-
-# 数据结构定义
-class Segment(TypedDict):
-    """句子片段数据结构"""
-
-    start: float  # 开始时间（秒）
-    end: float  # 结束时间（秒）
-    text: str  # 句子文本
-
-
-class SummaryItem(TypedDict):
-    """总结项数据结构"""
-
-    title: str  # 总结标题
-    content: str  # 总结内容
+from backend.schemas import Segment, SummaryItem
 
 
 class SummarizeRequest(TypedDict, total=False):
@@ -63,12 +48,6 @@ class ChatResponse(TypedDict):
     answer: str  # 回答内容
 
 
-class SaveSummariesRequest(TypedDict):
-    """保存总结请求数据结构"""
-
-    summaries: List[SummaryItem]  # 总结项列表
-
-
 class SaveSummariesResponse(TypedDict):
     """保存总结响应数据结构"""
 
@@ -93,12 +72,6 @@ class ChatMessage(TypedDict):
     timestamp: Optional[str]  # 时间戳
 
 
-class SaveChatMessagesRequest(TypedDict):
-    """保存聊天消息请求数据结构"""
-
-    messages: List[ChatMessage]  # 聊天消息列表
-
-
 class SaveChatMessagesResponse(TypedDict):
     """保存聊天消息响应数据结构"""
 
@@ -110,7 +83,7 @@ class SaveChatMessagesResponse(TypedDict):
 class GetChatMessagesResponse(TypedDict):
     """获取聊天消息响应数据结构"""
 
-    messages: Optional[List[ChatMessage]]  # 聊天消息列表，可能为None
+    messages: Optional[List[Dict]]  # 聊天消息列表，可能为None
     has_messages: bool  # 是否有消息
 
 
@@ -257,8 +230,13 @@ def api_chat_with_segments(payload: ChatRequest, request: Request) -> ChatRespon
 class SaveSummariesRequest(BaseModel):
     """保存总结的请求体"""
 
-    transcript_id: int
-    summaries: list
+    summaries: List[SummaryItem]
+
+
+class SaveChatMessagesRequest(BaseModel):
+    """保存聊天消息的请求体"""
+
+    messages: List[Dict]
 
 
 @router.post("/transcripts/{transcript_id}/summaries")
@@ -268,12 +246,12 @@ def api_save_summaries(
     """保存生成的总结到数据库。
 
     请求 body 字段：
-        - summaries: List[Dict] （必需）总结内容
+        - summaries: List[SummaryItem] （必需）总结内容
 
     返回：{"success": bool, "message": str, "saved": bool}
     """
     db_url = request.app.state.db_url
-    summaries = payload.get("summaries")
+    summaries = payload.summaries
 
     if not summaries or not isinstance(summaries, list):
         raise HTTPException(status_code=400, detail="summaries (list) is required")
@@ -331,7 +309,7 @@ def api_save_chat_messages(
     返回：{"success": bool, "message": str}
     """
     db_url = request.app.state.db_url
-    messages = payload.get("messages")
+    messages = payload.messages
 
     if not messages or not isinstance(messages, list):
         raise HTTPException(status_code=400, detail="messages (list) is required")

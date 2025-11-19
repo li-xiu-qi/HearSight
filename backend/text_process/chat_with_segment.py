@@ -8,7 +8,7 @@ import json
 import tiktoken
 
 from backend.chat_utils.chat_client import chat_text
-from backend.utils.typing_defs import Segment
+from backend.schemas import Segment
 
 
 def _count_tokens_for_segments(

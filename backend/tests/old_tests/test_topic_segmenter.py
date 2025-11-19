@@ -14,7 +14,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, Dict, List, Optional
+from typing_extensions import TypedDict
 import json
 
 from backend.chat_utils.chat_client import chat

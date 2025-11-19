@@ -12,7 +12,7 @@ from typing import Any, Callable, Dict, List, Optional
 import tiktoken
 
 from backend.chat_utils.chat_client import chat_text_async
-from backend.utils.typing_defs import Segment
+from backend.schemas import Segment
 
 
 def _split_segments_by_output_tokens(

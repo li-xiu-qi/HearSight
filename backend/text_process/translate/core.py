@@ -7,7 +7,7 @@ import logging
 from typing import Callable, Dict, List, Optional
 
 from backend.chat_utils.chat_client import chat_text_async
-from backend.utils.typing_defs import Segment
+from backend.schemas import Segment
 
 from .batch import split_segments_by_output_tokens
 from .parser import extract_translations

@@ -20,7 +20,8 @@ from __future__ import annotations
 import logging
 import threading
 from pathlib import Path
-from typing import Any, Dict, List, TypedDict
+from typing import Any, Dict, List
+from typing_extensions import TypedDict
 
 
 # 数据结构定义

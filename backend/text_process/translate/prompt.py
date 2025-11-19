@@ -4,7 +4,7 @@
 """
 from typing import List, Optional
 
-from backend.utils.typing_defs import Segment
+from backend.schemas import Segment
 
 
 def build_translate_prompt(
