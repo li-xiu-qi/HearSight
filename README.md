@@ -94,7 +94,7 @@ BILIBILI_SESSDATA=
 **快速提示**：仅配置 `OPENAI_API_KEY` 即可启动全部功能。我们默认使用硅基流动的 OpenAI 兼容 API。免费额度申请：<https://cloud.siliconflow.cn/i/FcjKykMn>，平台免费提供包括文心 4.5 多模态模型的大语言模型调用。
 
 ### 🐳 方案一：容器化部署（推荐）
-> 推荐使用方案二，因为目前docker部署存在部分问题。
+
 一行命令启动完整服务栈：
 
 ```bash

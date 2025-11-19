@@ -25,3 +25,5 @@ requests
 black
 isort
 pylint
+pydantic_settings
+python-multipart

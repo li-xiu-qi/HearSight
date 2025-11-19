@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 from backend.db.job_store import init_job_table
 from backend.db.transcript_init import init_transcript_table
-from config import settings
+from backend.config import settings
 
 
 def initialize_app() -> tuple[Path, str | None]:
@@ -23,7 +23,7 @@ def initialize_app() -> tuple[Path, str | None]:
     3. 初始化数据库
     """
     # 加载 .env 文件中的环境变量
-    env_file = Path(__file__).parent.parent.resolve() / ".env"
+    env_file = Path(__file__).parent.resolve() / ".env"
     if env_file.exists():
         load_dotenv(env_file)
 

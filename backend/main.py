@@ -3,6 +3,12 @@
 
 from __future__ import annotations
 
+import sys
+import os
+
+# 添加项目根目录到 sys.path 以支持模块导入
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
 from backend.app import create_app
 from backend.startup import initialize_app, get_backend_port
 from backend.worker.job_worker import start_worker

@@ -14,7 +14,7 @@ from backend.services.transcript_service import (delete_transcript_async,
                                                  list_transcripts_async)
 from backend.services.translate_service import (get_translate_progress,
                                                 start_translate_task)
-from config import settings
+from backend.config import settings
 
 
 # 数据结构定义

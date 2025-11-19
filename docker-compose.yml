@@ -2,7 +2,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile.backend
+      dockerfile: backend/Dockerfile
     container_name: hearsight-backend
     restart: unless-stopped
     depends_on:
@@ -46,12 +46,13 @@ services:
       dockerfile: Dockerfile
     container_name: hearsight-frontend
     restart: unless-stopped
+    depends_on:
+      - backend
     ports:
-      - "${FRONTEND_PORT:-10000}:80"
+      - "${FRONTEND_PORT:-10000}:5173"
     environment:
-      - PORT=80
-      - BACKEND_HOST=${BACKEND_HOST:-backend}
-      - BACKEND_PORT=${BACKEND_PORT:-8000}
+      - BACKEND_HOST=backend
+      - BACKEND_PORT=8000
       - USE_DOCKER=1
 
 

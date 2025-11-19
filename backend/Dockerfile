@@ -26,7 +26,7 @@ RUN sed -i 's|http://archive.ubuntu.com/ubuntu/|https://mirrors.tuna.tsinghua.ed
      && rm -rf /var/lib/apt/lists/*
 
 # 复制 requirements 并先显式安装与宿主环境匹配的 PyTorch (cu121)
-COPY requirements.txt /app/requirements.txt
+COPY backend/requirements.txt /app/requirements.txt
 
 RUN python3 -m pip install --upgrade pip \
      && python3 -m pip install --extra-index-url https://download.pytorch.org/whl/cu126 \
@@ -46,4 +46,4 @@ RUN mkdir -p /app/app_datas/download_videos \
 EXPOSE 8000
 
 # 启动时使用运行时的 PORT 环境变量（默认 8000）
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

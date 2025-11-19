@@ -13,7 +13,7 @@ from backend.db.transcript_crud import (clear_chat_messages, get_chat_messages,
                                         save_summaries)
 from backend.text_process.chat_with_segment import chat_with_segments
 from backend.text_process.summarize import summarize_segments
-from config import settings
+from backend.config import settings
 
 
 # 数据结构定义
