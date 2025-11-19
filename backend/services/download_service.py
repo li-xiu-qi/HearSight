@@ -64,8 +64,7 @@ class ResultItem(TypedDict):
 
 from backend.db.job_store import update_job_result
 from backend.routers.progress_router import set_task_progress
-from backend.utils.vedio_utils.download_video.multi_platform_downloader import \
-    MultiPlatformDownloader
+from backend.media_file_download.downloader_factory import MediaDownloaderFactory
 
 logger = logging.getLogger(__name__)
 
@@ -124,28 +123,30 @@ def _download_worker(
 
     try:
         logger.info(f"开始下载任务 (job_id={job_id}): {url}")
-        # 初始化多平台下载器，传入进度回调
-        downloader = MultiPlatformDownloader(
-            url=url,
-            out_dir=out_dir,
-            progress_callback=progress_hook,
-        )
-        # 执行下载，返回文件路径列表
-        files: List[str] = downloader.download()
+        # 初始化下载工厂，传入进度回调
+        factory = MediaDownloaderFactory(output_dir=out_dir)
+        # 执行下载，返回DownloadResult
+        result = factory.download(url, progress_callback=progress_hook)
 
-        logger.info(f"下载完成 (job_id={job_id}): {len(files)} 个文件")
+        if not result.success:
+            raise RuntimeError(f"下载失败: {result.error_message}")
+
+        file_path = result.video_path or result.audio_path
+        if not file_path:
+            raise RuntimeError("下载结果为空")
+
+        logger.info(f"下载完成 (job_id={job_id}): {file_path}")
 
         # 构建结果项列表，包含文件路径和静态URL
         result_items: List[ResultItem] = []
-        for fp in files:
-            p = Path(fp)
-            result_items.append(
-                {
-                    "path": str(p.resolve()),  # 绝对路径
-                    "basename": p.name,  # 文件名
-                    "static_url": f"/static/{p.name}",  # 静态服务URL
-                }
-            )
+        p = Path(file_path)
+        result_items.append(
+            {
+                "path": str(p.resolve()),  # 绝对路径
+                "basename": p.name,  # 文件名
+                "static_url": f"/static/{p.name}",  # 静态服务URL
+            }
+        )
 
         # 更新进度为完成状态
         set_task_progress(

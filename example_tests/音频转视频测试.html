@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音频播放测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+        }
+        video {
+            width: 640px;
+            height: 360px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>音频播放测试 - 类视频效果</h1>
+        <p>使用图片作为背景，让音频看起来像视频。</p>
+        <video controls poster="https://via.placeholder.com/640x360?text=Audio+Background">
+            <source src="https://www.voiptroubleshooter.com/open_speech/american/OSR_us_000_0010_8k.wav" type="audio/wav">
+            您的浏览器不支持音频播放。
+        </video>
+    </div>
+</body>
+</html>

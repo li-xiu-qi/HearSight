@@ -37,6 +37,7 @@ class Settings(BaseSettings):
 
     # --- 其他：B站 Cookie 等 ---
     bilibili_sessdata: Optional[str] = None
+    downloads_dir: str = os.path.join(os.path.dirname(os.path.dirname(__file__)), "app_datas", "download_videos")
 
     model_config = ConfigDict(
         env_file=os.path.join(os.path.dirname(__file__), ".env"),

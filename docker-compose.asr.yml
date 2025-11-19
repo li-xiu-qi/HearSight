@@ -1,0 +1,24 @@
+services:
+  asr-backend:
+    build:
+      context: ./ASRBackend
+      dockerfile: Dockerfile.cloud
+    container_name: hearsight-asr-backend
+    restart: unless-stopped
+    ports:
+      - "${ASR_BACKEND_PORT:-8003}:8003"
+    environment:
+      - ASR_MODE=cloud
+      # DashScope API 配置
+      - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY}
+      - DASHSCOPE_BASE_URL=${DASHSCOPE_BASE_URL:-https://dashscope.aliyuncs.com/api/v1}
+      # Supabase 配置（如果需要）
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

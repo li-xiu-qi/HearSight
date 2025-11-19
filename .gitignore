@@ -116,3 +116,5 @@ supabase_project/supabase/volumes/storage/
 
 docs/architecture
 docker-compose-xuanyuan.yml
+backend/media_file_download/**/download_results/
+backend/media_file_download/**/datas/

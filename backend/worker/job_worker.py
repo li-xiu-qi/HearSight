@@ -21,9 +21,7 @@ from backend.db.job_store import (
 )
 from backend.db.transcript_crud import save_transcript
 from backend.routers.progress_router import set_task_progress
-from backend.utils.vedio_utils.download_video.multi_platform_downloader import (
-    MultiPlatformDownloader,
-)
+from backend.media_file_download.downloader_factory import MediaDownloaderFactory
 
 
 def job_worker(app: FastAPI, db_url: str | None) -> None:
@@ -109,28 +107,28 @@ def _process_job(db_url: str | None, job_id: int, url: str, static_dir: Path) ->
                 set_task_progress(
                     job_id,
                     {
-                        "status": info["status"],
+                        "status": info.get("status", "unknown"),
                         "stage": "download",
-                        "progress_percent": info["progress_percent"],
-                        "current_bytes": info["downloaded_bytes"],
-                        "total_bytes": info["total_bytes"],
-                        "speed": info["speed"],
-                        "eta_seconds": info["eta_seconds"],
-                        "filename": info["filename"],
+                        "progress_percent": info.get("progress_percent", 0),
+                        "current_bytes": info.get("downloaded_bytes", 0),
+                        "total_bytes": info.get("total_bytes", 0),
+                        "speed": info.get("speed", 0),
+                        "eta_seconds": info.get("eta_seconds", 0),
+                        "filename": info.get("filename", ""),
                         "job_id": job_id,
                     },
                 )
 
-            downloader = MultiPlatformDownloader(
-                url=url,
-                out_dir=str(static_dir),
-                progress_callback=on_progress,
-            )
-            files = downloader.download()
-            if not files:
+            factory = MediaDownloaderFactory(output_dir=str(static_dir))
+            result = factory.download(url, progress_callback=on_progress)
+            if not result.success:
+                raise RuntimeError(f"下载失败: {result.error_message}")
+
+            file_path = result.video_path or result.audio_path
+            if not file_path:
                 raise RuntimeError("下载结果为空")
 
-            media_path = str(Path(files[0]).resolve())
+            media_path = str(Path(file_path).resolve())
             basename = Path(media_path).name
 
             set_task_progress(

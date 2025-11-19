@@ -1,4 +1,16 @@
 # -*- coding: utf-8 -*-
+"""
+多平台媒体下载器示例代码
+
+这是MultiPlatformDownloader的原始实现，使用yt-dlp库支持多种视频和音频平台的下载。
+该实现已被backend/media_file_download/downloader_factory.py所替代。
+
+支持的平台包括：
+- B站 (bilibili.com, b23.tv)
+- YouTube (youtube.com, youtu.be)
+- 小宇宙播客 (xiaoyuzhoufm.com)
+"""
+
 from __future__ import annotations
 
 import logging
