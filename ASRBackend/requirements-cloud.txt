@@ -1,0 +1,22 @@
+# ASR Backend - 云端版本
+# 轻量级依赖，仅支持阿里云 DashScope API 调用
+# 不包含任何本地模型和 torch，节省空间
+
+fastapi
+uvicorn
+pydantic
+pydantic-settings
+python-multipart
+pytest
+pytest-asyncio
+httpx
+requests
+
+# 云端 API 支持
+dashscope>=1.3.0
+
+# Supabase 支持
+supabase
+
+# 可选：如果需要保留语言检测功能
+langdetect

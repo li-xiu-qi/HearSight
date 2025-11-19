@@ -1,0 +1,32 @@
+# 本地版本 Dockerfile
+# 包含完整的本地模型支持、torch 等大型依赖
+# 构建大小：约 3-5GB（根据 torch 版本）
+
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# 设置运行模式为本地
+ENV ASR_MODE=local
+
+# 复制项目文件
+COPY . .
+
+# 安装依赖
+# 注意：需要手动处理 torch，根据您的 GPU 情况选择合适的版本
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir -r requirements-local.txt
+
+# 暴露端口
+EXPOSE 8003
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8003/health || exit 1
+
+# 启动应用
+CMD ["python", "main.py"]
