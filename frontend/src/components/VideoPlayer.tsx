@@ -13,7 +13,7 @@ const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({ videoSrc, 
   const playerTitle = isAudio ? '音频播放器' : '视频播放器'
   
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="h-full flex flex-col gap-0 py-0">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center justify-between">
           <span>{playerTitle}</span>
@@ -26,34 +26,15 @@ const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({ videoSrc, 
       </CardHeader>
       <CardContent className="flex-1 flex items-center justify-center p-0 relative">
         {videoSrc ? (
-          <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
-            {isAudio ? (
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 opacity-80">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="flex items-end gap-1 h-24">
-                    {[...Array(20)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="w-1 bg-white/60 rounded-full animate-pulse"
-                        style={{
-                          height: `${20 + Math.random() * 60}px`,
-                          animationDelay: `${i * 0.1}s`,
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="absolute inset-0 bg-black" />
-            )}
+          <div className="w-full h-full flex items-center justify-center relative overflow-hidden bg-black">
             <video
               ref={ref}
               src={videoSrc}
               controls
-              className="w-full h-full max-h-[600px] object-contain relative z-10"
+              className="w-full max-w-full max-h-[80vh] object-contain relative z-10"
+              style={{ objectFit: isAudio ? 'cover' : 'contain' }}
               preload="metadata"
+              poster={isAudio ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Cdefs%3E%3ClinearGradient id='grad1' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%231e293b;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%231e3a5f;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='800' height='600' fill='url(%23grad1)'/%3E%3Ccircle cx='400' cy='260' r='60' fill='url(%23musicGrad)'/%3E%3ClinearGradient id='musicGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23a855f7;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23ec4899;stop-opacity:1' /%3E%3C/linearGradient%3E%3Cpath d='M 380 240 L 380 270 C 380 275 385 280 390 280 L 400 280 C 405 280 410 275 410 270 L 410 235 L 420 235 L 420 245 C 420 250 415 255 410 255 L 410 270 C 410 280 415 285 425 285 C 435 285 440 280 440 270 L 440 230 L 410 230 L 410 240 L 380 240 Z' fill='white'/%3E%3C/svg%3E" : undefined}
               aria-label={isAudio ? '音频播放器' : '视频播放器'}
             />
           </div>
