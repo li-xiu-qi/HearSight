@@ -307,7 +307,7 @@ export default function ChatView({
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8 text-slate-500">
             <p className="text-base mb-2">欢迎使用视频内容问答功能</p>
-            <p className="text-sm">请输入您的问题，AI 将基于视频内容为您解答</p>
+            <p className="text-sm">请输入您的问题，AI 将基于当前媒体文件内容为您解答</p>
           </div>
         ) : (
           <div className="space-y-4">

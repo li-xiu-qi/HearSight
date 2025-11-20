@@ -111,7 +111,7 @@ END_SUMMARIES
     return "\n".join([header, *body_lines, "", footer])
 
 
-def _extract_summaries(response_text: str) -> List[Dict[str, str]]:
+def _extract_summaries(response_text: str) -> List[Dict[str, Any]]:
     """
     从模型响应中提取总结数据。
 
@@ -149,11 +149,9 @@ def _extract_summaries(response_text: str) -> List[Dict[str, str]]:
                             }
                             # 尝试提取时间戳信息
                             if "start_time" in item:
-                                summary_item["start_time"] = str(
-                                    float(item["start_time"])
-                                )
+                                summary_item["start_time"] = float(item["start_time"])
                             if "end_time" in item:
-                                summary_item["end_time"] = str(float(item["end_time"]))
+                                summary_item["end_time"] = float(item["end_time"])
                             summaries.append(summary_item)
     except Exception:
         pass  # 解析失败
@@ -223,8 +221,8 @@ def summarize_segments(
     # 为每个提取到的主题创建SummaryItem
     for item in extracted_summaries:
         # 如果模型提供了时间戳信息，则使用模型提供的时间戳，否则使用整体时间范围
-        start_time = float(item.get("start_time", overall_start_time))
-        end_time = float(item.get("end_time", overall_end_time))
+        start_time = item.get("start_time", overall_start_time)
+        end_time = item.get("end_time", overall_end_time)
 
         summaries.append(
             SummaryItem(

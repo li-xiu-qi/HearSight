@@ -95,7 +95,7 @@ function ProcessedTab({
         <ScrollArea className="h-full flex-1">
           <div className="space-y-2 px-4">
             {transcripts.map((item) => {
-              const basename = extractFilename(item.audio_path || item.video_path || '')
+              const basename = extractFilename(item.video_path || item.audio_path || '')
               const isActive = activeTranscriptId === item.id
               
               return (
