@@ -1,6 +1,6 @@
 import { forwardRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Play } from 'lucide-react'
+import { Loader2, Play, Music } from 'lucide-react'
 
 interface VideoPlayerProps {
   videoSrc: string | null
@@ -9,8 +9,9 @@ interface VideoPlayerProps {
 }
 
 const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({ videoSrc, mediaType, loading }, ref) => {
-  const isAudio = mediaType === 'audio' || (videoSrc && /\.(m4a|mp3|wav|flac|aac)$/i.test(videoSrc))
+  const isAudio = mediaType === 'audio' || (videoSrc && /\.(m4a|mp3|wav|flac|aac|ogg|wma)$/i.test(videoSrc))
   const playerTitle = isAudio ? '音频播放器' : '视频播放器'
+  
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="pb-3">
@@ -23,16 +24,37 @@ const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({ videoSrc, 
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex items-center justify-center p-0">
+      <CardContent className="flex-1 flex items-center justify-center p-0 relative">
         {videoSrc ? (
-          <div className="w-full h-full flex items-center justify-center bg-black">
+          <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
+            {isAudio ? (
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 opacity-80">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="flex items-end gap-1 h-24">
+                    {[...Array(20)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-1 bg-white/60 rounded-full animate-pulse"
+                        style={{
+                          height: `${20 + Math.random() * 60}px`,
+                          animationDelay: `${i * 0.1}s`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="absolute inset-0 bg-black" />
+            )}
             <video
               ref={ref}
               src={videoSrc}
               controls
-              className="w-full h-full max-h-[600px] object-contain"
+              className="w-full h-full max-h-[600px] object-contain relative z-10"
               preload="metadata"
-              aria-label="视频播放器"
+              aria-label={isAudio ? '音频播放器' : '视频播放器'}
             />
           </div>
         ) : (
@@ -47,7 +69,7 @@ const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({ videoSrc, 
           </div>
         )}
         {loading && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white">
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white z-20">
             <div className="flex items-center gap-2">
               <Loader2 className="h-5 w-5 animate-spin" />
               <span>处理中，请稍候...</span>
