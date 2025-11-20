@@ -11,16 +11,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from backend.app import create_app
 from backend.startup import initialize_app, get_backend_port
-from backend.worker.job_worker import start_worker
 
 # 初始化应用
 static_dir, db_url = initialize_app()
 
 # 创建 FastAPI 应用
 app = create_app(static_dir, db_url)
-
-# 启动后台 worker
-start_worker(app, db_url)
 
 if __name__ == "__main__":
     import uvicorn

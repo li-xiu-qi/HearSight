@@ -8,19 +8,7 @@ from __future__ import annotations
 import asyncio
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
-import sys
-import os
-
-# 添加项目根目录到 Python 路径（开发环境）
-project_root = os.path.dirname(os.path.abspath(__file__))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
-
-try:
-    from ASRBackend.config import settings
-except ImportError:
-    # 相对导入（生产环境）
-    from .config import settings
+from config import settings
 
 
 class ASRProvider(ABC):
@@ -78,9 +66,9 @@ class LocalASRProvider(ASRProvider):
         """确保本地模型已加载"""
         if not self._initialized:
             # 动态导入本地模块以避免启用云端模式时的依赖问题
-            from .asr_functions.asr_sentence_segments import process
-            from .asr_functions.segment_normalizer import extract_text
-            from .asr_functions.utils import detect_language
+            from asr_functions.asr_sentence_segments import process
+            from asr_functions.segment_normalizer import extract_text
+            from asr_functions.utils import detect_language
 
             self._process = process
             self._extract_text = extract_text
@@ -161,12 +149,12 @@ class CloudASRProvider(ASRProvider):
         """确保云端 API 已初始化"""
         if not self._initialized:
             # 动态导入云端模块
-            from .asr_functions.dashscope_paraformer_v2_transcription import (
+            from asr_functions.dashscope_paraformer_v2_transcription import (
                 initialize_dashscope_client,
                 transcribe_audio_from_url,
             )
-            from .asr_functions.segment_normalizer import extract_text
-            from .asr_functions.utils import detect_language
+            from asr_functions.segment_normalizer import extract_text
+            from asr_functions.utils import detect_language
 
             if settings.dashscope_api_key:
                 initialize_dashscope_client(settings.dashscope_api_key)

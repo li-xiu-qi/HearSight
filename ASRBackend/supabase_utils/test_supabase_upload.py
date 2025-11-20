@@ -1,6 +1,6 @@
 """测试 Supabase 文件上传功能"""
 
-from supabase_upload import upload_file_to_supabase
+from supabase_utils.supabase_upload import upload_file_to_supabase
 import os
 
 def test_upload():

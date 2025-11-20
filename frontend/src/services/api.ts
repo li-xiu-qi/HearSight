@@ -36,13 +36,13 @@ export const fetchTranscripts = async (limit = 50, offset = 0): Promise<Transcri
 
 export const fetchJobs = async (): Promise<JobsResponse> => {
   const results = await Promise.allSettled([
-    fetch('/api/jobs?status=downloading&limit=50&offset=0'),
+    fetch('/api/jobs?status=pending&limit=50&offset=0'),
     fetch('/api/jobs?status=processing&limit=50&offset=0'),
   ])
   
   const items = []
   
-  // 处理downloading任务
+  // 处理pending任务
   if (results[0].status === 'fulfilled' && results[0].value.ok) {
     const data = await results[0].value.json()
     if (Array.isArray(data.items)) {

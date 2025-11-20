@@ -1,6 +1,3 @@
-torch
-torchaudio
-funasr
 yt-dlp
 # 用于HuggingFace风格分词器（AutoTokenizer）
 modelscope
@@ -14,8 +11,11 @@ uvicorn
 PyYAML
 psycopg2-binary
 python-dotenv
-# 备用视频截图方案
-opencv-python 
+
+# 异步任务队列
+celery
+redis
+
 pillow
 # 用于重试机制，处理超时和限速
 tenacity

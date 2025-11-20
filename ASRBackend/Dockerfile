@@ -4,6 +4,9 @@ FROM python:3.10-slim
 # 设置工作目录
 WORKDIR /app
 
+# 设置 Python 路径
+ENV PYTHONPATH=/app
+
 # 配置 apt 使用清华源
 RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list.d/debian.sources
 
@@ -24,6 +27,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 复制源代码
 COPY . .
 
+# 创建必要的目录
+RUN mkdir -p cache datas/audios datas/results
+
 # 如果 .env 不存在，复制 .env.example 为 .env
 RUN if [ ! -f .env ]; then cp .env.example .env; fi
 
@@ -34,4 +40,4 @@ RUN mkdir -p datas/audios datas/results
 EXPOSE 8003
 
 # 启动应用
-CMD ["python", "main.py"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003"]

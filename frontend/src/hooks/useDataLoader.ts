@@ -53,11 +53,11 @@ export const useDataLoader = (): UseDataLoaderReturn => {
     try {
       setLoading(true)
       const data = await fetchTranscriptDetail(id)
-      const basename = extractFilename(data.media_path)
+      const basename = extractFilename(data.video_path || data.audio_path || '')
       if (basename) {
         setVideoSrc(`/static/${basename}`)
       }
-      setMediaType(data.media_type || 'video')
+      setMediaType(data.media_type || 'audio')
       setSegments(Array.isArray(data.segments) ? data.segments : [])
       setActiveTranscriptId(id)
     } catch (err: unknown) {

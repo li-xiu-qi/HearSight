@@ -4,7 +4,7 @@ import { Upload, X, FileVideo, FileAudio, Loader2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 
 interface FileUploaderProps {
-  onUploadSuccess: (data: { static_url: string; is_audio: boolean; placeholder_url?: string }) => void
+  onUploadSuccess: (data: { static_url: string; is_audio: boolean; placeholder_url?: string; job_id?: number }) => void
   onUploadError: (error: string) => void
 }
 

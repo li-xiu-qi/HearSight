@@ -5,23 +5,11 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
-# 添加项目根目录到 Python 路径
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-try:
-    from ASRBackend.config import settings
-    from ASRBackend.routers.asr_router import router as asr_router
-except ImportError:
-    # 相对导入（开发环境备用）
-    from .config import settings
-    from .routers.asr_router import router as asr_router
+from config import settings
+from routers.asr_router import router as asr_router
 
 app = FastAPI(title=settings.app_name)
 
@@ -40,8 +28,12 @@ app.include_router(asr_router)
 
 @app.get("/health")
 async def health_check():
-    """健康检查接口"""
-    return {"status": "healthy", "service": "ASR Backend"}
+    """健康检查接口，返回服务状态和运行模式"""
+    return {
+        "status": "healthy",
+        "service": "ASR Backend",
+        "mode": settings.asr_mode,
+    }
 
 
 def main():

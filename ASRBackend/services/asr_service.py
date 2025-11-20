@@ -11,23 +11,12 @@
 from __future__ import annotations
 
 import os
-import sys
 import tempfile
 import logging
 from typing import Any, Dict
 
-# 添加项目根目录到 Python 路径（开发环境）
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
-
-try:
-    from ASRBackend.providers import ASRProviderFactory
-    from ASRBackend.config import settings
-except ImportError:
-    # 相对导入（生产环境）
-    from ..providers import ASRProviderFactory
-    from ..config import settings
+from providers import ASRProviderFactory
+from config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +125,7 @@ class ASRService:
                 temp_file_path = temp_file.name
 
             # 2. 上传到 Supabase
-            from ..supabase_utils.supabase_upload import upload_file_to_supabase
+            from supabase_utils.supabase_upload import upload_file_to_supabase
 
             success, result, uuid_name = upload_file_to_supabase(temp_file_path)
 
@@ -181,7 +170,7 @@ class ASRService:
             # 7. 删除 Supabase 上的文件
             if uploaded_uuid:
                 try:
-                    from ..supabase_utils.supabase_upload import delete_file_from_supabase
+                    from supabase_utils.supabase_upload import delete_file_from_supabase
                     delete_success = delete_file_from_supabase(uploaded_uuid)
                     if delete_success:
                         logger.debug(f"Supabase 文件已清理: {uploaded_uuid}")

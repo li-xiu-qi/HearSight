@@ -42,6 +42,9 @@ services:
       - BILIBILI_SESSDATA=${BILIBILI_SESSDATA}
       # ASRBackend 服务地址（Docker 环境）
       - ASR_BACKEND_URL=http://asr-backend:8003
+      # Celery 配置
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
     deploy: {}
     gpus: all
 
@@ -49,7 +52,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: hearsight-frontend
+    container_name: hearsight-frontend-cloud
     restart: unless-stopped
     depends_on:
       - backend
@@ -92,11 +95,15 @@ services:
       - ASR_MODE=cloud
       # DashScope API 配置
       - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY}
-      - DASHSCOPE_BASE_URL=${DASHSCOPE_BASE_URL:-https://dashscope.aliyuncs.com/api/v1}
-      # Supabase 配置（如果需要）
+      - DASHSCOPE_MODEL=${DASHSCOPE_MODEL:-paraformer-v2}
+      - DASHSCOPE_LANGUAGE_HINTS=${DASHSCOPE_LANGUAGE_HINTS:-zh,en}
+      # Supabase 配置
       - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - SUPABASE_BUCKET_NAME=${SUPABASE_BUCKET_NAME:-test-public}
+      - SUPABASE_FOLDER_NAME=${SUPABASE_FOLDER_NAME:-asr}
+      - SUPABASE_ADMIN_EMAIL=${SUPABASE_ADMIN_EMAIL}
+      - SUPABASE_ADMIN_PASSWORD=${SUPABASE_ADMIN_PASSWORD}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
       interval: 30s
@@ -104,6 +111,59 @@ services:
       retries: 3
       start_period: 40s
 
+  redis:
+    image: redis:7-alpine
+    container_name: hearsight-redis-cloud
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
+    volumes:
+      - ./app_datas/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-
-
+  celery-worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: hearsight-celery-worker-cloud
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      asr-backend:
+        condition: service_healthy
+    env_file: ./backend/.env
+    volumes:
+      - ./app_datas:/app/app_datas
+    working_dir: /app
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_USER=${POSTGRES_USER:-hearsight}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-hearsight_pass}
+      - POSTGRES_DB=${POSTGRES_DB:-hearsight}
+      - MS_MODEL_CACHE=/app/app_datas/model_cache
+      - TORCH_HOME=/app/app_datas/torch_cache
+      - HF_HOME=/app/app_datas/transformers_cache
+      - XDG_CACHE_HOME=/app/app_datas/xdg_cache
+      # Celery 配置
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - CELERY_WORKER_CONCURRENCY=2
+      - CELERY_LOG_LEVEL=info
+      # ASRBackend 服务地址
+      - ASR_BACKEND_URL=http://asr-backend:8003
+      # DashScope API 配置
+      - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY}
+      - DASHSCOPE_MODEL=${DASHSCOPE_MODEL:-paraformer-v2}
+      - DASHSCOPE_LANGUAGE_HINTS=${DASHSCOPE_LANGUAGE_HINTS:-zh,en}
+    command: python -m backend.queues.worker_launcher
+    deploy: {}
+    gpus: all

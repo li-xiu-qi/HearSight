@@ -11,9 +11,10 @@ from fastapi.responses import JSONResponse
 from typing_extensions import TypedDict
 
 from backend.db.job_store import create_job, update_job_result_paths
-from backend.db.transcript_crud import update_transcript_media_path
+from backend.db.transcript_crud import update_transcript_audio_path
 from backend.services.upload_service import (create_audio_placeholder,
                                              get_unique_filename)
+from backend.queues.tasks import process_job_task
 
 
 # 数据结构定义
@@ -131,6 +132,20 @@ async def upload_file(
 
         result["job_id"] = job_id
 
+        # 立即提交Celery任务处理上传的文件
+        static_dir_str = str(static_dir.resolve())
+        try:
+            process_job_task.delay(
+                job_id=job_id,
+                url=f"upload://{safe_filename}",
+                static_dir=static_dir_str,
+                db_url=db_url
+            )
+            logger.info(f"已提交Celery任务处理上传文件: job_id={job_id}")
+        except Exception as e:
+            logger.error(f"提交Celery任务失败: {e}")
+            # 即使提交任务失败，也不影响上传接口的返回，日志会记录
+
         return JSONResponse(
             content={
                 "success": True,
@@ -184,18 +199,18 @@ async def rename_file(
         old_path.rename(new_path)
         logger.info(f"文件重命名成功: {old_filename} -> {final_filename}")
 
-        # 更新数据库中的media_path和job结果
+        # 更新数据库中的audio_path和job结果
         db_url = request.app.state.db_url
-        old_media_path = str(old_path.resolve())
-        new_media_path = str(new_path.resolve())
+        old_audio_path = str(old_path.resolve())
+        new_audio_path = str(new_path.resolve())
 
         try:
             # 更新transcripts表
-            transcript_count = update_transcript_media_path(
-                db_url, old_media_path, new_media_path
+            transcript_count = update_transcript_audio_path(
+                db_url, old_audio_path, new_audio_path
             )
             if transcript_count > 0:
-                logger.info(f"已更新 {transcript_count} 条转写记录的media_path")
+                logger.info(f"已更新 {transcript_count} 条转写记录的audio_path")
 
             # 更新jobs表的result字段
             job_count = update_job_result_paths(

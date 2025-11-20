@@ -13,17 +13,19 @@ from .conn_utils import connect_db
 
 def save_transcript(
     db_url: Optional[str],
-    media_path: str,
+    audio_path: str,
     segments: List[Dict[str, Any]],
-    media_type: str = "video",
+    media_type: str = "audio",
+    video_path: Optional[str] = None,
 ) -> int:
     """保存转写记录。
 
     Args:
         db_url: 数据库连接 URL
-        media_path: 媒体文件路径
+        audio_path: 音频文件路径
         segments: 转写片段列表
-        media_type: 媒体类型（'video' 或 'audio'）
+        media_type: 媒体类型（'audio' 或 'video'）
+        video_path: 可选的视频文件路径
 
     Returns:
         新创建的转写记录 ID
@@ -34,8 +36,8 @@ def save_transcript(
         with conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "INSERT INTO transcripts (media_path, media_type, segments_json) VALUES (%s, %s, %s) RETURNING id",
-                    (media_path, media_type, data),
+                    "INSERT INTO transcripts (audio_path, video_path, media_type, segments_json) VALUES (%s, %s, %s, %s) RETURNING id",
+                    (audio_path, video_path, media_type, data),
                 )
                 row = cur.fetchone()
                 if not row:
@@ -90,7 +92,7 @@ def get_transcript_by_id(
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
                     """
-                    SELECT id, media_path, media_type, segments_json, created_at
+                    SELECT id, audio_path, video_path, media_type, segments_json, created_at
                     FROM transcripts
                     WHERE id = %s
                     LIMIT 1
@@ -106,7 +108,8 @@ def get_transcript_by_id(
                     segs = []
                 return {
                     "id": int(row["id"]),
-                    "media_path": str(row["media_path"]),
+                    "audio_path": str(row["audio_path"]),
+                    "video_path": str(row["video_path"]) if row["video_path"] else None,
                     "media_type": str(row["media_type"]),
                     "created_at": str(row["created_at"]),
                     "segments": segs,
@@ -115,15 +118,15 @@ def get_transcript_by_id(
         conn.close()
 
 
-def update_transcript_media_path(
-    db_url: Optional[str], old_media_path: str, new_media_path: str
+def update_transcript_audio_path(
+    db_url: Optional[str], old_audio_path: str, new_audio_path: str
 ) -> int:
-    """更新转写记录的media_path。
+    """更新转写记录的audio_path。
 
     Args:
         db_url: 数据库连接 URL
-        old_media_path: 旧的媒体文件路径
-        new_media_path: 新的媒体文件路径
+        old_audio_path: 旧的音频文件路径
+        new_audio_path: 新的音频文件路径
 
     Returns:
         更新的记录数量
@@ -133,8 +136,8 @@ def update_transcript_media_path(
         with conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "UPDATE transcripts SET media_path = %s WHERE media_path = %s",
-                    (new_media_path, old_media_path),
+                    "UPDATE transcripts SET audio_path = %s WHERE audio_path = %s",
+                    (new_audio_path, old_audio_path),
                 )
                 return cur.rowcount
     finally:

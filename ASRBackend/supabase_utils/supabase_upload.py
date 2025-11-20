@@ -10,24 +10,9 @@ import uuid
 from datetime import datetime
 from typing import Optional, Tuple
 
-# 添加 backend 路径
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
 from config import settings
 
 from supabase import create_client, Client
-
-from config import settings
-
-# 全局客户端，避免重复登录
-_supabase_client: Optional[Client] = None
-
-# 文件名映射存储路径 - 使用config中的配置
-# FILENAME_MAPPING_FILE = settings.filename_mapping_file  # 转录场景不需要映射文件
-
-
-from supabase import create_client, Client
-from config import settings
 
 # 全局客户端，避免重复登录
 _supabase_client: Optional[Client] = None
@@ -133,7 +118,7 @@ def delete_file_from_supabase(uuid_name: str) -> bool:
     """从 Supabase 删除文件
 
     Args:
-        uuid_name: UUID 文件名（不含扩展名）
+        uuid_name: UUID 文件名（包含扩展名，如 3153b9eb72184995852a7dd87d76e05c.m4a）
 
     Returns:
         bool: 删除是否成功
@@ -148,8 +133,8 @@ def delete_file_from_supabase(uuid_name: str) -> bool:
         bucket = settings.supabase_bucket_name
         folder = settings.supabase_folder_name
 
-        # 构建远程路径
-        remote_path = f"{folder}/asr/{uuid_name}.wav"
+        # 构建远程路径（uuid_name 已经包含完整的文件名和扩展名）
+        remote_path = f"{folder}/{uuid_name}"
 
         # 删除文件
         response = client.storage.from_(bucket).remove([remote_path])

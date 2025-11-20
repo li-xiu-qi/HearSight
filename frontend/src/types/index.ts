@@ -11,7 +11,8 @@ export interface Segment {
 // 转写记录元数据
 export interface TranscriptMeta {
   id: number
-  media_path: string
+  audio_path: string
+  video_path?: string
   media_type?: string
   created_at: string
   segment_count: number
@@ -63,6 +64,7 @@ export interface Summary {
 // API响应类型
 export interface JobResponse {
   job_id: number
+  task_id?: string  // Celery任务ID
 }
 
 export interface TranscriptsResponse {
@@ -75,7 +77,8 @@ export interface JobsResponse {
 
 export interface TranscriptDetailResponse {
   id?: number
-  media_path: string
+  audio_path: string
+  video_path?: string
   media_type?: string
   segments: Segment[]
   summaries?: Summary[] | null

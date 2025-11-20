@@ -57,7 +57,7 @@ def list_transcripts_meta(
         offset: 偏移量
 
     Returns:
-        转写记录元信息列表，包含 id、media_path、created_at、segment_count
+        转写记录元信息列表，包含 id、audio_path、video_path、created_at、segment_count
     """
     conn = connect_db(db_url)
     try:
@@ -65,7 +65,7 @@ def list_transcripts_meta(
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
                     """
-                    SELECT id, media_path, media_type, segments_json, created_at
+                    SELECT id, audio_path, video_path, media_type, segments_json, created_at
                     FROM transcripts
                     ORDER BY id DESC
                     LIMIT %s OFFSET %s
@@ -76,7 +76,8 @@ def list_transcripts_meta(
                 items: List[Dict[str, Any]] = []
                 for r in rows:
                     rid = r["id"]
-                    media_path = r["media_path"]
+                    audio_path = r["audio_path"]
+                    video_path = r["video_path"]
                     seg_json = r["segments_json"]
                     created_at = r["created_at"]
                     try:
@@ -87,8 +88,9 @@ def list_transcripts_meta(
                     items.append(
                         {
                             "id": int(rid),
-                            "media_path": str(media_path),
-                            "media_type": str(r.get("media_type", "video")),
+                            "audio_path": str(audio_path),
+                            "video_path": str(video_path) if video_path else None,
+                            "media_type": str(r.get("media_type", "audio")),
                             "created_at": str(created_at),
                             "segment_count": int(seg_count),
                         }

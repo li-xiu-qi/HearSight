@@ -8,9 +8,9 @@ from typing import Any, Dict, List, Optional, Union
 from fastapi import APIRouter, HTTPException, Request
 from typing_extensions import TypedDict
 
-from backend.db.job_store import check_duplicate_url
+from backend.db.job_store import check_duplicate_url, update_job_celery_task_id
 from backend.routers.progress_router import set_task_progress
-from backend.services.download_service import start_download
+from backend.queues.tasks import process_job_task
 
 
 # 数据结构定义
@@ -45,6 +45,7 @@ class DownloadStartedResponse(TypedDict):
 
     status: str  # "started"
     job_id: int  # 任务ID
+    task_id: str  # Celery任务ID
     message: str  # 提示消息
 
 
@@ -56,7 +57,7 @@ router = APIRouter(prefix="/api", tags=["download"])
 
 @router.post("/download")
 def api_download(payload: DownloadRequest, request: Request) -> DownloadResponse:
-    """启动视频下载任务"""
+    """启动视频下载任务（异步处理）"""
     url = payload.get("url")
     if not url:
         raise HTTPException(status_code=400, detail="url is required")
@@ -117,11 +118,28 @@ def api_download(payload: DownloadRequest, request: Request) -> DownloadResponse
         },
     )
 
-    # 启动后台下载
-    start_download(job_id, url, out_dir, db_url)
+    # 提交Celery异步任务
+    try:
+        task = process_job_task.delay(
+            job_id=job_id,
+            url=url,
+            static_dir=str(static_dir),
+            db_url=db_url,
+        )
+        logger.info(f"任务已提交到Celery，job_id={job_id}, task_id={task.id}")
+        
+        # 保存Celery任务ID到数据库
+        if db_url:
+            update_job_celery_task_id(db_url, job_id, task.id)
 
-    return {
-        "status": "started",
-        "job_id": job_id,
-        "message": "下载任务已启动，请轮询查询进度",
-    }
+        return {
+            "status": "started",
+            "job_id": job_id,
+            "task_id": task.id,
+            "message": "任务已提交，后台异步处理中",
+        }
+    except Exception as e:
+        logger.error(f"提交Celery任务失败：{str(e)}")
+        raise HTTPException(status_code=500, detail=f"提交任务失败: {str(e)}")
+
+

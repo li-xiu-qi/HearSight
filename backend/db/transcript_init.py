@@ -18,8 +18,9 @@ def init_transcript_table(db_url: Optional[str] = None) -> None:
                     """
                     CREATE TABLE IF NOT EXISTS transcripts (
                         id SERIAL PRIMARY KEY,
-                        media_path TEXT NOT NULL,
-                        media_type TEXT NOT NULL DEFAULT 'video',
+                        audio_path TEXT NOT NULL,
+                        video_path TEXT,
+                        media_type TEXT NOT NULL DEFAULT 'audio',
                         segments_json TEXT NOT NULL,
                         summaries_json TEXT,
                         translations_json TEXT,
@@ -31,8 +32,14 @@ def init_transcript_table(db_url: Optional[str] = None) -> None:
                 )
                 cur.execute(
                     """
-                    CREATE INDEX IF NOT EXISTS idx_transcripts_media_path
-                    ON transcripts(media_path);
+                    CREATE INDEX IF NOT EXISTS idx_transcripts_audio_path
+                    ON transcripts(audio_path);
+                    """
+                )
+                cur.execute(
+                    """
+                    ALTER TABLE IF EXISTS transcripts
+                    ADD COLUMN IF NOT EXISTS video_path TEXT;
                     """
                 )
                 cur.execute(

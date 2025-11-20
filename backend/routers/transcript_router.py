@@ -22,7 +22,8 @@ class TranscriptItem(TypedDict, total=False):
     """转写记录项数据结构"""
 
     id: int  # 转写记录ID
-    media_path: str  # 媒体文件路径
+    audio_path: str  # 音频文件路径
+    video_path: Optional[str]  # 视频文件路径（可选）
     created_at: str  # 创建时间
     segment_count: int  # 句子片段数量
 

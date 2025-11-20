@@ -28,7 +28,8 @@ def init_job_table(db_url: Optional[str] = None) -> None:
                         started_at TIMESTAMP,
                         finished_at TIMESTAMP,
                         result_json TEXT,
-                        error TEXT
+                        error TEXT,
+                        celery_task_id VARCHAR(255)
                     );
                     """
                 )
@@ -36,6 +37,13 @@ def init_job_table(db_url: Optional[str] = None) -> None:
                     """
                     CREATE INDEX IF NOT EXISTS idx_jobs_status_created
                     ON jobs(status, created_at DESC);
+                    """
+                )
+                # 添加celery_task_id列（如果还不存在）
+                cur.execute(
+                    """
+                    ALTER TABLE IF EXISTS jobs
+                    ADD COLUMN IF NOT EXISTS celery_task_id VARCHAR(255);
                     """
                 )
     finally:
@@ -58,7 +66,7 @@ def create_job(db_url: Optional[str], url: str) -> int:
             with conn.cursor() as cur:
                 cur.execute(
                     "INSERT INTO jobs (url, status) VALUES (%s, %s) RETURNING id",
-                    (url, "downloading"),
+                    (url, "pending"),
                 )
                 row = cur.fetchone()
                 if not row:
@@ -83,7 +91,7 @@ def get_job(db_url: Optional[str], job_id: int) -> Optional[Dict[str, Any]]:
         with conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
-                    "SELECT id, url, status, created_at, started_at, finished_at, result_json, error FROM jobs WHERE id = %s",
+                    "SELECT id, url, status, created_at, started_at, finished_at, result_json, error, celery_task_id FROM jobs WHERE id = %s",
                     (int(job_id),),
                 )
                 row = cur.fetchone()
@@ -106,6 +114,7 @@ def get_job(db_url: Optional[str], job_id: int) -> Optional[Dict[str, Any]]:
                     ),
                     "result": result,
                     "error": str(row["error"]) if row["error"] else None,
+                    "celery_task_id": str(row["celery_task_id"]) if row["celery_task_id"] else None,
                 }
     finally:
         conn.close()
@@ -134,12 +143,12 @@ def list_jobs(
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 if status:
                     cur.execute(
-                        "SELECT id, url, status, created_at, started_at, finished_at, result_json, error FROM jobs WHERE status = %s ORDER BY id DESC LIMIT %s OFFSET %s",
+                        "SELECT id, url, status, created_at, started_at, finished_at, result_json, error, celery_task_id FROM jobs WHERE status = %s ORDER BY id DESC LIMIT %s OFFSET %s",
                         (status, int(limit), int(offset)),
                     )
                 else:
                     cur.execute(
-                        "SELECT id, url, status, created_at, started_at, finished_at, result_json, error FROM jobs ORDER BY id DESC LIMIT %s OFFSET %s",
+                        "SELECT id, url, status, created_at, started_at, finished_at, result_json, error, celery_task_id FROM jobs ORDER BY id DESC LIMIT %s OFFSET %s",
                         (int(limit), int(offset)),
                     )
                 rows = cur.fetchall()
@@ -167,63 +176,13 @@ def list_jobs(
                             ),
                             "result": result,
                             "error": str(r["error"]) if r["error"] else None,
+                            "celery_task_id": str(r["celery_task_id"]) if r["celery_task_id"] else None,
                         }
                     )
                 return items
     finally:
         conn.close()
 
-
-def claim_next_pending_job(db_url: Optional[str]) -> Optional[Dict[str, Any]]:
-    """原子领取一条 downloading 任务并置为 running，返回任务信息。
-
-    Args:
-        db_url: 数据库连接 URL
-
-    Returns:
-        任务信息，如果没有待处理任务返回 None
-    """
-    conn = connect_db(db_url)
-    try:
-        with conn:
-            with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                # 优先处理 downloading 状态的任务
-                cur.execute(
-                    """
-                    SELECT id, url FROM jobs
-                    WHERE status = 'downloading'
-                    ORDER BY id ASC
-                    FOR UPDATE SKIP LOCKED
-                    LIMIT 1
-                    """
-                )
-                row = cur.fetchone()
-                if row:
-                    rid = int(row["id"])
-                    url = row["url"]
-                    cur.execute(
-                        "UPDATE jobs SET status = 'running', started_at = now() WHERE id = %s",
-                        (rid,),
-                    )
-                    return {"id": rid, "url": str(url)}
-
-                # 没有 downloading，则尝试领取未完成的 running（finished_at 为空）以实现重启恢复
-                cur.execute(
-                    """
-                    SELECT id, url FROM jobs
-                    WHERE status = 'running' AND finished_at IS NULL
-                    ORDER BY started_at ASC
-                    LIMIT 1
-                    """
-                )
-                row2 = cur.fetchone()
-                if not row2:
-                    return None
-                rid2 = int(row2["id"])
-                url2 = row2["url"]
-                return {"id": rid2, "url": str(url2)}
-    finally:
-        conn.close()
 
 
 def finish_job_success(
@@ -263,6 +222,26 @@ def finish_job_failed(db_url: Optional[str], job_id: int, error: str) -> None:
                 cur.execute(
                     "UPDATE jobs SET status = 'failed', finished_at = now(), error = %s WHERE id = %s",
                     (error, int(job_id)),
+                )
+    finally:
+        conn.close()
+
+
+def update_job_celery_task_id(db_url: Optional[str], job_id: int, celery_task_id: str) -> None:
+    """保存Celery任务ID到job记录。
+
+    Args:
+        db_url: 数据库连接 URL
+        job_id: 任务 ID
+        celery_task_id: Celery任务 ID
+    """
+    conn = connect_db(db_url)
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE jobs SET celery_task_id = %s WHERE id = %s",
+                    (celery_task_id, int(job_id)),
                 )
     finally:
         conn.close()

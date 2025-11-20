@@ -4,7 +4,7 @@ import os
 # 添加项目根目录到路径，以便导入模块
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from backend.media_file_download.downloader_factory import MediaDownloaderFactory
+from backend.media_processing import MediaDownloaderFactory
 
 def test_multi_platform_downloader():
     """测试多平台下载器"""

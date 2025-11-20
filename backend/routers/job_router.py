@@ -7,6 +7,10 @@ from fastapi import APIRouter, HTTPException, Request
 from typing_extensions import TypedDict
 
 from backend.db.job_store import create_job, get_job, list_jobs
+from backend.config import create_celery_app
+
+# 创建Celery应用实例
+celery_app = create_celery_app()
 
 
 # 数据结构定义
@@ -33,6 +37,7 @@ class JobData(TypedDict, total=False):
     finished_at: Optional[str]  # 完成时间
     result: Optional[Dict[str, Any]]  # 任务结果
     error: Optional[str]  # 错误信息
+    celery_task_id: Optional[str]  # Celery任务ID
 
 
 class GetJobResponse(JobData):
@@ -53,6 +58,16 @@ class ListJobsResponse(TypedDict):
     """列出任务响应数据结构"""
 
     items: List[JobData]  # 任务列表
+
+
+class CeleryTaskStatus(TypedDict, total=False):
+    """Celery任务状态信息"""
+
+    task_id: str  # 任务ID
+    status: str  # 任务状态 (PENDING, STARTED, SUCCESS, FAILURE, RETRY, REVOKED)
+    result: Optional[Any]  # 任务结果
+    error: Optional[str]  # 错误信息
+    progress: Optional[int]  # 进度百分比
 
 
 router = APIRouter(prefix="/api", tags=["jobs"])
@@ -89,3 +104,29 @@ def api_list_jobs(
     db_url = request.app.state.db_url
     items = list_jobs(db_url, status=status, limit=limit, offset=offset)
     return {"items": items}
+
+
+@router.get("/celery/tasks/{task_id}")
+def api_get_celery_task_status(task_id: str) -> CeleryTaskStatus:
+    """查询Celery任务状态"""
+    try:
+        task = celery_app.AsyncResult(task_id)
+        
+        result_dict: CeleryTaskStatus = {
+            "task_id": task_id,
+            "status": task.status,
+        }
+        
+        if task.status == "SUCCESS":
+            result_dict["result"] = task.result
+        elif task.status == "FAILURE":
+            result_dict["error"] = str(task.info)
+        elif task.status in ("RETRY", "PENDING", "STARTED"):
+            # 处理中的任务
+            if hasattr(task, "info") and isinstance(task.info, dict):
+                result_dict["progress"] = task.info.get("progress_percent", 0)
+        
+        return result_dict
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"查询任务状态失败: {str(e)}")
+

@@ -11,24 +11,12 @@
 from __future__ import annotations
 
 from typing import Optional
-import sys
-import os
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
-# 添加项目根目录到 Python 路径（开发环境）
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
-
-try:
-    from ASRBackend.config import settings
-    from ASRBackend.services.asr_service import ASRService
-except ImportError:
-    # 相对导入（生产环境）
-    from ..config import settings
-    from ..services.asr_service import ASRService
+from config import settings
+from services.asr_service import ASRService
 
 router = APIRouter(prefix="/asr", tags=["ASR"])
 

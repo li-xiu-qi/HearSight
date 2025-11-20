@@ -8,16 +8,24 @@ WORKDIR /app
 
 # 设置运行模式为云端
 ENV ASR_MODE=cloud
+ENV PYTHONPATH=/app
+
+# 配置 pip 使用清华源
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 复制项目文件
 COPY . .
 
-# 安装依赖
+# 安装系统依赖
 RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir -r requirements-cloud.txt
+# 安装 Python 依赖
+RUN pip install -r requirements-cloud.txt
+
+# 创建必要的目录
+RUN mkdir -p cache
 
 # 暴露端口
 EXPOSE 8003
@@ -27,4 +35,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8003/health || exit 1
 
 # 启动应用
-CMD ["python", "main.py"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003"]

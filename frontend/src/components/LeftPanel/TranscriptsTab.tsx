@@ -42,7 +42,7 @@ function TranscriptsTab({
     <ScrollArea className="h-full">
       <div className="space-y-2">
         {transcripts.map((item) => {
-          const basename = extractFilename(item.media_path)
+          const basename = extractFilename(item.audio_path || item.video_path || '')
           const isActive = activeTranscriptId === item.id
           
           return (

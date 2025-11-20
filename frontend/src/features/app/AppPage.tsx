@@ -114,11 +114,16 @@ function AppPage() {
     }
   }
 
-  const handleUploadSuccess = (data: { static_url: string; is_audio: boolean; placeholder_url?: string }) => {
-    message.success("文件上传成功")
+  const handleUploadSuccess = (data: { static_url: string; is_audio: boolean; placeholder_url?: string; job_id?: number }) => {
+    message.success("文件上传成功，正在处理中")
     const videoUrl = data.is_audio && data.placeholder_url ? data.placeholder_url : data.static_url
     setVideoSrc(videoUrl)
     setUploadDialogOpen(false)
+    
+    // 上传成功后，刷新transcripts和jobs列表以显示最新状态
+    if (data.job_id) {
+      loadTranscripts()
+    }
   }
 
   const handleUploadError = (error: string) => {
