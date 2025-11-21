@@ -1,13 +1,22 @@
-
 # ARM设备Docker构建指南
 
 ## 概述
 
-本指南介绍如何将HearSight项目的Docker镜像构建并部署到ARM架构设备上（如ARM64处理器）。通过使用Docker Buildx工具，实现多平台构建，确保镜像兼容ARM设备。
+本指南介绍如何将HearSight项目的Docker镜像构建并部署到ARM架构设备上。如ARM设备资源充足，推荐直接在ARM设备上构建；否则，使用交叉构建方式。
 
 ## 构建流程
 
-以下是构建多架构Docker镜像的流程：
+### 直接构建流程（推荐）
+
+```mermaid
+flowchart TD
+    A[在ARM设备上安装Docker] --> B[传输项目代码]
+    B --> C[配置环境变量]
+    C --> D[运行docker-compose build]
+    D --> E[运行docker-compose up]
+```
+
+### 交叉构建流程（备选）
 
 ```mermaid
 flowchart TD
@@ -18,29 +27,120 @@ flowchart TD
     E --> F[加载并运行镜像]
 ```
 
+## 选择合适的docker-compose文件
+
+HearSight项目提供多个docker-compose文件，根据运行环境选择：
+
+- **docker-compose.cloud.yml**：适用于Windows主机，使用build指令构建镜像。
+- **docker-compose.cloud.linux.yml**：适用于Linux主机，使用build指令构建镜像。
+- **docker-compose.cloud.arm.linux.yml**：适用于ARM Linux设备，使用预构建的image指令。
+
+根据主机操作系统选择相应文件：
+
+- Windows：使用docker-compose.cloud.yml
+- Linux：使用docker-compose.cloud.linux.yml
+- 交叉编译到ARM：使用docker-compose.cloud.arm.linux.yml
+
+## 配置环境变量
+
+运行docker-compose前，创建环境变量文件：
+
+- **backend/.env**：后端服务配置，包含数据库、API密钥等。
+- **ASRBackend/.env**：ASR后端配置，包含API密钥等。
+
+参考项目中的.env.example文件。
+
+### 获取API密钥
+
+- **语音识别模型密钥 (DASHSCOPE_API_KEY)**：前往阿里云百炼控制台获取DashScope API密钥。
+- **Supabase配置**：前往 [Supabase官网](https://supabase.com/) 注册并创建项目。选择Public bucket，配置策略为：允许用户上传文件到名为asr的存储桶，文件名以.wav结尾，用户为<lixiuqixiaoke@qq.com>。
+
+示例backend/.env内容：
+
+```
+POSTGRES_USER=hearsight
+POSTGRES_PASSWORD=hearsight_pass
+POSTGRES_DB=hearsight
+BACKEND_PORT=9999
+FRONTEND_PORT=10000
+OPENAI_API_KEY=your_key
+# 其他变量...
+```
+
+示例ASRBackend/.env内容：
+
+```
+ASR_MODE=cloud
+DASHSCOPE_API_KEY=your_key
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-anon-key-here
+SUPABASE_BUCKET_NAME=test-public
+SUPABASE_FOLDER_NAME=asr
+SUPABASE_ADMIN_EMAIL=your-admin-email@example.com
+SUPABASE_ADMIN_PASSWORD=your-admin-password
+```
+
+确保.env文件不提交到版本控制。
+
+## 直接在ARM设备上构建
+
+如果ARM设备资源充足，直接在ARM设备上构建镜像。
+
+### 步骤
+
+1. 在ARM设备上安装Docker。
+2. 配置Docker镜像加速。
+3. 传输项目代码到ARM设备：
+
+   ```
+   scp -r C:\Users\ke\Downloads\HearSight root@arm-ip:/home/ke123/
+   ```
+
+   或使用U盘传输。
+
+4. 创建环境变量文件。
+5. 构建并运行：
+
+   ```
+   cd /home/ke123/HearSight
+   docker-compose -f docker-compose.cloud.linux.yml build
+   docker-compose -f docker-compose.cloud.linux.yml up -d
+   ```
+
+### 优势
+
+- 无需x86主机。
+- 无需传输大文件。
+- 确保兼容性。
+
+### 注意
+
+- ARM设备需足够资源。
+- 构建时间较长。
+- 网络慢时配置加速。
+
+## 交叉构建到ARM设备
+
+如果ARM设备资源有限，在x86主机上交叉构建ARM64镜像，然后传输。
+
 ### 详细步骤
 
-1. **启用Docker Buildx**：
+1. 启用Docker Buildx：
 
-   ```bash
+   ```
    docker buildx create --use
    ```
 
-   （创建并启用Buildx builder，用于多平台构建；`--use` 设置为默认builder）
+2. 检查Dockerfile兼容性，确保基础镜像支持ARM64。
+3. 构建多架构镜像：
 
-2. **检查Dockerfile兼容性**：确保基础镜像和依赖支持ARM64平台，例如使用`FROM ubuntu:22.04`等通用镜像。
-
-3. **构建多架构镜像**：
-
-   ```bash
+   ```
    docker buildx build --platform linux/arm64 -t image:arm64 --load ./backend
    ```
 
-   （`--platform linux/arm64` 指定目标平台为ARM64；`-t image:arm64` 标签镜像；`--load` 将镜像加载到本地Docker daemon；`./backend` 构建上下文目录）
+4. 保存镜像为文件：
 
-4. **保存镜像为文件**：
-
-   ```bash
+   ```
    mkdir -p docker-images
    docker save hearsight-backend:arm64 > docker-images/backend-arm64.tar
    docker save hearsight-frontend:arm64 > docker-images/frontend-arm64.tar
@@ -48,97 +148,79 @@ flowchart TD
    docker save hearsight-celery-worker:arm64 > docker-images/celery-worker-arm64.tar
    ```
 
-   （创建`docker-images`目录保存所有tar文件，便于管理；`docker save` 导出镜像为tar文件；`>` 重定向输出到文件；`docker-images/`已添加到`.gitignore`忽略）
+5. 传输到ARM设备：
 
-5. **传输到ARM设备**：
+   ```
+   scp docker-images/*.tar user@arm-ip:/path/
+   ```
 
-   - 使用SSH传输：
+   或使用U盘。
 
-     ```bash
-     scp docker-images/*.tar user@arm-ip:/path/
-     ```
-
-     （`scp` 安全复制文件；`user@arm-ip` 用户名和IP；`/path/` 目标路径；在ARM设备上运行`ip addr show`或`hostname -I`查看IP，选择类似192.168.x.x的主机IP，忽略广播地址如.x.255）
-
-   - 或者用硬盘（U盘等）物理复制文件到ARM设备。
-
-6. **在ARM设备上加载并运行**：
+6. 在ARM设备上加载并运行：
 
    - 加载镜像：
 
-     ```bash
+     ```
      docker load < backend-arm64.tar
      docker load < frontend-arm64.tar
      docker load < asr-backend-arm64.tar
      docker load < celery-worker-arm64.tar
      ```
 
-   - 使用compose运行所有服务（假设ARM设备有docker-compose）：
+   - 运行服务：
 
-     ```bash
+     ```
      docker-compose -f docker-compose.cloud.yml up -d
      ```
 
-     （这会启动backend、frontend、asr-backend、celery-worker等服务；celery-worker会自动运行其command启动worker）
+     或单独运行celery-worker：
 
-   - 或单独运行celery-worker：
-
-     ```bash
+     ```
      docker run -d --name celery-worker hearsight-celery-worker:arm64 python -m backend.queues.worker_launcher
      ```
 
-     （`-d` 后台运行；指定command启动worker）
-
 ### 构建多个服务
 
-根据`docker-compose.cloud.yml`，需要构建的服务如下：
+需要构建的服务：
 
-- **backend**（使用`backend/Dockerfile`）：
+- backend：
 
-  ```bash
+  ```
   docker buildx build --platform linux/arm64 -t hearsight-backend:arm64 --load -f backend/Dockerfile .
   ```
 
-  （上下文为根目录`.`，Dockerfile为`backend/Dockerfile`；`-f` 指定Dockerfile路径）
+- frontend：
 
-- **frontend**（使用`./frontend/Dockerfile`）：
-
-  ```bash
+  ```
   docker buildx build --platform linux/arm64 -t hearsight-frontend:arm64 --load ./frontend
   ```
 
-  （上下文为`./frontend`，Dockerfile为`Dockerfile`）
+- asr-backend：
 
-- **asr-backend**（使用`./ASRBackend/Dockerfile.cloud`）：
-
-  ```bash
+  ```
   docker buildx build --platform linux/arm64 -t hearsight-asr-backend:arm64 --load -f Dockerfile.cloud .
   ```
 
-  （上下文为`.`，Dockerfile为`Dockerfile.cloud`；`-f` 指定Dockerfile文件名）
+- celery-worker：
 
-- **celery-worker**（使用`backend/Dockerfile`）：
-
-  ```bash
+  ```
   docker buildx build --platform linux/arm64 -t hearsight-celery-worker:arm64 --load -f backend/Dockerfile .
   ```
 
-  （上下文为根目录`.`，Dockerfile为`backend/Dockerfile`；`-f` 指定Dockerfile路径；与backend相同）
-
-- **redis**：使用现成镜像`redis:7-alpine`，支持ARM64，无需构建，直接拉取或传输。
+- redis：使用现成镜像，无需构建。
 
 ## 在ARM设备上安装Docker
 
-如果ARM设备（Debian系统）没有安装Docker，按以下步骤安装：
+如果ARM设备未安装Docker，按以下步骤安装：
 
-```bash
+```
 # 更新包索引
 sudo apt update
 
-# 安装必要的包
+# 安装必要包
 sudo apt install apt-transport-https ca-certificates curl gnupg lsb-release
 
-# 添加Docker的官方GPG密钥
+# 添加Docker GPG密钥
 curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 
 # 添加Docker仓库
@@ -159,49 +241,38 @@ sudo systemctl enable docker
 # 安装Docker Compose
 sudo apt install docker-compose
 
-# 添加当前用户到docker组（避免每次sudo）
+# 添加用户到docker组
 sudo usermod -aG docker $USER
-
-# 重新登录或运行新终端生效
 ```
 
-（安装后，运行`docker --version`和`docker-compose --version`验证）
+安装后，验证版本。
 
-### 配置Docker镜像加速（可选）
+### 配置Docker镜像加速
 
-如果网络慢，可以配置镜像加速源（如<https://docker.1ms.run>）：
+配置镜像加速源，如<https://docker.1ms.run：>
 
-- **全局配置**（推荐）：
+- 全局配置：
 
-  ```bash
-  # 创建或编辑daemon.json
-  sudo nano /etc/docker/daemon.json
+  编辑 /etc/docker/daemon.json：
+
   ```
-
-  添加内容：
-
-  ```json
   {
     "registry-mirrors": ["https://docker.1ms.run"]
   }
   ```
 
-  ```bash
-  # 重启Docker服务
+  重启Docker：
+
+  ```
   sudo systemctl restart docker
   ```
 
-  （这会加速所有镜像拉取，如Redis）
-
-- **针对特定镜像**：在`docker-compose.cloud.yml`中修改image，例如将`image: redis:7-alpine`改为`image: docker.1ms.run/redis:7-alpine`（如果加速源支持此格式）。
-
-（验证：`docker pull redis:7-alpine`或compose拉取）
+- 针对特定镜像：在docker-compose中修改image。
 
 ## 注意事项
 
-- 确保Docker版本支持Buildx（19.03+）。
-- 如果Dockerfile中有特定架构依赖，需要调整为ARM兼容版本。
-- 构建时间可能较长，建议在x86主机上进行多平台构建。
-- 测试镜像在ARM设备上的运行效果。
-- ARM设备运行Debian时，确保镜像兼容。
-- 如果遇到PyPI下载SSL错误（如从清华镜像），可以更换PIP_INDEX_URL为其他源，如`https://pypi.org/simple`或阿里云`https://mirrors.aliyun.com/pypi/simple`，并添加`PIP_TRUSTED_HOST=mirrors.aliyun.com`。
+- 确保Docker版本支持Buildx。
+- 调整Dockerfile为ARM兼容。
+- 构建时间长，建议在x86上进行。
+- 测试ARM设备运行效果。
+- 如果PyPI下载SSL错误，更换PIP_INDEX_URL为其他源，并添加PIP_TRUSTED_HOST。

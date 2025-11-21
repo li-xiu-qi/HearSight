@@ -1,0 +1,127 @@
+services:
+  backend:
+    image: hearsight-backend:arm64
+    container_name: hearsight-backend-cloud
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      asr-backend:
+        condition: service_healthy
+    env_file: ./backend/.env
+    # 生产环境使用命名卷持久化数据（由 Docker 管理）
+    volumes:
+      - ./app_datas:/app/app_datas
+      # 注意：将整仓库绑定到容器根目录（./:/app:ro）会导致在只读 bind-mount 上创建子挂载点失败
+      # 如果你需要在开发时热加载代码，可把下面这一行取消注释并调整为非只读（/:/app:rw），或改为把代码挂到其它路径
+      # - ./:/app:ro
+    ports:
+      - "${BACKEND_PORT:-9999}:8000"
+    environment:
+      - PORT=8000
+      - POSTGRES_HOST=postgres
+      - MS_MODEL_CACHE=/app/app_datas/model_cache
+      - TORCH_HOME=/app/app_datas/torch_cache
+      - HF_HOME=/app/app_datas/transformers_cache
+      - XDG_CACHE_HOME=/app/app_datas/xdg_cache
+      - FRONTEND_HOST=localhost
+      - ASR_BACKEND_URL=http://asr-backend:8003
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    deploy: {}
+    gpus: all
+
+  frontend:
+    image: hearsight-frontend:arm64
+    container_name: hearsight-frontend-cloud
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-10000}:5173"
+    environment:
+      - BACKEND_HOST=backend
+      - BACKEND_PORT=8000
+      - USE_DOCKER=1
+
+
+  postgres:
+    image: postgres:17
+    container_name: hearsight-postgres-cloud
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-hearsight}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-hearsight_pass}
+      - POSTGRES_DB=${POSTGRES_DB:-hearsight}
+    volumes:
+      - ./app_datas/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hearsight} -d ${POSTGRES_DB:-hearsight}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  asr-backend:
+    image: hearsight-asr-backend:arm64
+    container_name: hearsight-asr-backend-cloud
+    restart: unless-stopped
+    env_file: ./ASRBackend/.env
+    ports:
+      - "${ASR_BACKEND_PORT:-8003}:8003"
+    environment:
+      - ASR_MODE=cloud
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  redis:
+    image: redis:7-alpine
+    container_name: hearsight-redis-cloud
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
+    volumes:
+      - ./app_datas/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  celery-worker:
+    image: hearsight-celery-worker:arm64
+    container_name: hearsight-celery-worker-cloud
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      asr-backend:
+        condition: service_healthy
+    env_file: ./backend/.env
+    volumes:
+      - ./app_datas:/app/app_datas
+    working_dir: /app
+    environment:
+      - POSTGRES_HOST=postgres
+      - MS_MODEL_CACHE=/app/app_datas/model_cache
+      - TORCH_HOME=/app/app_datas/torch_cache
+      - HF_HOME=/app/app_datas/transformers_cache
+      - XDG_CACHE_HOME=/app/app_datas/xdg_cache
+      # Celery 配置
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - CELERY_WORKER_CONCURRENCY=2
+      - CELERY_LOG_LEVEL=info
+      # ASRBackend 服务地址
+      - ASR_BACKEND_URL=http://asr-backend:8003
+    command: python3 -m backend.queues.worker_launcher
+    deploy: {}
+    gpus: all
