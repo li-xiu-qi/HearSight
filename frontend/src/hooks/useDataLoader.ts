@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { fetchJobs, fetchTranscripts, fetchTranscriptDetail, getTaskProgress } from '../services/api'
+import { fetchTranscripts, fetchTranscriptDetail } from '../services/api'
 import { extractFilename } from '../utils'
 import type { Segment, TranscriptMeta, JobItem } from '../types'
 
@@ -12,7 +12,6 @@ interface UseDataLoaderReturn {
   mediaType: string
   activeTranscriptId: number | null
   loadTranscripts: () => Promise<void>
-  loadJobs: () => Promise<void>
   loadTranscriptDetail: (id: number) => Promise<void>
   setSegments: (segments: Segment[]) => void
   setVideoSrc: (src: string | null) => void
@@ -39,16 +38,6 @@ export const useDataLoader = (): UseDataLoaderReturn => {
     }
   }, [])
 
-  const loadJobs = async () => {
-    try {
-      const data = await fetchJobs()
-      setJobs(data.items)
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : String(err)
-      console.warn('获取任务队列失败:', errorMessage)
-    }
-  }
-
   const loadTranscriptDetail = async (id: number) => {
     try {
       setLoading(true)
@@ -73,74 +62,35 @@ export const useDataLoader = (): UseDataLoaderReturn => {
     loadTranscripts()
   }, [loadTranscripts])
 
-  // 统一轮询任务进度和状态（避免两个轮询冲突）
+  // 监听SSE更新jobs
   useEffect(() => {
-    let prevSuccessfulJobs = new Set<number>()
-
-    const pollJobsProgress = async () => {
+    const eventSource = new EventSource('/api/progress/stream-all')
+    eventSource.onmessage = (evt) => {
       try {
-        // 获取所有任务
-        const data = await fetchJobs()
-        const updatedJobs = Array.isArray(data.items) ? [...data.items] : []
-        
-        // 检测任务完成状态变化，重新加载transcripts
-        const currentSuccessJobs = new Set(
-          updatedJobs
-            .filter(job => job.status === 'success')
-            .map(job => job.id)
-        )
-
-        for (const jobId of currentSuccessJobs) {
-          if (!prevSuccessfulJobs.has(jobId)) {
-            // 任务新完成时，重新加载转录列表
-            loadTranscripts()
-            break
+        const progress = JSON.parse(evt.data)
+        const jobId = progress.job_id
+        setJobs(prev => {
+          const idx = prev.findIndex(j => j.id === jobId)
+          if (idx >= 0) {
+            const newJobs = [...prev]
+            newJobs[idx] = { ...newJobs[idx], status: (progress.status as any) || newJobs[idx].status, progress }
+            return newJobs
           }
-        }
-
-        prevSuccessfulJobs = currentSuccessJobs
-        
-        // 仅对处于 downloading 或 processing 状态的任务，获取详细进度信息
-        const progressUpdates = await Promise.all(
-          updatedJobs.map(async (job) => {
-            if (job.status === 'downloading' || job.status === 'processing') {
-              try {
-                const progress = await getTaskProgress(job.id)
-                return { jobId: job.id, progress }
-              } catch (err) {
-                console.debug(`获取任务 ${job.id} 的进度失败:`, err)
-                return { jobId: job.id, progress: null }
-              }
-            }
-            return { jobId: job.id, progress: null }
-          })
-        )
-        
-        // 合并进度信息到任务中
-        const progressMap = new Map(
-          progressUpdates
-            .filter(u => u.progress !== null)
-            .map(u => [u.jobId, u.progress])
-        )
-        
-        const jobsWithProgress = updatedJobs.map(job => ({
-          ...job,
-          progress: progressMap.get(job.id)
-        }))
-        
-        setJobs(jobsWithProgress)
+          // 若 job 不存在，插入新条目
+          const url = (progress.url as string) || ''
+          return [{ id: jobId, url, status: (progress.status as any) || 'processing', progress }, ...prev]
+        })
       } catch (err) {
-        console.debug('轮询任务进度时出错:', err)
+        console.debug('解析SSE事件出错', err)
       }
     }
-
-    // 初始加载一次
-    pollJobsProgress()
-    
-    // 之后每 1 秒轮询一次，以获得实时的进度更新
-    const timer = setInterval(pollJobsProgress, 1000)
-    return () => clearInterval(timer)
-  }, [loadTranscripts])
+    eventSource.onerror = (err) => {
+      console.debug('SSE错误', err)
+    }
+    return () => {
+      eventSource.close()
+    }
+  }, [])
 
   return {
     segments,
@@ -151,7 +101,6 @@ export const useDataLoader = (): UseDataLoaderReturn => {
     mediaType,
     activeTranscriptId,
     loadTranscripts,
-    loadJobs,
     loadTranscriptDetail,
     setSegments,
     setVideoSrc,

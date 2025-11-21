@@ -20,3 +20,6 @@ supabase
 
 # 可选：如果需要保留语言检测功能
 langdetect
+
+# 环境变量支持
+python-dotenv>=1.0.0

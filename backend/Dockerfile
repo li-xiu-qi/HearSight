@@ -1,11 +1,11 @@
-FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
+FROM ubuntu:22.04
 
 # 环境变量与镜像运行行为
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    # 默认使用清华 PyPI 镜像加速大部分包安装，针对 PyTorch 使用额外索引
-    PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple \
-    PIP_TRUSTED_HOST=pypi.tuna.tsinghua.edu.cn
+    # 默认使用阿里云 PyPI 镜像加速大部分包安装
+    PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple \
+    PIP_TRUSTED_HOST=mirrors.aliyun.com
 
 WORKDIR /app
 
@@ -25,12 +25,10 @@ RUN sed -i 's|http://archive.ubuntu.com/ubuntu/|https://mirrors.tuna.tsinghua.ed
      && ln -s /usr/bin/python3 /usr/bin/python || true \
      && rm -rf /var/lib/apt/lists/*
 
-# 复制 requirements 并先显式安装与宿主环境匹配的 PyTorch (cu121)
+# 复制 requirements 并安装依赖
 COPY backend/requirements.txt /app/requirements.txt
 
 RUN python3 -m pip install --upgrade pip \
-     && python3 -m pip install --extra-index-url https://download.pytorch.org/whl/cu126 \
-         torch torchvision torchaudio \
      && python3 -m pip install -r /app/requirements.txt
 
 # 复制源码

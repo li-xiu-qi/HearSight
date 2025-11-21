@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Optional, Union
 from fastapi import APIRouter, HTTPException, Request
 from typing_extensions import TypedDict
 
-from backend.db.job_store import check_duplicate_url, update_job_celery_task_id
 from backend.routers.progress_router import set_task_progress
 from backend.queues.tasks import process_job_task
 
@@ -70,37 +69,6 @@ def api_download(payload: DownloadRequest, request: Request) -> DownloadResponse
     if not job_id:
         raise HTTPException(status_code=400, detail="job_id is required")
 
-    # 检查是否存在已成功下载的相同URL
-    if db_url:
-        existing_job = check_duplicate_url(db_url, url)
-        if existing_job:
-            logger.info(f"检测到重复下载，URL已在job_id={existing_job['id']}中成功下载")
-            set_task_progress(
-                job_id,
-                {
-                    "status": "completed",
-                    "stage": "downloading",
-                    "progress_percent": 100.0,
-                    "filename": existing_job.get("result", {}).get("basename", ""),
-                    "current_bytes": 0,
-                    "total_bytes": 0,
-                    "speed": 0,
-                    "eta_seconds": None,
-                    "timestamp": "",
-                    "job_id": job_id,
-                    "items": existing_job.get("result", {}).get("items", []),
-                    "duplicate": True,
-                    "original_job_id": existing_job["id"],
-                },
-            )
-            return {
-                "status": "duplicate",
-                "job_id": job_id,
-                "original_job_id": existing_job["id"],
-                "message": f"该URL已在任务{existing_job['id']}中成功下载，已跳过下载",
-                "items": existing_job.get("result", {}).get("items", []),
-            }
-
     # 初始化进度状态
     set_task_progress(
         job_id,
@@ -127,10 +95,6 @@ def api_download(payload: DownloadRequest, request: Request) -> DownloadResponse
             db_url=db_url,
         )
         logger.info(f"任务已提交到Celery，job_id={job_id}, task_id={task.id}")
-        
-        # 保存Celery任务ID到数据库
-        if db_url:
-            update_job_celery_task_id(db_url, job_id, task.id)
 
         return {
             "status": "started",

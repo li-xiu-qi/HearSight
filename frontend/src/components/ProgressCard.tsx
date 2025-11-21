@@ -1,4 +1,5 @@
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { useEffect } from 'react'
 import type { ProgressInfo } from '../types'
 
 interface ProgressCardProps {
@@ -7,6 +8,9 @@ interface ProgressCardProps {
 }
 
 function ProgressCard({ filename, progress }: ProgressCardProps) {
+  useEffect(() => {
+    console.log(`ProgressCard update for ${filename}:`, progress)
+  }, [filename, progress])
   const formatBytes = (bytes: number): string => {
     if (bytes === 0) return '0 B'
     const k = 1024

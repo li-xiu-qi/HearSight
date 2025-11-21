@@ -11,3 +11,6 @@ dashscope
 requests
 supabase
 # torch安装请看文档说明，或者去pytorch官网查看下载所需要的命令。
+
+# 环境变量支持
+python-dotenv>=1.0.0

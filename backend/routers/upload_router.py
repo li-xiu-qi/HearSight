@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -10,8 +11,6 @@ from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 from typing_extensions import TypedDict
 
-from backend.db.job_store import create_job, update_job_result_paths
-from backend.db.transcript_crud import update_transcript_audio_path
 from backend.services.upload_service import (create_audio_placeholder,
                                              get_unique_filename)
 from backend.queues.tasks import process_job_task
@@ -127,7 +126,7 @@ async def upload_file(
             result["placeholder_url"] = f"/static/{placeholder_name}"
 
         db_url = request.app.state.db_url
-        job_id = create_job(db_url, f"upload://{safe_filename}")
+        job_id = str(uuid.uuid4())
         logger.info(f"创建处理任务: job_id={job_id}, file={safe_filename}")
 
         result["job_id"] = job_id

@@ -49,6 +49,9 @@ model_cache/
 torch_cache/
 transformers_cache/
 
+# Docker镜像tar文件
+docker-images/
+
 # 数据库相关
 postgres/
 

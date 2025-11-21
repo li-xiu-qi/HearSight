@@ -28,6 +28,7 @@ def initialize_dashscope_client(api_key: str) -> None:
     if dashscope is None:
         raise ImportError("dashscope 未安装")
     dashscope.api_key = api_key
+    os.environ['DASHSCOPE_API_KEY'] = api_key
     print("DashScope 客户端初始化成功")
 
 

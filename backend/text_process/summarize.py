@@ -122,7 +122,7 @@ def _extract_summaries(response_text: str) -> List[Dict[str, Any]]:
     - 包含主题和总结的字典列表
     """
     summaries = []
-
+    response_text = response_text.strip()
     try:
         # 提取START_SUMMARIES到END_SUMMARIES之间的内容
         if "START_SUMMARIES" in response_text and "END_SUMMARIES" in response_text:

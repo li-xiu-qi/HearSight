@@ -62,17 +62,8 @@ export interface Summary {
 }
 
 // API响应类型
-export interface JobResponse {
-  job_id: number
-  task_id?: string  // Celery任务ID
-}
-
 export interface TranscriptsResponse {
   items: TranscriptMeta[]
-}
-
-export interface JobsResponse {
-  items: JobItem[]
 }
 
 export interface TranscriptDetailResponse {

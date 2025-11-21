@@ -33,7 +33,9 @@ def main():
     loglevel = os.getenv("CELERY_LOG_LEVEL", "info")
 
     print(f"启动Celery worker，并发数: {concurrency}, 日志级别: {loglevel}")
+    from backend.config import settings
     print(f"Broker: {os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')}")
+    print(f"Result backend: {getattr(settings, 'celery_result_backend', 'redis://localhost:6379/1')}")
 
     # 创建并启动worker
     celery_app = create_celery_app()

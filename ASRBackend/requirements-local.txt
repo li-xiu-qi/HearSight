@@ -40,3 +40,6 @@ textblob
 
 # 可选：云端 API 支持（如果想在本地版本中也支持云端作为备选）
 dashscope
+
+# 环境变量支持
+python-dotenv>=1.0.0

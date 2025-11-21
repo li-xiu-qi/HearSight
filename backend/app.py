@@ -13,7 +13,6 @@ from fastapi.staticfiles import StaticFiles
 from backend.routers import (
     chat_router,
     download_router,
-    job_router,
     progress_router,
     thumbnail_router,
     transcript_router,
@@ -59,7 +58,6 @@ def create_app(static_dir: Path, db_url: str | None) -> FastAPI:
     # 注册路由
     app.include_router(download_router)
     app.include_router(transcript_router)
-    app.include_router(job_router)
     app.include_router(chat_router)
     app.include_router(thumbnail_router)
     app.include_router(progress_router)

@@ -156,6 +156,9 @@ class CloudASRProvider(ASRProvider):
             from asr_functions.segment_normalizer import extract_text
             from asr_functions.utils import detect_language
 
+            print(f"调试: dashscope_api_key 是否为空: {not bool(settings.dashscope_api_key)}")
+            print(f"调试: dashscope_api_key 值: {settings.dashscope_api_key[:10] if settings.dashscope_api_key else 'None'}...")
+
             if settings.dashscope_api_key:
                 initialize_dashscope_client(settings.dashscope_api_key)
 

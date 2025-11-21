@@ -3,7 +3,6 @@
 
 from .chat_router import router as chat_router
 from .download_router import router as download_router
-from .job_router import router as job_router
 from .progress_router import router as progress_router
 from .thumbnail_router import router as thumbnail_router
 from .transcript_router import router as transcript_router
@@ -12,7 +11,6 @@ from .upload_router import router as upload_router
 __all__ = [
     "download_router",
     "transcript_router",
-    "job_router",
     "chat_router",
     "thumbnail_router",
     "progress_router",

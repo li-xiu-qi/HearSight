@@ -120,6 +120,16 @@ class ASRBackendSettings(BaseSettings):
                 "云端模式需要设置 dashscope_api_key，"
                 "请设置环境变量 DASHSCOPE_API_KEY 或在 .env 文件中配置"
             )
+        if self.is_cloud_mode() and not self.supabase_url:
+            raise ValueError(
+                "云端模式的文件上传功能需要设置 supabase_url，"
+                "请设置环境变量 SUPABASE_URL 或在 .env 文件中配置"
+            )
+        if self.is_cloud_mode() and not self.supabase_key:
+            raise ValueError(
+                "云端模式的文件上传功能需要设置 supabase_key，"
+                "请设置环境变量 SUPABASE_KEY 或在 .env 文件中配置"
+            )
 
 
 settings = ASRBackendSettings()

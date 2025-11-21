@@ -9,7 +9,6 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from backend.db.job_store import init_job_table
 from backend.db.transcript_init import init_transcript_table
 from backend.config import settings
 
@@ -33,7 +32,6 @@ def initialize_app() -> tuple[Path, str | None]:
 
     db_url = os.environ.get("POSTGRES_DSN") or os.environ.get("DATABASE_URL")
     init_transcript_table(db_url)
-    init_job_table(db_url)
 
     return static_dir, db_url
 

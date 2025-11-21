@@ -21,28 +21,13 @@ services:
       - "${BACKEND_PORT:-9999}:8000"
     environment:
       - PORT=8000
-      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
-      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
-      - POSTGRES_USER=${POSTGRES_USER:-hearsight}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-hearsight_pass}
-      - POSTGRES_DB=${POSTGRES_DB:-hearsight}
+      - POSTGRES_HOST=postgres
       - MS_MODEL_CACHE=/app/app_datas/model_cache
       - TORCH_HOME=/app/app_datas/torch_cache
       - HF_HOME=/app/app_datas/transformers_cache
       - XDG_CACHE_HOME=/app/app_datas/xdg_cache
-      - BACKEND_PORT=${BACKEND_PORT:-9999}
-      - FRONTEND_HOST=${FRONTEND_HOST:-localhost}
-      - FRONTEND_PORT=${FRONTEND_PORT:-10000}
-      # OpenAI / Chat API 配置
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.siliconflow.cn/v1}
-      - OPENAI_CHAT_MODEL=${OPENAI_CHAT_MODEL:-deepseek-ai/DeepSeek-V3}
-      - CHAT_MAX_WINDOWS=${CHAT_MAX_WINDOWS:-1000000}
-      # Bilibili 配置
-      - BILIBILI_SESSDATA=${BILIBILI_SESSDATA}
-      # ASRBackend 服务地址（Docker 环境）
+      - FRONTEND_HOST=localhost
       - ASR_BACKEND_URL=http://asr-backend:8003
-      # Celery 配置
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
     deploy: {}
@@ -86,24 +71,13 @@ services:
     build:
       context: ./ASRBackend
       dockerfile: Dockerfile.cloud
-    container_name: hearsight-asr-backend-cloud
+    container_name: hearsight-asr-backenfd-cloud
     restart: unless-stopped
     env_file: ./ASRBackend/.env
     ports:
       - "${ASR_BACKEND_PORT:-8003}:8003"
     environment:
       - ASR_MODE=cloud
-      # DashScope API 配置
-      - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY}
-      - DASHSCOPE_MODEL=${DASHSCOPE_MODEL:-paraformer-v2}
-      - DASHSCOPE_LANGUAGE_HINTS=${DASHSCOPE_LANGUAGE_HINTS:-zh,en}
-      # Supabase 配置
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_KEY=${SUPABASE_KEY}
-      - SUPABASE_BUCKET_NAME=${SUPABASE_BUCKET_NAME:-test-public}
-      - SUPABASE_FOLDER_NAME=${SUPABASE_FOLDER_NAME:-asr}
-      - SUPABASE_ADMIN_EMAIL=${SUPABASE_ADMIN_EMAIL}
-      - SUPABASE_ADMIN_PASSWORD=${SUPABASE_ADMIN_PASSWORD}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
       interval: 30s
@@ -144,11 +118,7 @@ services:
       - ./app_datas:/app/app_datas
     working_dir: /app
     environment:
-      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
-      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
-      - POSTGRES_USER=${POSTGRES_USER:-hearsight}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-hearsight_pass}
-      - POSTGRES_DB=${POSTGRES_DB:-hearsight}
+      - POSTGRES_HOST=postgres
       - MS_MODEL_CACHE=/app/app_datas/model_cache
       - TORCH_HOME=/app/app_datas/torch_cache
       - HF_HOME=/app/app_datas/transformers_cache
@@ -160,10 +130,6 @@ services:
       - CELERY_LOG_LEVEL=info
       # ASRBackend 服务地址
       - ASR_BACKEND_URL=http://asr-backend:8003
-      # DashScope API 配置
-      - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY}
-      - DASHSCOPE_MODEL=${DASHSCOPE_MODEL:-paraformer-v2}
-      - DASHSCOPE_LANGUAGE_HINTS=${DASHSCOPE_LANGUAGE_HINTS:-zh,en}
     command: python -m backend.queues.worker_launcher
     deploy: {}
     gpus: all

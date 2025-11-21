@@ -1,7 +1,5 @@
 import type { 
-  JobResponse, 
   TranscriptsResponse, 
-  JobsResponse, 
   TranscriptDetailResponse, 
   SummarizeResponse,
   Segment,
@@ -9,20 +7,6 @@ import type {
   Summary,
   ChatMessage
 } from '../types'
-
-export const createJob = async (url: string): Promise<JobResponse> => {
-  const response = await fetch('/api/jobs', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url })
-  })
-  
-  if (!response.ok) {
-    throw new Error(`创建任务失败：${response.status}`)
-  }
-  
-  return response.json()
-}
 
 export const fetchTranscripts = async (limit = 50, offset = 0): Promise<TranscriptsResponse> => {
   const response = await fetch(`/api/transcripts?limit=${limit}&offset=${offset}`)
@@ -32,39 +16,6 @@ export const fetchTranscripts = async (limit = 50, offset = 0): Promise<Transcri
   }
   
   return response.json()
-}
-
-export const fetchJobs = async (): Promise<JobsResponse> => {
-  const results = await Promise.allSettled([
-    fetch('/api/jobs?status=pending&limit=50&offset=0'),
-    fetch('/api/jobs?status=processing&limit=50&offset=0'),
-  ])
-  
-  const items = []
-  
-  // 处理pending任务
-  if (results[0].status === 'fulfilled' && results[0].value.ok) {
-    const data = await results[0].value.json()
-    if (Array.isArray(data.items)) {
-      items.push(...data.items)
-    }
-  }
-  
-  // 处理processing任务
-  if (results[1].status === 'fulfilled' && results[1].value.ok) {
-    const data = await results[1].value.json()
-    if (Array.isArray(data.items)) {
-      items.push(...data.items)
-    }
-  }
-  
-  const map = new Map()
-  for (const item of items) {
-    map.set(Number(item.id), item)
-  }
-  const sortedItems = Array.from(map.values()).sort((a, b) => Number(a.id) - Number(b.id))
-  
-  return { items: sortedItems }
 }
 
 export const fetchTranscriptDetail = async (id: number): Promise<TranscriptDetailResponse> => {

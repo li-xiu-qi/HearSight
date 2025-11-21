@@ -10,8 +10,9 @@ WORKDIR /app
 ENV ASR_MODE=cloud
 ENV PYTHONPATH=/app
 
-# 配置 pip 使用清华源
-RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+# 配置 pip 使用阿里云源
+RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
+    pip config set global.trusted-host mirrors.aliyun.com
 
 # 复制项目文件
 COPY . .

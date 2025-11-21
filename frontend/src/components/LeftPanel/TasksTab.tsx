@@ -39,6 +39,7 @@ function TasksTab({ jobs }: TasksTabProps) {
         return 'bg-slate-100 text-slate-600'
     }
   }
+
   if (jobs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-8">
@@ -53,54 +54,43 @@ function TasksTab({ jobs }: TasksTabProps) {
 
   return (
     <ScrollArea className="h-full">
-      <div className="space-y-2">
-        {jobs.map((item) => {
-          const shortUrl = (item.url || '').replace(/^https?:\/\//, '')
-          const filename = item.progress?.filename || extractFilename(item.url || '') || `任务 #${item.id}`
-          
-          // 对于下载中或处理中的任务，显示进度卡片
-          if (item.status === 'downloading' || item.status === 'processing') {
-            return (
-              <ProgressCard
-                key={item.id}
-                filename={filename}
-                progress={item.progress || {
-                  stage: item.status === 'downloading' ? 'downloading' : 'processing',
-                  status: 'in-progress',
-                  progress_percent: 0,
-                  filename: filename,
-                  timestamp: new Date().toISOString(),
-                }}
-              />
-            )
-          }
-          
-          // 对于已完成或失败的任务，显示普通卡片
-          return (
-            <div
-              key={item.id}
-              className="p-3 rounded-lg border border-slate-200 bg-white"
-            >
-              <div className="flex items-start justify-between gap-2">
+      <div className="space-y-3 p-1">
+        {jobs.map((job) => (
+          <div
+            key={job.id}
+            className="border rounded-lg p-3 bg-white shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-center space-x-2 flex-1 min-w-0">
+                {getStatusIcon(job.status)}
                 <div className="flex-1 min-w-0">
-                  <div 
-                    className="text-sm font-medium text-slate-900 line-clamp-2" 
-                    title={item.url}
-                  >
-                    {shortUrl}
+                  <div className="text-sm font-medium text-slate-900 truncate">
+                    {extractFilename(job.url) || job.url}
                   </div>
-                  <div className="text-xs text-slate-500 mt-1 line-clamp-1">
-                    # {item.id} · {item.created_at || item.started_at || ''}
+                  <div className="text-xs text-slate-500">
+                    ID: {job.id}
                   </div>
                 </div>
-                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${getStatusColor(item.status)}`}>
-                  {getStatusIcon(item.status)}
-                  {item.status}
-                </span>
+              </div>
+              <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(job.status)}`}>
+                {job.status}
               </div>
             </div>
-          )
-        })}
+
+            {job.progress && (
+              <ProgressCard
+                filename={job.progress.filename}
+                progress={job.progress}
+              />
+            )}
+
+            {job.error && (
+              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                {job.error}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </ScrollArea>
   )

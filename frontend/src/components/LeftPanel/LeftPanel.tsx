@@ -27,7 +27,7 @@ function LeftPanel({
           <Tabs defaultValue="processed" className="h-full flex flex-col">
             <TabsList className="w-full rounded-none border-b">
               <TabsTrigger value="processed" className="flex-1">已处理</TabsTrigger>
-              <TabsTrigger value="tasks" className="flex-1">处理情况</TabsTrigger>
+              <TabsTrigger value="tasks" className="flex-1">任务</TabsTrigger>
             </TabsList>
             
             <TabsContent value="processed" className="flex-1 m-0 p-3 overflow-hidden">
@@ -38,7 +38,7 @@ function LeftPanel({
                 onTranscriptsUpdate={onTranscriptsUpdate}
               />
             </TabsContent>
-            
+
             <TabsContent value="tasks" className="flex-1 m-0 p-3 overflow-hidden">
               <TasksTab jobs={jobs} />
             </TabsContent>

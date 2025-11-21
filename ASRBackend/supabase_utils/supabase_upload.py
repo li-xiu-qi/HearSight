@@ -29,6 +29,9 @@ def get_supabase_client() -> Optional[Client]:
     supabase_url = settings.supabase_url
     supabase_key = settings.supabase_key
 
+    print(f"调试: supabase_url 是否为空: {not bool(supabase_url)}")
+    print(f"调试: supabase_key 是否为空: {not bool(supabase_key)}")
+
     if not supabase_url or not supabase_key:
         print("Supabase 配置缺失")
         return None
