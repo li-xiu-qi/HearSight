@@ -78,6 +78,8 @@ POSTGRES_PORT=5432
 # 服务端口（可选）
 BACKEND_PORT=9999
 FRONTEND_PORT=10000
+ASR_BACKEND_PORT=8003
+REDIS_PORT=6379
 
 # 大语言模型（必需，仅需任选一个配置）
 OPENAI_API_KEY=your_api_key_here
@@ -91,19 +93,45 @@ CHAT_MAX_WINDOWS=1000000
 BILIBILI_SESSDATA=
 ```
 
-**快速提示**：仅配置 `OPENAI_API_KEY` 即可启动全部功能。我们默认使用硅基流动的 OpenAI 兼容 API。免费额度申请：<https://cloud.siliconflow.cn/i/FcjKykMn>，平台免费提供包括文心 4.5 多模态模型的大语言模型调用。
+在 `backend/` 目录下创建 `.env` 文件：
+
+```bash
+# 复制模板
+cp .env.example backend/.env
+# 编辑配置
+```
+
+在 `ASRBackend/` 目录下创建 `.env` 文件：
+
+```bash
+# ASR 相关配置
+ASR_MODE=cloud
+DASHSCOPE_API_KEY=your_dashscope_api_key
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-anon-key
+SUPABASE_BUCKET_NAME=test-public
+SUPABASE_FOLDER_NAME=asr
+SUPABASE_ADMIN_EMAIL=your-email@example.com
+SUPABASE_ADMIN_PASSWORD=your-password
+```
+
+**快速提示**：仅配置 `OPENAI_API_KEY` 和 `DASHSCOPE_API_KEY` 即可启动全部功能。我们默认使用硅基流动的 OpenAI 兼容 API。免费额度申请：<https://cloud.siliconflow.cn/i/FcjKykMn>，平台免费提供包括文心 4.5 多模态模型的大语言模型调用。DASHSCOPE_API_KEY 可从阿里云百炼获取。
 
 ### 🐳 方案一：容器化部署（推荐）
 
 一行命令启动完整服务栈：
 
 ```bash
-docker compose up -d --build
+docker-compose -f docker-compose.cloud.yml up -d --build
 ```
 
 部署完成后，访问 <http://localhost:10000> 即可进入应用。
 
 > 如果仅需使用容器运行 PostgreSQL 数据库，而将后端和前端分别在本地启动，请参考下方本地部署方案。
+
+### 🖥️ ARM设备部署
+
+如果您在ARM架构设备（如ARM64处理器）上部署HearSight，推荐直接在ARM设备上构建镜像，无需交叉编译（包含交叉编辑教程）。详细步骤请参考 [ARM设备Docker构建指南](docs/ARM设备Docker构建指南.md)。
 
 ### 💻 方案二：本地开发部署
 
