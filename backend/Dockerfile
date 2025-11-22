@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM python:3.10-slim
 
 # 环境变量与镜像运行行为
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -19,17 +19,16 @@ RUN sed -i 's|http://archive.ubuntu.com/ubuntu/|https://mirrors.tuna.tsinghua.ed
      || true \
      && apt-get -o Acquire::Retries=3 update || apt-get -o Acquire::Retries=3 update --fix-missing \
      && apt-get -o Acquire::Retries=3 install -y --no-install-recommends ca-certificates apt-transport-https \
-         python3 python3-pip python3-venv build-essential git curl ffmpeg libsndfile1 \
+         build-essential git curl ffmpeg libsndfile1 \
      || apt-get install -y --no-install-recommends --fix-missing ca-certificates apt-transport-https \
-         python3 python3-pip python3-venv build-essential git curl ffmpeg libsndfile1 \
-     && ln -s /usr/bin/python3 /usr/bin/python || true \
+         build-essential git curl ffmpeg libsndfile1 \
      && rm -rf /var/lib/apt/lists/*
 
 # 复制 requirements 并安装依赖
 COPY backend/requirements.txt /app/requirements.txt
 
-RUN python3 -m pip install --upgrade pip \
-     && python3 -m pip install -r /app/requirements.txt
+RUN python -m pip install --upgrade pip \
+    && python -m pip install -r /app/requirements.txt
 
 # 复制源码
 COPY . /app

@@ -28,10 +28,10 @@ RUN sed -i 's|http://archive.ubuntu.com/ubuntu/|https://mirrors.tuna.tsinghua.ed
 # 复制 requirements 并先显式安装与宿主环境匹配的 PyTorch (cu121)
 COPY requirements.txt /app/requirements.txt
 
-RUN python3 -m pip install --upgrade pip \
-     && python3 -m pip install --extra-index-url https://download.pytorch.org/whl/cu126 \
+RUN python -m pip install --upgrade pip \
+     && python -m pip install --extra-index-url https://download.pytorch.org/whl/cu126 \
          torch torchvision torchaudio \
-     && python3 -m pip install -r /app/requirements.txt
+     && python -m pip install -r /app/requirements.txt
 
 # 复制源码
 COPY . /app

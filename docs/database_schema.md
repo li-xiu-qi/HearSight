@@ -20,6 +20,7 @@ HearSight 系统使用 PostgreSQL 数据库存储任务处理和转写结果信�
 | finished_at | TIMESTAMP | NULL | 完成时间 |
 | result_json | TEXT | NULL | 处理结果（JSON格式） |
 | error | TEXT | NULL | 错误信息 |
+| celery_task_id | VARCHAR(255) | NULL | Celery任务ID |
 
 **状态枚举值：**
 
@@ -35,10 +36,13 @@ HearSight 系统使用 PostgreSQL 数据库存储任务处理和转写结果信�
 | 字段名 | 类型 | 约束 | 说明 |
 |--------|------|------|------|
 | id | SERIAL | PRIMARY KEY | 转写记录唯一标识 |
-| media_path | TEXT | NOT NULL | 媒体文件路径 |
+| audio_path | TEXT | NOT NULL | 音频文件路径 |
+| video_path | TEXT | NULL | 视频文件路径 |
+| media_type | TEXT | NOT NULL DEFAULT 'audio' | 媒体类型（'audio' 或 'video'） |
 | segments_json | TEXT | NOT NULL | 句子片段数据（JSON格式） |
 | summaries_json | TEXT | NULL | 总结数据（JSON格式） |
 | translations_json | TEXT | NULL | 翻译结果（JSON格式，按语言代码组织） |
+| chat_messages_json | TEXT | NULL | 聊天消息数据（JSON格式） |
 | created_at | TIMESTAMP | NOT NULL DEFAULT now() | 创建时间 |
 | updated_at | TIMESTAMP | NOT NULL DEFAULT now() | 更新时间 |
 
@@ -61,10 +65,13 @@ erDiagram
 
     transcripts {
         integer id PK
-        text media_path "媒体文件路径"
+        text audio_path "音频文件路径"
+        text video_path "视频文件路径"
+        text media_type "媒体类型"
         text segments_json "句子片段JSON"
         text summaries_json "总结数据JSON"
         text translations_json "翻译结果JSON"
+        text chat_messages_json "聊天消息JSON"
         timestamp created_at "创建时间"
         timestamp updated_at "更新时间"
     }
@@ -88,34 +95,26 @@ erDiagram
   - `basename`: 文件名
   - `static_url`: 静态文件访问URL
 
-- **transcripts.media_path**: 指向实际的媒体文件
+- **transcripts.audio_path**: 指向实际的音频文件
+- **transcripts.video_path**: 指向实际的视频文件（如果有）
+- **transcripts.media_type**: 媒体类型，区分音频和视频
 - **transcripts.segments_json**: 存储ASR处理后的句子片段数据
 - **transcripts.summaries_json**: 存储生成的总结数据（主题、摘要、时间范围）
 - **transcripts.translations_json**: 存储翻译结果，按语言代码组织
   - 结构: `{ "zh": [...], "en": [...] }`
   - 每个翻译项包含：index、sentence、translation、start_time、end_time
+- **transcripts.chat_messages_json**: 存储聊天消息数据（用于对话功能）
 
 ## 索引设计
 
 ### 性能优化索引
 
 1. **jobs表索引**:
-
-   ```sql
-   CREATE INDEX idx_jobs_status_created
-   ON jobs(status, created_at DESC);
-   ```
-
-   - 用于快速查询不同状态的任务，按创建时间倒序
+   - `idx_jobs_status_created`: 在 `status` 和 `created_at DESC` 上创建复合索引，用于快速查询不同状态的任务，按创建时间倒序
 
 2. **transcripts表索引**:
-
-   ```sql
-   CREATE INDEX idx_transcripts_media_path
-   ON transcripts(media_path);
-   ```
-
-   - 用于通过媒体文件路径快速查找转写记录
+   - `idx_transcripts_audio_path`: 在 `audio_path` 上创建索引，用于通过音频文件路径快速查找转写记录
+   - `idx_transcripts_updated_at`: 在 `updated_at DESC` 上创建索引，用于按更新时间倒序查询转写记录
 
 ## 业务规则
 
@@ -137,22 +136,3 @@ erDiagram
    - 总结和翻译结果通过后端自动保存
    - 重新生成总结或翻译时，自动覆盖旧数据
    - `updated_at` 字段记录最后一次更新时间
-
-### 并发处理
-
-- 使用 `SELECT ... FOR UPDATE SKIP LOCKED` 实现任务的原子性领取
-- 支持多个worker实例并发处理不同任务
-- 任务重启恢复机制：重新处理状态为 `running` 但长时间未完成的任务
-
-## 扩展性考虑
-
-### 未来可能的扩展
-
-1. **用户系统**: 添加用户表，支持多用户任务隔离
-2. **任务类型**: 扩展支持不同类型的媒体处理任务
-3. **历史记录**: 添加任务历史表，支持任务重试和统计分析
-4. **文件元数据**: 扩展媒体文件元数据存储
-
----
-
-最后更新时间: 2025年10月19日

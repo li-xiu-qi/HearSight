@@ -8,6 +8,12 @@ HearSight 是一个企业级的视频内容智能分析工具。通过集成先�
 
 项目地址：<https://github.com/li-xiu-qi/HearSight>
 
+## 🛠 技术架构
+
+HearSight 采用现代化的微服务架构设计。后端基于 FastAPI 构建高性能 RESTful API，通过 PostgreSQL 实现数据的持久化和查询优化，通过 Celery 构建任务队列处理异步任务；前端采用 React 18 + TypeScript + Tailwind CSS 提供交互流畅的用户界面。整体支持 Docker 容器化部署，开箱即用。
+
+![架构图](https://oss-liuchengtu.hudunsoft.com/userimg/b5/b54f2ca20885a98aa90ec0557b8354e1.png)
+
 ## ✨ 核心能力
 
 ![核心能力](https://oss-liuchengtu.hudunsoft.com/userimg/eb/eb8ce69e51ffee1798ab4419f391adab.png)
@@ -45,215 +51,21 @@ HearSight 是一个企业级的视频内容智能分析工具。通过集成先�
 
 ![图文模式对话图片放大展示](https://oss-liuchengtu.hudunsoft.com/userimg/45/45b084440a50e098229d8c827ab5f01f.png)
 
-## 🛠 技术架构
+## 📂 项目结构
 
-HearSight 采用现代化的微服务架构设计。后端基于 FastAPI 构建高性能 RESTful API，通过 PostgreSQL 实现数据的持久化和查询优化；前端采用 React 18 + TypeScript + Tailwind CSS 提供交互流畅的用户界面。整体支持 Docker 容器化部署，开箱即用。
+详细的项目结构说明请参考 [项目结构](docs/项目结构.md)。
 
-![架构图](https://oss-liuchengtu.hudunsoft.com/userimg/b5/b54f2ca20885a98aa90ec0557b8354e1.png)
+## 📡 API 文档
+
+API 接口文档请参考 [API 文档导航](docs/api_文档导航.md)。
+
+## 🚀 快速开始
+
+详细的快速开始指南请参考 [快速开始](docs/快速开始.md)。
 
 ## 🎯 适用场景
 
 学术研究：快速整理讲座视频，建立参考文献档案库。教育培训：自动生成教学讲义和习题解析。内容创作：批量处理视频脚本和文案素材。企业培训：构建结构化的内部知识库与学习平台。客户服务：分析客服录音提取关键问题与解决方案。市场研究：监测竞品视频内容并自动生成分析报告。
-
-## 🚀 快速开始
-
-### 🔥 获取源代码
-
-```bash
-git clone https://github.com/li-xiu-qi/HearSight
-cd HearSight
-```
-
-### ⚙️ 环境配置
-
-在项目根目录创建 `.env` 文件，按需配置以下参数：
-
-```bash
-# PostgreSQL 数据库（必需）
-POSTGRES_USER=hearsight
-POSTGRES_PASSWORD=hearsight_pass
-POSTGRES_DB=hearsight
-POSTGRES_PORT=5432
-
-# 服务端口（可选）
-BACKEND_PORT=9999
-FRONTEND_PORT=10000
-ASR_BACKEND_PORT=8003
-REDIS_PORT=6379
-
-# 大语言模型（必需，仅需任选一个配置）
-OPENAI_API_KEY=your_api_key_here
-OPENAI_BASE_URL=https://api.siliconflow.cn/v1
-OPENAI_CHAT_MODEL=baidu/ERNIE-4.5-300B-A47B
-
-# 对话上下文窗口（可选）
-CHAT_MAX_WINDOWS=1000000
-
-# 哔哩哔哩登录凭证（可选，用于获取会员视频）
-BILIBILI_SESSDATA=
-```
-
-在 `backend/` 目录下创建 `.env` 文件：
-
-```bash
-# 复制模板
-cp .env.example backend/.env
-# 编辑配置
-```
-
-在 `ASRBackend/` 目录下创建 `.env` 文件：
-
-```bash
-# ASR 相关配置
-ASR_MODE=cloud
-DASHSCOPE_API_KEY=your_dashscope_api_key
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-anon-key
-SUPABASE_BUCKET_NAME=test-public
-SUPABASE_FOLDER_NAME=asr
-SUPABASE_ADMIN_EMAIL=your-email@example.com
-SUPABASE_ADMIN_PASSWORD=your-password
-```
-
-**快速提示**：仅配置 `OPENAI_API_KEY` 和 `DASHSCOPE_API_KEY` 即可启动全部功能。我们默认使用硅基流动的 OpenAI 兼容 API。免费额度申请：<https://cloud.siliconflow.cn/i/FcjKykMn>，平台免费提供包括文心 4.5 多模态模型的大语言模型调用。DASHSCOPE_API_KEY 可从阿里云百炼获取。
-
-### 🐳 方案一：容器化部署（推荐）
-
-一行命令启动完整服务栈：
-
-```bash
-docker-compose -f docker-compose.cloud.yml up -d --build
-```
-
-部署完成后，访问 <http://localhost:10000> 即可进入应用。
-
-> 如果仅需使用容器运行 PostgreSQL 数据库，而将后端和前端分别在本地启动，请参考下方本地部署方案。
-
-### 🖥️ ARM设备部署
-
-如果您在ARM架构设备（如ARM64处理器）上部署HearSight，推荐直接在ARM设备上构建镜像，无需交叉编译（包含交叉编辑教程）。详细步骤请参考 [ARM设备Docker构建指南](docs/ARM设备Docker构建指南.md)。
-
-### 💻 方案二：本地开发部署
-
-#### 前置要求
-
-需要 PostgreSQL 数据库运行。可通过 Docker 启动也可本地安装。
-
-#### 后端服务启动
-
-1. 安装依赖
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. 安装 PyTorch
-
-   访问 <https://pytorch.org/get-started/locally/> 选择对应硬件版本
-
-3. 启动服务
-
-   ```bash
-   python main.py
-   ```
-
-   后端运行在 `http://localhost:9999`
-
-#### 前端应用启动
-
-1. 安装依赖
-
-   ```bash
-   cd frontend
-   npm install
-   ```
-
-2. 启动开发服务器
-
-   ```bash
-   npm run dev
-   ```
-
-前端在 `http://localhost:5173` 启动
-
-## 📡 API 参考
-
-后端使用 FastAPI 框架，启动后访问 `http://localhost:9999/docs` 查看完整交互式文档。
-
-### 媒体操作
-
-- `POST /api/download` 启动下载任务
-- `POST /api/upload` 上传媒体文件
-- `GET /api/transcripts` 列出所有媒体
-- `GET /api/transcripts/{id}` 获取媒体详情及转写内容
-- `DELETE /api/transcripts/{id}` 删除媒体
-
-### 内容处理
-
-- `POST /api/asr/segments` 执行语音识别与分句
-- `POST /api/summarize` 生成摘要
-- `POST /api/transcripts/{id}/summaries` 保存摘要
-- `GET /api/transcripts/{id}/summaries` 查看摘要历史
-- `POST /api/transcripts/{id}/translate` 启动翻译
-- `GET /api/transcripts/{id}/translate-progress` 查询翻译进度
-- `GET /api/transcripts/{id}/translations` 查看翻译结果
-
-### 交互
-
-- `POST /api/chat` 问答交互
-
-## 📂 项目架构
-
-```text
-HearSight/
-├── backend/                    # 后端服务
-│   ├── routers/               # API 路由层
-│   │   ├── asr_router.py      # 语音识别相关接口
-│   │   ├── chat_router.py     # 对话与总结接口
-│   │   ├── download_router.py # 媒体下载接口
-│   │   ├── transcript_router.py # 媒体管理接口
-│   │   ├── upload_router.py   # 文件上传接口
-│   │   └── ...                # 其他功能路由
-│   ├── services/              # 业务服务层
-│   │   ├── download_service.py    # 下载服务
-│   │   ├── translate_service.py   # 翻译服务
-│   │   └── ...                    # 其他服务
-│   ├── db/                    # 数据库访问层
-│   │   ├── pg_store.py        # PostgreSQL 数据操作
-│   │   ├── transcript_crud.py  # 媒体数据 CRUD
-│   │   └── ...
-│   ├── audio2text/            # 语音识别模块
-│   │   └── asr_sentence_segments.py # ASR 与分句处理
-│   ├── text_process/          # 文本处理模块
-│   │   ├── summarize.py       # 摘要生成
-│   │   ├── chat_with_segment.py # 问答交互
-│   │   └── ...
-│   ├── cache/                 # 缓存管理
-│   ├── utils/                 # 工具函数
-│   └── app.py                 # FastAPI 应用工厂
-│
-├── frontend/                  # 前端应用（React 18 + TypeScript）
-│   ├── src/
-│   │   ├── components/        # React 组件库
-│   │   │   ├── RightPanel/    # 右侧功能面板
-│   │   │   ├── VideoPlayer/   # 视频播放器
-│   │   │   └── ...
-│   │   ├── features/app/      # 应用主体功能
-│   │   ├── services/          # API 服务层
-│   │   ├── types/             # TypeScript 类型定义
-│   │   ├── hooks/             # 自定义 React hooks
-│   │   ├── HomePage/          # 首页
-│   │   └── App.tsx            # 应用入口
-│   ├── vite.config.ts         # Vite 构建配置
-│   └── tailwind.config.js     # Tailwind CSS 配置
-│
-├── main.py                    # 后端启动入口
-├── config.py                  # 配置管理
-├── docker-compose.yml         # 容器编排配置
-├── Dockerfile.backend         # 后端镜像配置
-├── requirements.txt           # Python 依赖
-└── README.md                  # 项目说明
-```
 
 ## 🔧 功能详解
 

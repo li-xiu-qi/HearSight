@@ -122,6 +122,6 @@ services:
       - CELERY_LOG_LEVEL=info
       # ASRBackend 服务地址
       - ASR_BACKEND_URL=http://asr-backend:8003
-    command: python3 -m backend.queues.worker_launcher
+    command: python -m backend.queues.worker_launcher
     deploy: {}
     gpus: all
