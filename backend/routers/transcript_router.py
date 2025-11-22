@@ -74,11 +74,12 @@ class DeleteTranscriptResponse(TypedDict):
 class TranslateRequestData(TypedDict, total=False):
     """翻译请求数据结构"""
 
-    target_language: str  # 目标语言
+    target_lang_code: str  # 目标语言代码
+    source_lang_code: str  # 源语言代码
     confirmed: bool  # 是否确认
     max_tokens: int  # 最大token数
-    source_lang_name: str  # 源语言名称
-    target_lang_name: str  # 目标语言名称
+    source_lang_display_name: str  # 源语言显示名称
+    target_lang_display_name: str  # 目标语言显示名称
     force_retranslate: bool  # 是否强制重新翻译
 
 
@@ -107,11 +108,12 @@ class GetTranslationsResponse(TypedDict):
 
 
 class TranslateRequest(BaseModel):
-    target_language: str = "zh"
+    target_lang_code: str = "zh"
+    source_lang_code: Optional[str] = None
     confirmed: bool = True
     max_tokens: int = 4096
-    source_lang_name: Optional[str] = None
-    target_lang_name: Optional[str] = None
+    source_lang_display_name: Optional[str] = None
+    target_lang_display_name: Optional[str] = None
     force_retranslate: bool = False
 
 
@@ -175,9 +177,9 @@ async def api_translate(
     """
     db_url = request.app.state.db_url
 
-    api_key = settings.openai_api_key
-    base_url = settings.openai_base_url
-    model = settings.openai_chat_model
+    api_key = settings.llm_provider_api_key
+    base_url = settings.llm_provider_base_url
+    model = settings.llm_model
 
     if not all([api_key, base_url, model]):
         logging.error("LLM 配置缺失")
@@ -196,13 +198,14 @@ async def api_translate(
     return await start_translate_task(
         transcript_id,
         segments,
-        body.target_language,
+        body.target_lang_code,
         body.max_tokens,
         api_key,
         base_url,
         model,
-        body.source_lang_name or "",
-        body.target_lang_name or "",
+        body.source_lang_code or "",
+        body.source_lang_display_name or "",
+        body.target_lang_display_name or "",
         db_url,
         force_retranslate=body.force_retranslate,
     )

@@ -115,18 +115,15 @@ def api_summarize(payload: SummarizeRequest, request: Request) -> SummarizeRespo
     # 优先使用请求体中的配置；其次使用配置或环境变量
     api_key = (
         payload.get("api_key")
-        or settings.openai_api_key
-        or os.environ.get("OPENAI_API_KEY")
+        or settings.llm_provider_api_key
     )
     base_url = (
         payload.get("base_url")
-        or settings.openai_base_url
-        or os.environ.get("OPENAI_BASE_URL")
+        or settings.llm_provider_base_url
     )
     model = (
         payload.get("model")
-        or settings.openai_chat_model
-        or os.environ.get("OPENAI_CHAT_MODEL")
+        or settings.llm_model
     )
 
     if not api_key or not base_url or not model:
@@ -135,8 +132,8 @@ def api_summarize(payload: SummarizeRequest, request: Request) -> SummarizeRespo
             detail="chat api_key, base_url and model are required (either in payload or config/env)",
         )
 
-    # 从配置或环境读取 CHAT_MAX_WINDOWS（优先级：config -> 环境变量 -> 默认 1000000）
-    chat_max = settings.chat_max_windows or int(
+    # 从配置或环境读取 CHAT_MAX_WINDOWS（优先级：环境变量 -> 默认 1000000）
+    chat_max = int(
         os.environ.get("CHAT_MAX_WINDOWS") or 1000000
     )
 
@@ -183,18 +180,15 @@ def api_chat_with_segments(payload: ChatRequest, request: Request) -> ChatRespon
     # 优先使用请求体中的配置；其次使用配置或环境变量
     api_key = (
         payload.get("api_key")
-        or settings.openai_api_key
-        or os.environ.get("OPENAI_API_KEY")
+        or settings.llm_provider_api_key
     )
     base_url = (
         payload.get("base_url")
-        or settings.openai_base_url
-        or os.environ.get("OPENAI_BASE_URL")
+        or settings.llm_provider_base_url
     )
     model = (
         payload.get("model")
-        or settings.openai_chat_model
-        or os.environ.get("OPENAI_CHAT_MODEL")
+        or settings.llm_model
     )
 
     if not api_key or not base_url or not model:
@@ -203,8 +197,8 @@ def api_chat_with_segments(payload: ChatRequest, request: Request) -> ChatRespon
             detail="chat api_key, base_url and model are required (either in payload or config/env)",
         )
 
-    # 从配置或环境读取 CHAT_MAX_WINDOWS（优先级：config -> 环境变量 -> 默认 1000000）
-    chat_max = settings.chat_max_windows or int(
+    # 从配置或环境读取 CHAT_MAX_WINDOWS（优先级：环境变量 -> 默认 1000000）
+    chat_max = int(
         os.environ.get("CHAT_MAX_WINDOWS") or 1000000
     )
 

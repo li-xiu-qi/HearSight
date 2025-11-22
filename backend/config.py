@@ -29,11 +29,24 @@ class Settings(BaseSettings):
     backend_port: Optional[int] = None
     frontend_port: Optional[int] = None
 
-    # --- OpenAI / AI 相关 ---
-    openai_api_key: Optional[str] = None
-    openai_base_url: Optional[str] = None
-    openai_chat_model: Optional[str] = None
-    chat_max_windows: Optional[int] = None
+    # --- LLM 配置 ---
+    llm_provider: Optional[str] = None
+    llm_model: Optional[str] = None
+    llm_provider_base_url: Optional[str] = None
+    llm_provider_api_key: Optional[str] = None
+    llm_context_length: Optional[int] = None
+    llm_tpm: Optional[int] = None
+    llm_rpm: Optional[int] = None
+
+    # --- Embedding 配置 ---
+    embedding_provider: Optional[str] = None
+    embedding_provider_base_url: Optional[str] = None
+    embedding_provider_api_key: Optional[str] = None
+    embedding_model: Optional[str] = None
+    embedding_context_length: Optional[int] = None
+    embedding_dim: Optional[int] = None
+    embedding_tpm: Optional[int] = None
+    embedding_rpm: Optional[int] = None
 
     # --- 其他：B站 Cookie 等 ---
     bilibili_sessdata: Optional[str] = None

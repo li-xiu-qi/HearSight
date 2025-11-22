@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional
 from typing_extensions import TypedDict
 import json
 
-from backend.chat_utils.chat_client import chat
+from backend.ai_utils.chat_client import chat
 
 
 class TopicSpan(TypedDict):

@@ -91,15 +91,21 @@ export const translateTranscript = async (
   transcriptId: number,
   targetLanguage: string = 'zh',
   maxTokens: number = 4096,
-  forceRetranslate: boolean = false
+  forceRetranslate: boolean = false,
+  sourceLanguage?: string,
+  sourceLangDisplayName?: string,
+  targetLangDisplayName?: string
 ): Promise<TranslateResponse> => {
   const response = await fetch(`/api/transcripts/${transcriptId}/translate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      target_language: targetLanguage,
+      target_lang_code: targetLanguage,
+      source_lang_code: sourceLanguage,
       confirmed: true,
       max_tokens: maxTokens,
+      source_lang_display_name: sourceLangDisplayName,
+      target_lang_display_name: targetLangDisplayName,
       force_retranslate: forceRetranslate
     })
   })
@@ -115,15 +121,21 @@ export const startTranslate = async (
   transcriptId: number,
   targetLanguage: string = 'zh',
   maxTokens: number = 4096,
-  forceRetranslate: boolean = false
+  forceRetranslate: boolean = false,
+  sourceLanguage?: string,
+  sourceLangDisplayName?: string,
+  targetLangDisplayName?: string
 ): Promise<{ status: string; transcript_id: number; total_count: number }> => {
   const response = await fetch(`/api/transcripts/${transcriptId}/translate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      target_language: targetLanguage,
+      target_lang_code: targetLanguage,
+      source_lang_code: sourceLanguage,
       confirmed: true,
       max_tokens: maxTokens,
+      source_lang_display_name: sourceLangDisplayName,
+      target_lang_display_name: targetLangDisplayName,
       force_retranslate: forceRetranslate
     })
   })

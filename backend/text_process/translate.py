@@ -7,12 +7,23 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 from typing import Any, Callable, Dict, List, Optional
 
 import tiktoken
+import litellm
 
-from backend.chat_utils.chat_client import chat_text_async
-from backend.schemas import Segment
+# 动态导入配置
+try:
+    from backend.config import settings
+    from backend.schemas import Segment
+except ImportError:
+    # 如果backend模块找不到，尝试添加路径
+    backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    if backend_dir not in os.sys.path:
+        os.sys.path.insert(0, backend_dir)
+    from backend.config import settings
+    from backend.schemas import Segment
 
 
 def _split_segments_by_output_tokens(
@@ -380,14 +391,19 @@ async def translate_segments_async(
         )
 
         try:
-            response = await chat_text_async(
-                prompt=prompt,
-                api_key=api_key,
-                base_url=base_url,
-                model=model,
+            # 设置 LiteLLM 环境变量
+            os.environ["OPENAI_API_KEY"] = api_key
+            if base_url:
+                os.environ["OPENAI_API_BASE"] = base_url
+
+            # 使用 LiteLLM 异步调用
+            response = await litellm.acompletion(
+                model=f"openai/{model}",
+                messages=[{"role": "user", "content": prompt}],
                 max_tokens=max_tokens,
                 timeout=120,
                 stream=True,
+                temperature=0.6,
             )
             logging.info(f"第 {batch_idx + 1} 批翻译成功，解析响应")
         except Exception as e:
@@ -500,14 +516,18 @@ async def translate_segments_async(
                     f"重试 {len(retry_batch)} 个失败的分句 (indices: {retry_indices})"
                 )
 
-                response = await chat_text_async(
-                    prompt=retry_prompt,
-                    api_key=api_key,
-                    base_url=base_url,
-                    model=model,
+                # 设置 LiteLLM 环境变量
+                os.environ["OPENAI_API_KEY"] = api_key
+                if base_url:
+                    os.environ["OPENAI_API_BASE"] = base_url
+
+                response = await litellm.acompletion(
+                    model=f"openai/{model}",
+                    messages=[{"role": "user", "content": retry_prompt}],
                     max_tokens=2048,
                     timeout=60,
                     stream=True,
+                    temperature=0.6,
                 )
                 retry_trans = _extract_translations(response)
 

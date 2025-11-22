@@ -21,6 +21,9 @@ pillow
 tenacity
 aiohttp
 requests
+openai
+litellm
+
 
 black
 isort

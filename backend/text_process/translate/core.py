@@ -4,10 +4,22 @@
 """
 import asyncio
 import logging
+import os
 from typing import Callable, Dict, List, Optional
 
-from backend.chat_utils.chat_client import chat_text_async
-from backend.schemas import Segment
+import litellm
+
+# 动态导入配置
+try:
+    from backend.config import settings
+    from backend.schemas import Segment
+except ImportError:
+    # 如果backend模块找不到，尝试添加路径
+    backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+    if backend_dir not in os.sys.path:
+        os.sys.path.insert(0, backend_dir)
+    from backend.config import settings
+    from backend.schemas import Segment
 
 from .batch import split_segments_by_output_tokens
 from .parser import extract_translations
@@ -19,10 +31,11 @@ async def translate_segments_async(
     api_key: str,
     base_url: str,
     model: str,
-    target_language: str = "zh",
+    target_lang_code: str = "zh",
+    source_lang_code: str = "",
     max_tokens: int = 4096,
-    source_lang_name: str = "",
-    target_lang_name: str = "",
+    source_lang_display_name: str = "",
+    target_lang_display_name: str = "",
     progress_callback: Optional[Callable[[int, int], None]] = None,
     force_retranslate: bool = False,
 ) -> List[Segment]:
@@ -31,17 +44,18 @@ async def translate_segments_async(
 
     参数:
     - segments: 要翻译的分句列表
-    - api_key: LLM API密钥
-    - base_url: LLM API基础URL
-    - model: 模型名
-    - target_language: 目标语言代码 ("zh", "en", "ja" 等)
-    - max_tokens: 每批翻译的最大输出token数（默认4096）
-    - source_lang_name: 源语言名称（如 "English", "Chinese"）
-    - target_lang_name: 目标语言名称
-    - progress_callback: 进度回调函数，签名为 callback(translated_count, total_count)
-    - force_retranslate: 是否强制重新翻译所有分句，默认 False
+    - api_key: LLM API密钥，用于访问语言模型服务
+    - base_url: LLM API基础URL，指定API服务器地址
+    - model: 使用的语言模型名称
+    - target_lang_code: 目标语言代码，如"zh"(中文)、"en"(英文)、"ja"(日文)等
+    - source_lang_code: 源语言代码，如"en"(英文)、"zh"(中文)，为空时由LLM自动检测
+    - max_tokens: 每批翻译的最大输出token数，默认4096
+    - source_lang_display_name: 源语言的显示名称，如"English"、"中文"，为空时使用默认值"原文"
+    - target_lang_display_name: 目标语言的显示名称，如"中文"、"English"，为空时根据target_lang_code自动推断
+    - progress_callback: 翻译进度回调函数，参数为(translated_count, total_count)
+    - force_retranslate: 是否强制重新翻译所有分句（包括已翻译的），默认False
 
-    返回: 包含翻译结果的分句列表
+    返回: 包含翻译结果的分句列表，每个分句的translation字段会包含目标语言的翻译
     """
     if not segments:
         return segments
@@ -57,11 +71,11 @@ async def translate_segments_async(
             seg
             for seg in segments
             if not seg.get("translation")
-            or target_language not in (seg.get("translation") or {})
+            or target_lang_code not in (seg.get("translation") or {})
         ]
 
     logging.info(
-        f"翻译分析: 总分句数={len(segments)}, 待翻译={len(untranslated_segments)}, 目标语言={target_language}, 强制重译={force_retranslate}"
+        f"翻译分析: 总分句数={len(segments)}, 待翻译={len(untranslated_segments)}, 目标语言={target_lang_code}, 强制重译={force_retranslate}"
     )
 
     if not untranslated_segments:
@@ -75,15 +89,19 @@ async def translate_segments_async(
     lang_names = {
         "zh": "中文",
         "en": "英文",
+        "ja": "日文",
+        "ko": "韩文",
+        "fr": "法文",
+        "de": "德文",
+        "es": "西班牙文",
+        "it": "意大利文",
+        "pt": "葡萄牙文",
+        "ru": "俄文",
     }
 
     # 使用提供的语言名称或默认映射
-    source_name = source_lang_name or lang_names.get(
-        target_language.replace("_to_", "_").split("_")[0], "原文"
-    )
-    target_name = target_lang_name or lang_names.get(
-        target_language.split("_")[-1], target_language
-    )
+    source_name = source_lang_display_name or lang_names.get(source_lang_code, "原文")  # 源语言名称
+    target_name = target_lang_display_name or lang_names.get(target_lang_code, target_lang_code)  # 目标语言名称
 
     # 按输出token分批（只对未翻译的分句）
     batches = split_segments_by_output_tokens(untranslated_segments, max_tokens)
@@ -106,18 +124,29 @@ async def translate_segments_async(
         )
 
         try:
-            response = await chat_text_async(
-                prompt=prompt,
-                api_key=api_key,
-                base_url=base_url,
-                model=model,
+            # 设置 LiteLLM 环境变量
+            os.environ["OPENAI_API_KEY"] = api_key
+            if base_url:
+                os.environ["OPENAI_API_BASE"] = base_url
+
+            response = await litellm.acompletion(
+                model=f"openai/{model}",
+                messages=[{"role": "user", "content": prompt}],
                 max_tokens=max_tokens,
                 timeout=120,
                 stream=True,
+                temperature=0.6,
             )
+
+            # 累积流式响应
+            response_text = ""
+            async for chunk in response:
+                if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
+                    response_text += chunk.choices[0].delta.content
+
             logging.info(f"第 {batch_idx + 1} 批翻译成功，解析响应")
             logging.info(
-                f"=== LLM 原始响应第 {batch_idx + 1} 批 ===\n{response}\n=== 响应结束 ==="
+                f"=== LLM 原始响应第 {batch_idx + 1} 批 ===\n{response_text}\n=== 响应结束 ==="
             )
         except Exception as e:
             logging.error(f"第 {batch_idx + 1} 批翻译失败: {e}")
@@ -126,7 +155,7 @@ async def translate_segments_async(
                 failed_indices.append(seg.get("index", 0))
             continue
 
-        batch_translations = extract_translations(response)
+        batch_translations = extract_translations(response_text)
         logging.info(
             f"第 {batch_idx + 1} 批解析出 {len(batch_translations)} 个翻译结果"
         )
@@ -195,16 +224,27 @@ async def translate_segments_async(
                     f"重试 {len(retry_batch)} 个失败的分句 (indices: {retry_indices})"
                 )
 
-                response = await chat_text_async(
-                    prompt=retry_prompt,
-                    api_key=api_key,
-                    base_url=base_url,
-                    model=model,
+                # 设置 LiteLLM 环境变量
+                os.environ["OPENAI_API_KEY"] = api_key
+                if base_url:
+                    os.environ["OPENAI_API_BASE"] = base_url
+
+                response = await litellm.acompletion(
+                    model=f"openai/{model}",
+                    messages=[{"role": "user", "content": retry_prompt}],
                     max_tokens=2048,
                     timeout=60,
                     stream=True,
+                    temperature=0.6,
                 )
-                retry_trans = extract_translations(response)
+
+                # 累积流式响应
+                response_text = ""
+                async for chunk in response:
+                    if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
+                        response_text += chunk.choices[0].delta.content
+
+                retry_trans = extract_translations(response_text)
 
                 # 统计重试成功的数量
                 success_count = 0
@@ -231,7 +271,7 @@ async def translate_segments_async(
             current_translation = new_seg.get("translation") or {}
             if not isinstance(current_translation, dict):
                 current_translation = {}
-            current_translation[target_language] = all_translations[index]
+            current_translation[target_lang_code] = all_translations[index]
             new_seg["translation"] = current_translation
         # 如果已有翻译，保持不变
         result.append(new_seg)

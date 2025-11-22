@@ -4,11 +4,22 @@ from __future__ import annotations
 
 from typing import List, Dict
 import json
+import os
 
 import tiktoken
+import litellm
 
-from backend.chat_utils.chat_client import chat_text
-from backend.schemas import Segment
+# 动态导入配置
+try:
+    from backend.config import settings
+    from backend.schemas import Segment
+except ImportError:
+    # 如果backend模块找不到，尝试添加路径
+    backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    if backend_dir not in os.sys.path:
+        os.sys.path.insert(0, backend_dir)
+    from backend.config import settings
+    from backend.schemas import Segment
 
 
 def _count_tokens_for_segments(
@@ -132,11 +143,16 @@ def chat_with_segments(
 
     prompt = _build_prompt(segments, question)
 
-    response = chat_text(
-        prompt=prompt,
-        api_key=api_key,
-        base_url=base_url,
-        model=model,
-    ).strip()
+    # 设置 LiteLLM 环境变量
+    os.environ["OPENAI_API_KEY"] = api_key
+    if base_url:
+        os.environ["OPENAI_API_BASE"] = base_url
+
+    # 使用 LiteLLM 调用
+    response = litellm.completion(
+        model=f"openai/{model}",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.6,
+    ).choices[0].message.content.strip()
 
     return response

@@ -76,7 +76,7 @@ async def get_thumbnail(
             raise HTTPException(status_code=400, detail="音频文件不支持缩略图生成")
 
         # 获取视频路径
-        video_path = transcript.get("media_path")
+        video_path = transcript.get("video_path")
         if not video_path:
             raise HTTPException(status_code=400, detail="转写记录中没有视频路径")
 
