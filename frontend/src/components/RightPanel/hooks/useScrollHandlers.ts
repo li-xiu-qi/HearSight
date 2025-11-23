@@ -28,10 +28,25 @@ export const useScrollHandlers = () => {
       ) as HTMLElement | null
       el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     } else if (activeTab === 'transcript') {
-      const el = transcriptScrollRef.current?.querySelector(
+      // 对于TranscriptTab，使用ScrollArea，需要找到正确的滚动容器
+      const scrollContainer = transcriptScrollRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null
+      const el = scrollContainer?.querySelector(
         `[data-seg-index="${activeSegIndex}"]`
       ) as HTMLElement | null
-      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      if (el && scrollContainer) {
+        // 计算元素相对于滚动容器的位置
+        const elementRect = el.getBoundingClientRect()
+        const containerRect = scrollContainer.getBoundingClientRect()
+        const scrollTop = scrollContainer.scrollTop
+        const elementTop = elementRect.top - containerRect.top + scrollTop
+        const containerHeight = scrollContainer.clientHeight
+        const targetScrollTop = elementTop - containerHeight / 2 + el.offsetHeight / 2
+
+        scrollContainer.scrollTo({
+          top: targetScrollTop,
+          behavior: 'smooth'
+        })
+      }
     }
   }
 

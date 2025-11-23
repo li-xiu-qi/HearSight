@@ -80,10 +80,25 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
       if (!autoScroll || activeSegIndex == null || activeTab !== "transcript") {
         return
       }
-      const element = transcriptScrollRef.current?.querySelector(
+      // 对于TranscriptTab，使用ScrollArea，需要找到正确的滚动容器
+      const scrollContainer = transcriptScrollRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null
+      const element = scrollContainer?.querySelector(
         `[data-seg-index="${activeSegIndex}"]`
       ) as HTMLElement | null
-      element?.scrollIntoView({ behavior: "smooth", block: "center" })
+      if (element && scrollContainer) {
+        // 计算元素相对于滚动容器的位置
+        const elementRect = element.getBoundingClientRect()
+        const containerRect = scrollContainer.getBoundingClientRect()
+        const scrollTop = scrollContainer.scrollTop
+        const elementTop = elementRect.top - containerRect.top + scrollTop
+        const containerHeight = scrollContainer.clientHeight
+        const targetScrollTop = elementTop - containerHeight / 2 + element.offsetHeight / 2
+
+        scrollContainer.scrollTo({
+          top: targetScrollTop,
+          behavior: 'smooth'
+        })
+      }
     }, [activeSegIndex, autoScroll, activeTab, transcriptScrollRef])
 
     return (
