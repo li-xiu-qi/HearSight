@@ -4,6 +4,8 @@ import os
 from typing import List, Optional
 from .base_agent import BaseAgent
 from .chat_prompt_builder import build_chat_agent_system_prompt
+from .memory_manager import MemoryManager
+from .react_loop import ReactLoop
 
 
 class ChatAgent(BaseAgent):
@@ -15,18 +17,12 @@ class ChatAgent(BaseAgent):
 
     def __init__(
         self,
-        openai_api_key: str,
-        openai_api_base: str,
-        openai_api_model: str,
-        tools_backend_url: str = "http://localhost:8001/mcp",
+        tools_backend_url: str = "http://localhost:8004/mcp",
     ):
         """
         初始化聊天Agent
 
         参数:
-            openai_api_key: OpenAI API 密钥
-            openai_api_base: OpenAI API 基础 URL
-            openai_api_model: 使用的模型名称
             tools_backend_url: 工具后端服务 URL
         """
         # 构建配置文件路径
@@ -34,85 +30,64 @@ class ChatAgent(BaseAgent):
         config_path = os.path.join(current_dir, "chat_tools_config.json")
 
         super().__init__(
-            openai_api_key=openai_api_key,
-            openai_api_base=openai_api_base,
-            openai_api_model=openai_api_model,
             tools_backend_url=tools_backend_url,
             config_path=config_path,
             prompt_builder=build_chat_agent_system_prompt,
             extra_headers={"DashScope-Plugin": "optional"},
         )
 
-    async def chat_with_transcript(
+        # 初始化记忆管理器
+        self.memory_manager = MemoryManager()
+
+    async def generate_answer(
         self,
         question: str,
-        transcript_id: int,
-        allowed_tools: Optional[List[str]] = None
-    ) -> str:
+        allowed_tools: Optional[List[str]] = None,
+        transcript_ids: Optional[List[int]] = None,
+    ):
         """
-        与单个转录内容进行聊天
+        生成答案（支持记忆管理）
 
         参数:
             question: 用户问题
-            transcript_id: 转录ID
             allowed_tools: 允许使用的工具列表
+            transcript_ids: 用户选择的转录ID列表
 
         返回:
-            聊天回答
+            AgentResult 包含最终答案、推理步骤、消息历史和错误信息
         """
-        # 设置默认允许的工具
-        if allowed_tools is None:
-            allowed_tools = ["knowledge_retrieval"]
+        # 检查是否需要总结记忆
+        if self.memory_manager.should_summarize():
+            await self._summarize_memory()
 
-        # 构建问题上下文
-        context_question = f"请基于转录ID {transcript_id} 的内容回答：{question}"
+        # 添加用户问题到记忆
+        self.memory_manager.add_message({"role": "user", "content": question})
 
-        # 执行ReAct推理
-        result = await self.generate_answer(
-            question=context_question,
-            allowed_tools=allowed_tools
+        # 获取当前上下文消息
+        context_messages = self.memory_manager.get_context_messages()
+
+        # 创建包含transcript_ids的prompt_builder
+        def prompt_builder_with_transcript_ids(action_names, tool_description):
+            return build_chat_agent_system_prompt(action_names, tool_description, transcript_ids)
+
+        # 创建临时的ReactLoop，使用自定义prompt_builder
+        temp_react_loop = ReactLoop(
+            self.llm_router, self.llm_model, self.tool_manager, prompt_builder_with_transcript_ids
         )
 
-        return result.final_answer
+        # 调用ReactLoop.run，但需要传入正确的参数
+        # 注意：这里需要修改以使用记忆管理的上下文
+        result = await temp_react_loop.run(question, allowed_tools)
 
-    async def chat_with_multiple_transcripts(
-        self,
-        question: str,
-        transcript_ids: List[int],
-        allowed_tools: Optional[List[str]] = None
-    ) -> str:
+        # 添加助手回复到记忆
+        if result.final_answer:
+            self.memory_manager.add_message({"role": "assistant", "content": result.final_answer})
+
+        return result
+
+    async def _summarize_memory(self) -> None:
         """
-        与多个转录内容进行聊天
-
-        参数:
-            question: 用户问题
-            transcript_ids: 转录ID列表
-            allowed_tools: 允许使用的工具列表
-
-        返回:
-            聊天回答
+        总结记忆
         """
-        if allowed_tools is None:
-            allowed_tools = ["knowledge_retrieval"]
-
-        # 为每个transcript_id执行检索和整合
-        context_parts = []
-        for transcript_id in transcript_ids:
-            result = await self.generate_answer(
-                question=f"请基于转录ID {transcript_id} 的内容回答：{question}",
-                allowed_tools=allowed_tools
-            )
-            if result.final_answer and "error" not in result.final_answer.lower():
-                context_parts.append(f"转录 {transcript_id}: {result.final_answer}")
-
-        if not context_parts:
-            return "抱歉，在选定的转录中没有找到相关信息。"
-
-        # 整合多个转录的回答
-        combined_context = "\n".join(context_parts)
-        final_result = await self.generate_answer(
-            question=f"基于以下多个转录的内容回答问题：\n{combined_context}\n\n原问题：{question}",
-            allowed_tools=[]
-        )
-
-        return final_result.final_answer
+        await self.memory_manager.summarize_memory()
+        

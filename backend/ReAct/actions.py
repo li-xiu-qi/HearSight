@@ -9,8 +9,9 @@ from .models import ToolCallable
 class ActionExecutor:
     """执行各个动作"""
 
-    def __init__(self, llm_client: Any):
-        self.llm_client = llm_client
+    def __init__(self, llm_router: Any, llm_model: str):
+        self.llm_router = llm_router
+        self.llm_model = llm_model
 
     async def execute_action(
         self,

@@ -1,23 +1,28 @@
 """ReAct ChatAgent 测试"""
 
 import asyncio
+import sys
 import os
+
+# 添加backend目录到路径
+backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+parent_path = os.path.abspath(os.path.join(backend_path, '..'))
+for path in [backend_path, parent_path]:
+    if path not in sys.path:
+        sys.path.insert(0, path)
+
+from backend.config import settings
 from backend.ReAct import ChatAgent
 
 
 async def test_chat_agent():
     """测试ChatAgent基本功能"""
-    # 使用环境变量或默认配置
-    api_key = os.getenv("OPENAI_API_KEY", "your-api-key")
-    base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
-    model = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
-
-    # 创建ChatAgent实例
+    # 使用settings配置
     agent = ChatAgent(
-        openai_api_key=api_key,
-        openai_api_base=base_url,
-        openai_api_model=model,
-        tools_backend_url="http://localhost:8001/mcp"
+        openai_api_key=settings.llm_provider_api_key,
+        openai_api_base=settings.llm_provider_base_url,
+        openai_api_model=settings.llm_model,
+        tools_backend_url="http://localhost:8004/mcp"
     )
 
     # 测试基本功能

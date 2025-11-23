@@ -4,7 +4,6 @@ from .action_parser import parse_response
 from .actions import ActionExecutor
 from .base_agent import BaseAgent
 from .chat_agent import ChatAgent
-from .llm_client import LLMClient
 from .models import AgentResult, StreamCallback, ToolCallable, TraceStep
 from .react_loop import ReactLoop
 from .tool_manager import ToolManager

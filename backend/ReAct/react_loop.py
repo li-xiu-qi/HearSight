@@ -46,7 +46,8 @@ class ReactLoop:
 
     def __init__(
         self,
-        llm_client: Any,
+        llm_router: Any,
+        llm_model: str,
         tool_manager: Any,
         prompt_builder: Callable[[List[str], str], str],
         max_loops: int = 10,
@@ -55,16 +56,18 @@ class ReactLoop:
         初始化 ReAct 循环处理器
 
         参数:
-            llm_client: LLM 客户端实例，用于调用大语言模型
+            llm_router: LLM 路由器实例，用于调用大语言模型
+            llm_model: 使用的模型名称
             tool_manager: 工具管理器实例，负责工具的加载和调用
             prompt_builder: 系统提示构建函数，根据可用工具生成提示文本
             max_loops: 最大推理循环次数，防止无限循环，默认10次
         """
-        self.llm_client = llm_client
+        self.llm_router = llm_router
+        self.llm_model = llm_model
         self.tool_manager = tool_manager
         self.prompt_builder = prompt_builder
-        # 创建动作执行器，传入 LLM 客户端（用于可能的内部动作处理）
-        self.action_executor = ActionExecutor(llm_client)
+        # 创建动作执行器，传入 LLM 路由器（用于可能的内部动作处理）
+        self.action_executor = ActionExecutor(llm_router, llm_model)
         self.max_loops = max_loops
 
     async def run(
@@ -171,21 +174,29 @@ class ReactLoop:
                 # 根据是否启用流式模式选择不同的调用方式
                 if token_callback:
                     # 流式调用：实时接收 token 并通过回调推送
-                    response_text = (
-                        await self.llm_client.chat_completion_stream(
-                            messages,
-                            emit_token=token_callback,  # 实时推送 token
-                            temperature=0.2,  # 较低温度保证推理稳定性
-                            max_tokens=800,  # 限制输出长度
-                        )
+                    response = self.llm_router.completion(
+                        model=self.llm_model,
+                        messages=messages,
+                        temperature=0.2,  # 较低温度保证推理稳定性
+                        max_tokens=800,  # 限制输出长度
+                        stream=True,
                     )
+                    response_text = ""
+                    for chunk in response:
+                        if chunk.choices[0].delta.content:
+                            token = chunk.choices[0].delta.content
+                            response_text += token
+                            if token_callback:
+                                await token_callback(token)
                 else:
                     # 非流式调用：等待完整响应
-                    response_text = await self.llm_client.chat_completion(
-                        messages,
+                    response = self.llm_router.completion(
+                        model=self.llm_model,
+                        messages=messages,
                         temperature=0.2,  # 较低温度保证推理稳定性
                         max_tokens=800,  # 限制输出长度
                     )
+                    response_text = response.choices[0].message.content
 
                 # 将 LLM 响应添加到消息历史中
                 messages.append(

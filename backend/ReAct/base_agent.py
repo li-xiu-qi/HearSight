@@ -5,9 +5,9 @@ import contextlib
 import json
 from typing import Any, AsyncIterator, Callable, Dict, List, Optional
 
-from openai import AsyncOpenAI
+from backend.startup import get_llm_router
+from backend.config import settings
 
-from .llm_client import LLMClient
 from .models import AgentResult, StreamCallback, ToolCallable
 from .react_loop import ReactLoop
 from .tool_manager import ToolManager
@@ -26,9 +26,6 @@ class BaseAgent:
 
     def __init__(
         self,
-        openai_api_key: str,
-        openai_api_base: str,
-        openai_api_model: str,
         tools_backend_url: str,
         config_path: Optional[str] = None,
         prompt_builder: Optional[Callable[[List[str], str], str]] = None,
@@ -38,9 +35,6 @@ class BaseAgent:
         初始化 Agent
 
         参数:
-            openai_api_key: OpenAI API 密钥
-            openai_api_base: OpenAI API 基础 URL
-            openai_api_model: 使用的模型名称
             tools_backend_url: 工具后端服务 URL
             config_path: 工具配置文件路径
             prompt_builder: 系统提示构建函数
@@ -50,13 +44,10 @@ class BaseAgent:
         if extra_headers:
             headers.update(extra_headers)
 
-        openai_client = AsyncOpenAI(
-            api_key=openai_api_key,
-            base_url=openai_api_base,
-            default_headers=headers,
-        )
+        # 使用全局 LLM 路由器和配置
+        self.llm_router = get_llm_router()
+        self.llm_model = settings.llm_model
 
-        self.llm_client = LLMClient(openai_client, openai_api_model)
         self.tool_manager = ToolManager(tools_backend_url, config_path)
 
         # 使用提供的 prompt_builder，或使用默认的通用构建器
@@ -64,7 +55,7 @@ class BaseAgent:
             prompt_builder = self._default_prompt_builder
 
         self.react_loop = ReactLoop(
-            self.llm_client, self.tool_manager, prompt_builder
+            self.llm_router, self.llm_model, self.tool_manager, prompt_builder
         )
 
     @staticmethod
