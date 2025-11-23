@@ -30,7 +30,7 @@ const SegmentsTab = forwardRef<HTMLDivElement, SegmentsTabProps>(
             暂无分句
           </div>
         ) : (
-          <div className="p-2 space-y-1">
+          <div className="p-2 pb-4 space-y-1 min-h-full">
             {segments.map((seg) => {
               const isActive = activeSegIndex === seg.index
               return (

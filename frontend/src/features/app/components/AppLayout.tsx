@@ -24,7 +24,7 @@ function AppLayout({
 
   // 桌面端：完整可拖拽布局
   return (
-    <div className="h-full flex-1">
+    <div className="h-[90vh] flex-1">
       <ResizablePanelGroup
         direction="horizontal"
         className="h-full"
@@ -47,7 +47,7 @@ function AppLayout({
               onCollapse={() => setPanelSize('left', 0)}
               onExpand={() => setPanelSize('left', panelSizes.left)}
             >
-              <div className="h-full border-r border-slate-200 bg-white overflow-hidden">
+              <div className="h-[90vh] border-r border-slate-200 bg-white overflow-hidden">
                 {leftPanel}
               </div>
             </ResizablePanel>
@@ -59,7 +59,7 @@ function AppLayout({
           defaultSize={panelSizes.center}
           minSize={30}
         >
-          <div className="h-full min-w-[400px]">
+          <div className="h-[90vh] min-w-[400px]">
             {centerPanel}
           </div>
         </ResizablePanel>

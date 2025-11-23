@@ -102,7 +102,7 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
     }, [activeSegIndex, autoScroll, activeTab, transcriptScrollRef])
 
     return (
-      <div className="h-full flex flex-col overflow-hidden">
+      <div className="h-[90vh] flex flex-col overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col gap-0 overflow-hidden">
           <div className="flex-shrink-0">
             <TabsList className="w-full justify-start rounded-none border-b">
@@ -126,7 +126,7 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
             />
           )}
 
-          <div className="flex-1 min-h-0 overflow-hidden">
+          <div className="flex-1 min-h-0">
             <TabsContent value="segments" className="h-full m-0 data-[state=inactive]:hidden">
               <SegmentsTab
                 ref={segmentsScrollRef}

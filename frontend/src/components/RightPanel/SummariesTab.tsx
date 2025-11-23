@@ -157,7 +157,7 @@ export default function SummariesTab({
           </div>
         )}
         {!loading && summaries.length > 0 && (
-          <div className="p-3 space-y-3">
+          <div className="p-3 pb-4 space-y-3">
             {summaries.map((sum) => {
               if (sum.start_time === null || sum.start_time === undefined || 
                   sum.end_time === null || sum.end_time === undefined) {

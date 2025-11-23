@@ -22,13 +22,13 @@ const TranscriptTab = forwardRef<HTMLDivElement, TranscriptTabProps>(
   }
 
   return (
-      <ScrollArea ref={ref} className="h-full overflow-hidden">
+      <ScrollArea ref={ref} className="h-full">
         {segments.length === 0 ? (
           <div className="flex items-center justify-center h-40 text-sm text-slate-500">
             暂无内容
           </div>
         ) : (
-          <div className="p-4 text-base leading-7 text-slate-800 text-left">
+          <div className="p-4 pb-8 text-base leading-7 text-slate-800 text-left min-h-full">
             {segments.map((seg) => {
               const isActive = activeSegIndex === seg.index
               const displayText = getDisplayText(seg)
