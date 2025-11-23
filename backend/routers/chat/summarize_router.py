@@ -6,7 +6,6 @@ from fastapi import APIRouter, HTTPException, Request
 
 from backend.text_process.summarize import summarize_segments
 from .models import SummarizeRequest, SummarizeResponse
-from .utils import get_llm_config
 
 
 router = APIRouter()
