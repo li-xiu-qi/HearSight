@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react"
-import type { Segment, ChatResponse, ChatMessage } from "../../types"
-import { chatWithSegments } from "../../services/chatService"
+import type { ChatResponse, ChatMessage } from "../../types"
+import { chatWithTranscripts } from "../../services/chatService"
 import { getChatMessages, saveChatMessages, clearChatMessages } from "../../services/chatService"
 import { fetchTranscripts } from "../../services/transcriptService"
 import { fetchThumbnail } from "../../services/thumbnailService"
 import { MessageList, VideoSelector, ChatToolbar, MessageInput } from "./Chat"
 
 interface ChatViewProps {
-  readonly segments: Segment[]
   readonly messages?: ChatMessage[]
   readonly loading?: boolean
   readonly error?: string | null
@@ -20,7 +19,6 @@ interface ChatViewProps {
 }
 
 export default function ChatView({
-  segments,
   messages: externalMessages,
   loading: externalLoading,
   error: externalError,
@@ -167,7 +165,7 @@ export default function ChatView({
     setError(null)
 
     try {
-      const response: ChatResponse = await chatWithSegments(segments, inputValue, selectedTranscriptIds)
+      const response: ChatResponse = await chatWithTranscripts(inputValue, selectedTranscriptIds)
 
       const aiMessage: ChatMessage = {
         id: `ai-${Date.now()}`,

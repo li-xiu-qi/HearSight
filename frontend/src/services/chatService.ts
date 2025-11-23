@@ -1,11 +1,10 @@
 import type { 
-  Segment,
   ChatResponse,
   ChatMessage
 } from '../types'
 
-export const chatWithSegments = async (segments: Segment[], question: string, transcriptIds?: number[]): Promise<ChatResponse> => {
-  const requestBody: any = { segments, question }
+export const chatWithTranscripts = async (question: string, transcriptIds: number[]): Promise<ChatResponse> => {
+  const requestBody: any = { question }
   if (transcriptIds && transcriptIds.length > 0) {
     requestBody.transcript_ids = transcriptIds
   }

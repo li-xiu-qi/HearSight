@@ -40,70 +40,60 @@ class ChatService(ChatPromptService, ChatKnowledgeService):
 
     def chat_with_segments(
         self,
-        segments: List[Segment],
         question: str,
         api_key: str,
         base_url: str,
         model: str,
+        transcript_id: int,
         chat_max_windows: int = 1_000_000,
-        transcript_id: Optional[int] = None,
     ) -> str:
         """
-        基于分句内容进行智能问答。
+        基于数据库转录内容进行智能问答。
 
-        如果提供transcript_id，根据内容长度智能选择使用完整内容或检索内容。
+        根据内容长度智能选择使用完整内容或检索内容。
 
         参数：
-        - segments: 句子片段列表
         - question: 用户问题
         - api_key: LLM API密钥
         - base_url: LLM API基础URL
         - model: LLM模型名称
         - chat_max_windows: 最大token限制
-        - transcript_id: 可选，转录ID
+        - transcript_id: 转录ID
 
         返回：
         - LLM生成的回答
         """
-        if not segments:
-            return "没有可用的字幕内容。"
-
         is_from_retrieval = False
         filename = None
 
-        # 如果提供了 transcript_id，优先使用完整转录稿
-        if transcript_id is not None:
-            # 从数据库获取完整转录稿
-            from backend.db.transcript_crud import get_transcript_by_id
-            db_url = None  # connect_db 会使用环境变量
-            full_transcript = get_transcript_by_id(db_url, transcript_id)
-            if full_transcript and "segments" in full_transcript:
-                full_segments = full_transcript["segments"]
-                full_tokens = self._count_tokens_for_segments(full_segments)
-                threshold = settings.llm_context_length or 100000
-                
-                # 获取文件名
-                import os
-                video_path = full_transcript.get("video_path")
-                audio_path = full_transcript.get("audio_path")
-                if video_path:
-                    filename = os.path.basename(video_path)
-                elif audio_path:
-                    filename = os.path.basename(audio_path)
-                
-                if full_tokens <= threshold:
-                    # 直接使用完整转录稿
-                    segments = full_segments
-                    tokens = full_tokens
-                else:
-                    # 使用知识库检索相关segments
-                    is_from_retrieval = True
-                    segments, filename = self._perform_knowledge_retrieval(question, transcript_id)
-                    tokens = self._count_tokens_for_segments(segments)
-            else:
-                # 如果无法获取完整转录稿，回退到前端提供的segments
-                tokens = self._count_tokens_for_segments(segments)
+        # 从数据库获取完整转录稿
+        from backend.db.transcript_crud import get_transcript_by_id
+        db_url = None  # connect_db 会使用环境变量
+        full_transcript = get_transcript_by_id(db_url, transcript_id)
+        if not full_transcript or "segments" not in full_transcript:
+            raise ValueError(f"Transcript {transcript_id} not found or has no segments")
+
+        full_segments = full_transcript["segments"]
+        full_tokens = self._count_tokens_for_segments(full_segments)
+        threshold = settings.llm_context_length or 100000
+        
+        # 获取文件名
+        import os
+        video_path = full_transcript.get("video_path")
+        audio_path = full_transcript.get("audio_path")
+        if video_path:
+            filename = os.path.basename(video_path)
+        elif audio_path:
+            filename = os.path.basename(audio_path)
+        
+        if full_tokens <= threshold:
+            # 直接使用完整转录稿
+            segments = full_segments
+            tokens = full_tokens
         else:
+            # 使用知识库检索相关segments
+            is_from_retrieval = True
+            segments, filename = self._perform_knowledge_retrieval(question, transcript_id)
             tokens = self._count_tokens_for_segments(segments)
 
         if tokens > chat_max_windows:
@@ -129,13 +119,12 @@ class ChatService(ChatPromptService, ChatKnowledgeService):
 
     def chat_with_multiple_transcripts(
         self,
-        segments: List[Segment],
         question: str,
         api_key: str,
         base_url: str,
         model: str,
+        transcript_ids: List[int],
         chat_max_windows: int = 1_000_000,
-        transcript_ids: List[int] = None,
     ) -> str:
         """
         基于多个转录内容进行智能问答。
@@ -143,7 +132,6 @@ class ChatService(ChatPromptService, ChatKnowledgeService):
         对每个transcript_id执行知识检索，合并结果后进行问答。
 
         参数：
-        - segments: 句子片段列表（前端提供）
         - question: 用户问题
         - api_key: LLM API密钥
         - base_url: LLM API基础URL
@@ -154,9 +142,6 @@ class ChatService(ChatPromptService, ChatKnowledgeService):
         返回：
         - LLM生成的回答
         """
-        if not transcript_ids:
-            return self.chat_with_segments(segments, question, api_key, base_url, model, chat_max_windows)
-
         # 对每个transcript_id执行检索
         all_segments = []
         video_info = []
@@ -168,9 +153,9 @@ class ChatService(ChatPromptService, ChatKnowledgeService):
                 if filename:
                     video_info.append({"filename": filename, "transcript_id": transcript_id})
 
-        # 如果没有检索到内容，回退到前端提供的segments
+        # 如果没有检索到内容，报错
         if not all_segments:
-            all_segments = segments
+            raise ValueError("No relevant content found in the selected transcripts")
 
         # 按index排序确保内容连贯
         all_segments.sort(key=lambda s: s.get("index", 0))

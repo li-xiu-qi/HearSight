@@ -6,7 +6,7 @@ import VideoPlayer from "@/components/VideoPlayer"
 import RightPanel from "@/components/RightPanel"
 import { useUrlHandler, useDataLoader, useVideoSync } from "@/hooks"
 import { getPendingUrl } from "@/utils/pendingUrl"
-import WorkspaceLayout from "./components/WorkspaceLayout"
+import AppLayout from "./components/AppLayout"
 import HeaderBar from "./components/HeaderBar"
 import UploadDialog from "./components/UploadDialog"
 import { message } from "@/utils/message"
@@ -153,7 +153,7 @@ function AppPage() {
         onNavigateHome={() => navigate("/")}
         onOpenUpload={() => setUploadDialogOpen(true)}
       />
-      <WorkspaceLayout
+      <AppLayout
         leftPanelVisible={leftPanelVisible}
         rightPanelVisible={rightPanelVisible}
         leftPanel={

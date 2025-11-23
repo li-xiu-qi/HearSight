@@ -71,11 +71,11 @@ def example_chat_with_segments():
     try:
         # 调用问答功能
         response = chat_service.chat_with_segments(
-            segments=segments,
             question=question,
             api_key=api_key,
             base_url=base_url,
-            model=model
+            model=model,
+            transcript_id=1  # 示例transcript_id
         )
 
         print(f"问题: {question}")

@@ -99,11 +99,11 @@ def test_chat_with_segments():
     try:
         # 调用聊天功能
         response = chat_service.chat_with_segments(
-            segments=test_segments,
             question=question,
             api_key=api_key,
             base_url=base_url,
-            model=model
+            model=model,
+            transcript_id=1  # 示例transcript_id
         )
         
         print("\nAI回复:")

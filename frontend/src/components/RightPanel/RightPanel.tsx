@@ -147,7 +147,6 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
 
             <TabsContent value="chat" className="h-full m-0 data-[state=inactive]:hidden">
               <ChatView
-                segments={segments}
                 messages={chatMessages}
                 loading={chatLoading}
                 error={chatError}
