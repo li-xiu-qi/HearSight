@@ -1,55 +1,101 @@
 # -*- coding: utf-8 -*-
 """
-提示词生成模块：为翻译任务构建高质量的提示词，包含上下文信息。
+提示词生成模块：为两步翻译法构建高质量的提示词。
 """
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from backend.schemas import Segment
 
 
-def build_translate_prompt(
+def build_literal_translate_prompt(
     segments: List[Segment],
     source_lang: str,
     target_lang: str,
     all_segments: Optional[List[Segment]] = None,
 ) -> str:
     """
-    构建翻译提示词，支持任意语言对，包含上下文信息。
-
-    参数:
-    - segments: 本批次要翻译的分句列表（约 10 句）
-    - source_lang: 源语言名称（如 "English", "Chinese", "Japanese"）
-    - target_lang: 目标语言名称
-    - all_segments: 完整的分句列表（用于提供上下文，仅供参考）
+    构建直译提示词：强调准确传达信息，不遗漏。
+    针对双语翻译优化。
     """
-    header = f"""# 翻译任务：{source_lang} → {target_lang}
+    header = f"""你是一位专业翻译，擅长中英文互译。我希望你能帮我将以下{source_lang}段落直译成{target_lang}。
 
-## 输入格式
-- `index: 原句`
-- index 从 0 开始，仅用于标识
-- 原句保持原始大小写与符号
+规则：
+- 准确传达原文事实和背景，不要遗漏任何信息
+- 保留特定的英文术语或名字，并在其前后加上空格，例如：" AI "、" UN "
+- 根据内容直译，保持原文结构和逻辑
+- 这是直译步骤，重点是信息完整性
 
-## 输出格式
-```
-translation_content:
-```json
-[{{"index": 0, "translation": "示例翻译"}}]
-```
-```
+英文原文：
+"""
 
-## 必须遵守
-- 保持 index 对应，一句一译
-- 忠实传达原意，不得增删解释
-- 只输出上述 JSON 代码块
-""".strip()
-
-    lines = [header, "待翻译句子："]
-
+    # 添加原文句子
+    content_lines = []
     for seg in segments:
         sentence = (seg.get("sentence") or "").strip()
         if not sentence:
             continue
         index = seg.get("index", 0)
-        lines.append(f"{index}: {sentence}")
+        content_lines.append(f"{index}: {sentence}")
 
-    return "\n".join(lines)
+    content = "\n".join(content_lines)
+
+    footer = f"""
+
+直译结果：
+请只输出JSON格式的翻译结果：
+```json
+[{{"index": 0, "translation": "直译内容"}}]
+```"""
+
+    return header + content + footer
+
+
+def build_meaning_translate_prompt(
+    segments: List[Segment],
+    literal_translations: Dict[int, str],
+    source_lang: str,
+    target_lang: str,
+    all_segments: Optional[List[Segment]] = None,
+) -> str:
+    """
+    构建意译提示词：基于直译结果优化表达，使其更自然。
+    针对双语翻译优化。
+    """
+    header = f"""你是一位专业中英文翻译，擅长对翻译结果进行二次修改和润色。我希望你能帮我将以下{source_lang}的{target_lang}直译结果重新意译和润色。
+
+规则：
+- 基于直译结果重新意译，意译时务必对照原始{source_lang}，不要添加也不要遗漏内容
+- 让翻译结果通俗易懂，符合{target_lang}表达习惯
+- 保留特定的英文术语、数字或名字，并在其前后加上空格，例如：" AI "、" 10 秒"
+- 注意专业术语的准确性
+- 这是意译步骤，重点是自然流畅的表达
+
+英文原文：
+"""
+
+    # 添加原文句子
+    original_lines = []
+    for seg in segments:
+        sentence = (seg.get("sentence") or "").strip()
+        if not sentence:
+            continue
+        index = seg.get("index", 0)
+        original_lines.append(f"{index}: {sentence}")
+
+    content = "\n".join(original_lines)
+
+    literal_content = "\n直译结果：\n"
+    for seg in segments:
+        index = seg.get("index", 0)
+        literal = literal_translations.get(index, "")
+        literal_content += f"{index}: {literal}\n"
+
+    footer = f"""
+
+意译和润色后：
+请只输出JSON格式的最终翻译结果：
+```json
+[{{"index": 0, "translation": "意译内容"}}]
+```"""
+
+    return header + content + literal_content + footer

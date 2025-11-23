@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: hearsight-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      asr-backend:
+        condition: service_healthy
+    env_file: .env
+    volumes:
+      - ../app_datas:/app/app_datas
+    ports:
+      - "${BACKEND_PORT:-9999}:8000"
+    environment:
+      - PORT=8000
+      - POSTGRES_HOST=postgres
+      - MS_MODEL_CACHE=/app/app_datas/model_cache
+      - TORCH_HOME=/app/app_datas/torch_cache
+      - HF_HOME=/app/app_datas/transformers_cache
+      - XDG_CACHE_HOME=/app/app_datas/xdg_cache
+      - FRONTEND_HOST=localhost
+      - ASR_BACKEND_URL=http://asr-backend:8003
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    deploy: {}
+    gpus: all
+
+  celery-worker:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: hearsight-celery-worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      asr-backend:
+        condition: service_healthy
+    env_file: .env
+    volumes:
+      - ../app_datas:/app/app_datas
+    working_dir: /app
+    environment:
+      - POSTGRES_HOST=postgres
+      - MS_MODEL_CACHE=/app/app_datas/model_cache
+      - TORCH_HOME=/app/app_datas/torch_cache
+      - HF_HOME=/app/app_datas/transformers_cache
+      - XDG_CACHE_HOME=/app/app_datas/xdg_cache
+      # Celery 配置
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - CELERY_WORKER_CONCURRENCY=2
+      - CELERY_LOG_LEVEL=info
+      # ASRBackend 服务地址
+      - ASR_BACKEND_URL=http://asr-backend:8003
+    command: python -m backend.queues.worker_launcher
+    deploy: {}
+    gpus: all

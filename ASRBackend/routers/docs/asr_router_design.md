@@ -54,7 +54,15 @@
   "status": "success",
   "text": "识别的文本内容",
   "language": "zh",
-  "segments": [...],
+  "segments": [
+    {
+      "index": 0,
+      "spk_id": "说话人ID",
+      "sentence": "识别的句子",
+      "start_time": 起始时间（毫秒）,
+      "end_time": 结束时间（毫秒）
+    }
+  ],
   "filename": "audio.wav"
 }
 ```
@@ -103,7 +111,15 @@
   "status": "success",
   "text": "识别的文本内容",
   "language": "zh",
-  "segments": [...],
+  "segments": [
+    {
+      "index": 0,
+      "spk_id": "说话人ID",
+      "sentence": "识别的句子",
+      "start_time": 起始时间（毫秒）,
+      "end_time": 结束时间（毫秒）
+    }
+  ],
   "filename": "audio.mp3"
 }
 ```
@@ -151,7 +167,15 @@
   "status": "success",
   "text": "识别的文本内容",
   "language": "zh",
-  "segments": [...],
+  "segments": [
+    {
+      "index": 0,
+      "spk_id": "说话人ID",
+      "sentence": "识别的句子",
+      "start_time": 起始时间（毫秒）,
+      "end_time": 结束时间（毫秒）
+    }
+  ],
   "filename": "a1b2c3d4e5f6.wav",
   "upload_url": "https://xxx.supabase.co/storage/v1/object/public/..."
 }
@@ -263,6 +287,7 @@ curl -X POST "http://localhost:8000/asr/transcribe/upload" \
   3. 调用 URL 识别
   4. 添加上传信息到结果
   5. 清理临时文件
+  6. 清理 Supabase 临时文件
 - **返回内容**: 标准识别结果 + 上传信息（upload_url）
 
 ## 配置要求

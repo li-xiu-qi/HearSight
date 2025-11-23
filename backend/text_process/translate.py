@@ -9,8 +9,7 @@ import json
 import logging
 import os
 from typing import Any, Callable, Dict, List, Optional
-
-import litellm
+from backend.startup import get_llm_router
 
 # 动态导入配置
 try:
@@ -32,9 +31,6 @@ from backend.text_process.translate_result_service import _extract_translations
 
 async def translate_segments_async(
     segments: List[Segment],
-    api_key: str,
-    base_url: str,
-    model: str,
     target_language: str = "zh",
     max_tokens: int = 4096,
     source_lang_name: str = "",
@@ -120,14 +116,12 @@ async def translate_segments_async(
         )
 
         try:
-            # 设置 LiteLLM 环境变量
-            os.environ["OPENAI_API_KEY"] = api_key
-            if base_url:
-                os.environ["OPENAI_API_BASE"] = base_url
+            # 使用全局 LLM Router
+            router = get_llm_router()
 
-            # 使用 LiteLLM 异步调用
-            response = await litellm.acompletion(
-                model=f"openai/{model}",
+            # 使用 LiteLLM Router 异步调用
+            response = await router.acompletion(
+                model=settings.llm_model,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=max_tokens,
                 timeout=120,
@@ -246,12 +240,10 @@ async def translate_segments_async(
                 )
 
                 # 设置 LiteLLM 环境变量
-                os.environ["OPENAI_API_KEY"] = api_key
-                if base_url:
-                    os.environ["OPENAI_API_BASE"] = base_url
+                router = get_llm_router()
 
-                response = await litellm.acompletion(
-                    model=f"openai/{model}",
+                response = await router.acompletion(
+                    model=settings.llm_model,
                     messages=[{"role": "user", "content": retry_prompt}],
                     max_tokens=2048,
                     timeout=60,

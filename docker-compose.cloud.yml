@@ -71,7 +71,7 @@ services:
     build:
       context: ./ASRBackend
       dockerfile: Dockerfile.cloud
-    container_name: hearsight-asr-backenfd-cloud
+    container_name: hearsight-asr-backend-cloud
     restart: unless-stopped
     env_file: ./ASRBackend/.env
     ports:

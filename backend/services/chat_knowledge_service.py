@@ -25,35 +25,10 @@ class ChatKnowledgeService:
         返回：
         - (相关片段列表, 来源文件名)
         """
-        search_results = knowledge_base.search_similar(question, n_results=5, transcript_ids=[transcript_id])
-        relevant_segments = []
-        db_url = None  # connect_db 会使用环境变量
-        
-        for result in search_results:
-            doc_id = result["doc_id"]
-            doc_details = knowledge_base.get_doc_details(doc_id, db_url)
-            if doc_details and "sentences" in doc_details:
-                # 为每个segment添加transcript_id信息
-                for segment in doc_details["sentences"]:
-                    segment["transcript_id"] = transcript_id
-                relevant_segments.extend(doc_details["sentences"])
-        
-        # 按句子在原视频中的顺序排序，确保内容连贯
-        relevant_segments.sort(key=lambda s: s.get("index", 0))
-        
-        # 获取文件名
-        filename = None
-        if relevant_segments:
-            transcript = get_transcript_by_id(db_url, transcript_id)
-            if transcript:
-                video_path = transcript.get("video_path")
-                audio_path = transcript.get("audio_path")
-                if video_path:
-                    filename = os.path.basename(video_path)
-                elif audio_path:
-                    filename = os.path.basename(audio_path)
-        
-        return relevant_segments, filename
+        # 使用异步任务执行检索（暂时同步等待结果）
+        from backend.queues.tasks.process_job_task import knowledge_retrieval_task
+        task = knowledge_retrieval_task.delay(question, transcript_id)
+        return task.get(timeout=30)  # 等待30秒
 
     def _count_tokens_for_segments(self, segments: List[Segment]) -> int:
         """
@@ -65,8 +40,5 @@ class ChatKnowledgeService:
         返回：
         - 总 token 数
         """
-        from backend.utils.token_utils.calculate_tokens import OpenAITokenCalculator
-        calculator = OpenAITokenCalculator()
-        # 仅统计句子文本，避免引入其他结构性字符的误差
-        text = "\n".join(s.get("sentence", "") for s in segments)
-        return calculator.count_tokens(text)
+        from backend.utils.token_utils.calculate_tokens import count_segments_tokens
+        return count_segments_tokens(segments)

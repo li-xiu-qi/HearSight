@@ -21,7 +21,7 @@ from .transcript_translation_crud import (
     get_translations
 )
 
-from .transcript_chat_crud import (
+from .chat_message_crud import (
     save_chat_messages,
     get_chat_messages,
     clear_chat_messages

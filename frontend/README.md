@@ -1,75 +1,117 @@
-# React + TypeScript + Vite
+# HearSight 前端
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+HearSight 前端是基于 React 19、TypeScript 和 Vite 构建的现代化 Web 应用，提供直观友好的用户界面，让用户能够轻松上传媒体文件、查看转写结果、进行翻译、生成摘要以及与 AI 进行对话。
 
-Currently, two official plugins are available:
+## 🚀 快速开始
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### 环境要求
 
-## React Compiler
+- Node.js 18.x 或更高版本
+- npm 或 yarn 包管理器
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+### 安装依赖
 
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 启动开发服务器
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev
 ```
+
+默认情况下，开发服务器将在 `http://localhost:5173` 上运行。
+
+### 构建生产版本
+
+```bash
+npm run build
+```
+
+构建后的文件将位于 `dist` 目录中。
+
+### 预览生产构建
+
+```bash
+npm run preview
+```
+
+## 📁 项目结构
+
+```
+src/
+├── App.tsx                  # 应用根组件
+├── main.tsx                 # 应用入口文件
+├── routes.tsx               # 路由配置
+├── HomePage/                # 首页模块
+│   ├── HomePage.tsx         # 首页组件
+│   └── components/          # 首页组件
+├── features/                # 功能模块
+│   ├── app/                 # 主应用功能
+│   └── chat/                # 聊天功能
+├── components/              # 共享组件
+│   ├── LeftPanel/           # 左侧面板
+│   ├── RightPanel/          # 右侧面板
+│   └── ui/                  # UI 组件库 (基于 shadcn/ui)
+├── services/                # API 服务层
+├── stores/                  # 状态管理 (Zustand)
+├── hooks/                   # 自定义 Hooks
+├── utils/                   # 工具函数
+├── types/                   # 类型定义
+└── lib/                     # 第三方库配置
+```
+
+## 🛠 技术栈
+
+- **核心框架**: React 19
+- **语言**: TypeScript
+- **构建工具**: Vite
+- **包管理**: npm
+- **UI 组件库**: shadcn/ui
+- **样式**: Tailwind CSS
+- **状态管理**: Zustand
+- **路由**: React Router v7
+- **表单处理**: React Hook Form
+- **数据验证**: Zod
+
+## 📚 文档
+
+- [前端功能设计文档](src/docs/前端功能设计文档.md) - 详细介绍前端各项功能模块
+- [前端架构设计文档](src/docs/前端架构设计文档.md) - 说明前端技术架构和设计原则
+- [前端快速开始指南](docs/快速开始.md) - 说明如何快速启动和配置前端开发环境
+- [Docker 部署指南](docs/docker_deployment.md) - 详细介绍如何使用 Docker 部署前端应用
+- [前端 API 文档](docs/api.md) - 详细描述前端与后端之间的接口调用
+
+## ⚙️ 环境变量
+
+前端应用需要配置以下环境变量：
+
+```bash
+# 后端 API 地址
+VITE_BACKEND_URL=http://localhost:9999
+
+# 是否在 Docker 环境中运行
+VITE_USE_DOCKER=false
+```
+
+这些变量可以在项目根目录的 `.env` 文件中配置。
+
+## 🧪 测试
+
+运行测试：
+
+```bash
+npm run test
+```
+
+## 📦 部署
+
+使用 Docker 部署：
+
+```bash
+docker build -t hearsight-frontend .
+docker run -p 5173:5173 hearsight-frontend
+```
+
+详细部署说明请参考 [Docker 部署指南](docs/docker_deployment.md)。

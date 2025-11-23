@@ -157,7 +157,7 @@ HearSight Backend 提供媒体处理、转写、总结、翻译和聊天等功�
 
 #### POST /api/transcripts/{transcript_id}/translate
 
-翻译转写内容。后台异步翻译，使用轮询查询进度。
+翻译转写内容。后台异步翻译，使用SSE流式推送进度。
 
 **请求体**:
 ```json
@@ -179,19 +179,15 @@ HearSight Backend 提供媒体处理、转写、总结、翻译和聊天等功�
 }
 ```
 
-#### GET /api/transcripts/{transcript_id}/translate-progress
+#### GET /api/transcripts/{transcript_id}/translate/stream
 
-获取翻译进度。
+SSE流式获取翻译进度。连接后服务器会实时推送翻译进度更新。
 
-**响应**:
-```json
-{
-  "status": "translating",
-  "progress": 50,
-  "translated_count": 5,
-  "total_count": 10,
-  "message": "string"
-}
+**响应**: Server-Sent Events 流
+```
+data: {"type": "progress", "status": "translating", "progress": 50, "translated_count": 5, "total_count": 10, "message": "翻译中..."}
+
+data: {"type": "complete", "status": "completed", "progress": 100, "translated_count": 10, "total_count": 10, "message": "翻译完成", "is_complete": true}
 ```
 
 #### GET /api/transcripts/{transcript_id}/translations
@@ -303,7 +299,7 @@ HearSight Backend 提供媒体处理、转写、总结、翻译和聊天等功�
 
 #### POST /api/chat
 
-基于分句内容进行问答。
+基于分句内容进行问答（异步处理）。
 
 **请求体**:
 ```json
@@ -326,7 +322,44 @@ HearSight Backend 提供媒体处理、转写、总结、翻译和聊天等功�
 **响应**:
 ```json
 {
-  "answer": "string"
+  "task_id": 123,
+  "status": "pending"
+}
+```
+
+#### GET /api/chat/{task_id}
+
+查询聊天任务的执行结果。
+
+**响应** (处理中):
+
+```json
+{
+  "task_id": 123,
+  "status": "processing",
+  "progress": 50
+}
+```
+
+**响应** (完成):
+
+```json
+{
+  "task_id": 123,
+  "status": "completed",
+  "result": {
+    "answer": "string"
+  }
+}
+```
+
+**响应** (失败):
+
+```json
+{
+  "task_id": 123,
+  "status": "failed",
+  "error": "错误信息"
 }
 ```
 
@@ -335,6 +368,7 @@ HearSight Backend 提供媒体处理、转写、总结、翻译和聊天等功�
 保存chat消息到数据库。
 
 **请求体**:
+
 ```json
 {
   "messages": [
@@ -348,6 +382,7 @@ HearSight Backend 提供媒体处理、转写、总结、翻译和聊天等功�
 ```
 
 **响应**:
+
 ```json
 {
   "success": true,
@@ -361,6 +396,7 @@ HearSight Backend 提供媒体处理、转写、总结、翻译和聊天等功�
 获取已保存的chat消息。
 
 **响应**:
+
 ```json
 {
   "messages": [
@@ -379,6 +415,7 @@ HearSight Backend 提供媒体处理、转写、总结、翻译和聊天等功�
 清空chat消息。
 
 **响应**:
+
 ```json
 {
   "success": true,
@@ -404,11 +441,13 @@ SSE 推送全部进度事件（订阅 Redis pubsub channel `progress_channel`）
 获取视频缩略图。
 
 **查询参数**:
+
 - `start_time`: 开始时间（毫秒）
 - `end_time`: 结束时间（毫秒）
 - `width`: 缩略图宽度（默认320）
 
 **响应**:
+
 ```json
 {
   "success": true,

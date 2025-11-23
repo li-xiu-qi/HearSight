@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from backend.config import create_celery_app
 from backend.db.job_store import (
@@ -16,11 +16,36 @@ from backend.db.job_store import (
 )
 from .download_stage import handle_download_stage
 from .asr_stage import handle_asr_stage
-from .knowledge_base_stage import handle_knowledge_base_stage
+from .knowledge_base_stage import handle_knowledge_base_stage, handle_knowledge_retrieval_stage
+from .translate_stage import handle_translate_stage
 from .progress_utils import update_task_progress, create_progress_info
 
 # 创建Celery应用实例
 app = create_celery_app()
+
+
+@app.task(
+    bind=True,
+    name="backend.queues.tasks.knowledge_retrieval_task",
+    autoretry_for=(Exception,),
+    retry_kwargs={"max_retries": 1},
+    retry_backoff=True,
+)
+def knowledge_retrieval_task(
+    self,
+    question: str,
+    transcript_id: int
+) -> Tuple[List[Dict[str, Any]], str]:
+    """异步执行知识库检索任务。
+
+    Args:
+        question: 用户问题
+        transcript_id: 转录ID
+
+    Returns:
+        (相关片段列表, 来源文件名)
+    """
+    return handle_knowledge_retrieval_stage(question, transcript_id)
 
 
 @app.task(
@@ -112,6 +137,81 @@ def process_job_task(
         progress_info = create_progress_info(
             job_id, "failed", "error", 0,
             message=f"任务处理失败: {str(e)}",
+            error=str(e)
+        )
+        update_task_progress(set_task_progress, progress_redis_client, job_id, progress_info)
+
+        finish_job_failed(db_url, job_id, str(e))
+        raise
+
+
+@app.task(
+    bind=True,
+    name="backend.queues.tasks.process_streaming_chat_task",
+    autoretry_for=(Exception,),
+    retry_kwargs={"max_retries": 1},
+    retry_backoff=True,
+)
+def process_streaming_chat_task(
+    self,
+    job_id: int,
+    question: str,
+    transcript_ids: List[int],
+    chat_max_windows: int,
+    db_url: Optional[str] = None,
+) -> Dict[str, Any]:
+    """处理流式聊天任务的Celery任务。
+
+    Args:
+        job_id: 任务ID
+        question: 用户问题
+        transcript_ids: 转录ID列表
+        chat_max_windows: 聊天最大窗口
+        db_url: 数据库URL
+
+    Returns:
+        任务结果字典
+    """
+    from backend.routers.progress_router import redis_client as progress_redis_client
+    from .chat_stage import handle_streaming_chat_stage
+
+    logger = logging.getLogger(__name__)
+
+    # 获取Redis客户端用于进度更新（已从progress_router导入）
+    # progress_redis_client = get_redis_client()
+
+    # 创建进度更新函数
+    def set_task_progress(job_id: int, progress: Dict[str, Any]) -> bool:
+        """设置任务进度"""
+        from backend.routers.progress_router import set_task_progress as _set_task_progress
+        return _set_task_progress(job_id, progress)
+
+    try:
+        # 更新任务状态为处理中
+        update_job_status(db_url, job_id, "processing")
+
+        # 处理流式聊天
+        result = handle_streaming_chat_stage(
+            question=question,
+            transcript_ids=transcript_ids,
+            chat_max_windows=chat_max_windows,
+            job_id=job_id,
+            set_task_progress=set_task_progress,
+            progress_redis_client=progress_redis_client,
+        )
+
+        # 完成任务
+        finish_job_success(db_url, job_id, result)
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Streaming chat task {job_id} failed: {e}")
+
+        # 更新进度
+        progress_info = create_progress_info(
+            job_id, "failed", "error", 0,
+            message=f"流式聊天任务失败: {str(e)}",
             error=str(e)
         )
         update_task_progress(set_task_progress, progress_redis_client, job_id, progress_info)

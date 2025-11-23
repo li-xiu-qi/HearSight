@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  asr-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.local
+    container_name: hearsight-asr-backend-local
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${ASR_BACKEND_PORT:-8003}:8003"
+    environment:
+      - ASR_MODE=local
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

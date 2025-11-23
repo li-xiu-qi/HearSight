@@ -32,7 +32,7 @@ class ThumbnailResponse(TypedDict):
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api", tags=["thumbnail"])
+router = APIRouter(tags=["thumbnail"])
 
 
 @router.get("/thumbnails/{transcript_id}")

@@ -12,8 +12,6 @@ from backend.db.transcript_crud import get_translations
 from backend.services.transcript_service import (delete_transcript_async,
                                                  get_transcript_async,
                                                  list_transcripts_async)
-from backend.services.translate_service import (get_translate_progress,
-                                                start_translate_task)
 from backend.config import settings
 
 
@@ -71,53 +69,7 @@ class DeleteTranscriptResponse(TypedDict):
     transcript_id: int  # 转写记录ID
 
 
-class TranslateRequestData(TypedDict, total=False):
-    """翻译请求数据结构"""
-
-    target_lang_code: str  # 目标语言代码
-    source_lang_code: str  # 源语言代码
-    confirmed: bool  # 是否确认
-    max_tokens: int  # 最大token数
-    source_lang_display_name: str  # 源语言显示名称
-    target_lang_display_name: str  # 目标语言显示名称
-    force_retranslate: bool  # 是否强制重新翻译
-
-
-class StartTranslateResponse(TypedDict):
-    """开始翻译响应数据结构"""
-
-    status: str  # 状态
-    transcript_id: int  # 转写记录ID
-
-
-class TranslateProgressResponse(TypedDict):
-    """翻译进度响应数据结构"""
-
-    status: str  # 翻译状态
-    progress: int  # 进度百分比
-    translated_count: int  # 已翻译数量
-    total_count: int  # 总数
-    message: str  # 状态消息
-
-
-class GetTranslationsResponse(TypedDict):
-    """获取翻译结果响应数据结构"""
-
-    translations: Optional[Dict[str, List[Any]]]  # 翻译结果字典
-    has_translations: bool  # 是否有翻译结果
-
-
-class TranslateRequest(BaseModel):
-    target_lang_code: str = "zh"
-    source_lang_code: Optional[str] = None
-    confirmed: bool = True
-    max_tokens: int = 4096
-    source_lang_display_name: Optional[str] = None
-    target_lang_display_name: Optional[str] = None
-    force_retranslate: bool = False
-
-
-router = APIRouter(prefix="/api", tags=["transcripts"])
+router = APIRouter(tags=["transcripts"])
 
 
 @router.get("/transcripts")
@@ -160,94 +112,3 @@ async def api_delete_transcript_complete(
     if not result:
         raise HTTPException(status_code=404, detail="转写记录不存在或已被删除")
     return result
-
-
-@router.post("/transcripts/{transcript_id}/translate")
-async def api_translate(
-    transcript_id: int, request: Request, body: TranslateRequest
-) -> StartTranslateResponse:
-    """翻译转写内容。后台异步翻译，使用轮询查询进度。
-
-    请求体: {
-        "target_language": "zh" | "en",
-        "confirmed": bool
-    }
-
-    返回: { "status": "started", "transcript_id": int }
-    """
-    db_url = request.app.state.db_url
-
-    api_key = settings.llm_provider_api_key
-    base_url = settings.llm_provider_base_url
-    model = settings.llm_model
-
-    if not all([api_key, base_url, model]):
-        logging.error("LLM 配置缺失")
-        raise HTTPException(status_code=500, detail="LLM configuration is missing")
-
-    data = await get_transcript_async(db_url, transcript_id)
-    if not data:
-        raise HTTPException(
-            status_code=404, detail=f"transcript not found: {transcript_id}"
-        )
-
-    segments = data.get("segments", [])
-    if not segments:
-        raise HTTPException(status_code=400, detail="No segments to translate")
-
-    return await start_translate_task(
-        transcript_id,
-        segments,
-        body.target_lang_code,
-        body.max_tokens,
-        api_key,
-        base_url,
-        model,
-        body.source_lang_code or "",
-        body.source_lang_display_name or "",
-        body.target_lang_display_name or "",
-        db_url,
-        force_retranslate=body.force_retranslate,
-    )
-
-
-@router.get("/transcripts/{transcript_id}/translate-progress")
-async def api_get_translate_progress(
-    transcript_id: int, request: Request
-) -> TranslateProgressResponse:
-    """获取翻译进度。
-
-    返回: {
-        "status": "translating" | "completed" | "error",
-        "progress": 0-100,
-        "translated_count": int,
-        "total_count": int,
-        "message": str
-    }
-    """
-    return get_translate_progress(transcript_id)
-
-
-@router.get("/transcripts/{transcript_id}/translations")
-async def api_get_translations(
-    transcript_id: int, request: Request
-) -> GetTranslationsResponse:
-    """获取已保存的翻译结果。
-
-    返回: {
-        "translations": Dict[str, List] | null,
-        "has_translations": bool
-    }
-    """
-    db_url = request.app.state.db_url
-
-    try:
-        translations = get_translations(db_url, transcript_id)
-        return {
-            "translations": translations,
-            "has_translations": translations is not None and len(translations) > 0,
-        }
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get translations: {str(e)}"
-        )

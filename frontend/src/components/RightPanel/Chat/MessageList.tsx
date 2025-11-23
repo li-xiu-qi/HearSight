@@ -3,10 +3,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Copy, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import type { Segment, ChatMessage } from "../../../types";
-import { fetchThumbnail } from "../../../services/thumbnailService";
+import type { ChatMessage } from "../../../types";
 import { formatTime } from "../../../utils";
-import MarkdownRenderer from "../../MarkdownRenderer"
 import {
   Dialog,
   DialogContent,
@@ -20,7 +18,6 @@ interface MessageListProps {
   readonly loading: boolean
   readonly error: string | null
   readonly imageModeEnabled: boolean
-  readonly transcriptId?: number
   readonly frameCache: Record<string, string>
   readonly onSeekTo: (timeMs: number, videoName?: string) => void
 }
@@ -30,7 +27,6 @@ export default function MessageList({
   loading,
   error,
   imageModeEnabled,
-  transcriptId,
   frameCache,
   onSeekTo,
 }: MessageListProps) {
@@ -46,6 +42,12 @@ export default function MessageList({
   }
 
   const renderMessageContent = (content: string) => {
+    // 修复模型可能把时间戳或图片信息放在句末标点之前的情况，例如：
+    // "这是一个示例[123.00-456.00]." -> "这是一个示例. [123.00-456.00]"
+    // 规则：将紧邻标点之前的方括号时间戳或带文件名的方括号移动到标点之后并在其前加一个空格
+    content = content.replace(/(\S)(\[[^\]]+\])([。.,!?，；;:：])/g, "$1$3 $2")
+    // 也处理没有紧邻字符的情况，例如："句子 [123-456]." -> "句子. [123-456]"
+    content = content.replace(/(\s)(\[[^\]]+\])([。.,!?，；;:：])/g, "$1$3 $2")
     const parts = content.split(/(\[.*?\s*\d+(?:\.\d+)?-\d+(?:\.\d+)?\])/g)
 
     return parts.map((part, index) => {
@@ -62,15 +64,21 @@ export default function MessageList({
 
         return (
           <div key={`time-${index}-${startTime}-${endTime}`} className="flex flex-col gap-2 my-2">
+            <button
+              onClick={() => onSeekTo(startTime, videoName || undefined)}
+              className="text-blue-600 hover:text-blue-800 underline text-sm self-start"
+            >
+              {videoName ? `${videoName} ` : ""}{formatTime(startTime)} - {formatTime(endTime)}
+            </button>
             {imageModeEnabled && (
-              <div className="relative">
+              <div className="relative flex justify-center">
                 {cachedImage ? (
                   <Dialog>
                     <DialogTrigger asChild>
                       <img
                         src={cachedImage}
                         alt={`视频截图 ${formatTime(startTime)}`}
-                        className="w-full max-w-xs h-24 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
+                        className="w-full max-w-md h-40 sm:h-48 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
                       />
                     </DialogTrigger>
                     <DialogContent className="max-w-4xl">
@@ -86,18 +94,12 @@ export default function MessageList({
                     </DialogContent>
                   </Dialog>
                 ) : (
-                  <div className="w-full max-w-xs h-24 bg-gray-200 rounded flex items-center justify-center">
+                  <div className="w-full max-w-md h-40 sm:h-48 bg-gray-200 rounded flex items-center justify-center">
                     <Loader2 className="h-4 w-4 animate-spin" />
                   </div>
                 )}
               </div>
             )}
-            <button
-              onClick={() => onSeekTo(startTime, videoName || undefined)}
-              className="text-blue-600 hover:text-blue-800 underline text-sm"
-            >
-              {videoName ? `${videoName} ` : ""}{formatTime(startTime)} - {formatTime(endTime)}
-            </button>
           </div>
         )
       }
@@ -106,7 +108,7 @@ export default function MessageList({
   }
 
   return (
-    <ScrollArea className="flex-1 min-h-0 p-3">
+    <ScrollArea className="flex-1 min-h-0 h-full p-3">
       {error && (
         <div className="mx-3 mt-3 mb-0 p-3 bg-red-50 text-red-700 text-sm rounded border border-red-200 flex-shrink-0">
           {error}
@@ -128,9 +130,11 @@ export default function MessageList({
               }`}
             >
               {message.type === "ai" && (
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-xs font-semibold">
-                  AI
-                </div>
+                <img
+                  src="/chatbot.png"
+                  alt="AI"
+                  className="flex-shrink-0 w-8 h-8 rounded-full object-cover"
+                />
               )}
               <div className="flex flex-col gap-0.5 flex-1">
                 <div
@@ -159,8 +163,32 @@ export default function MessageList({
                   </Button>
                 </div>
               </div>
+              {message.type === "user" && (
+                <img
+                  src="/human.png"
+                  alt="User"
+                  className="flex-shrink-0 w-8 h-8 rounded-full object-cover"
+                />
+              )}
             </div>
           ))}
+          {loading && (
+            <div className="flex items-start gap-2">
+              <img
+                src="/chatbot.png"
+                alt="AI"
+                className="flex-shrink-0 w-8 h-8 rounded-full object-cover"
+              />
+              <div className="flex flex-col gap-0.5 flex-1">
+                <div className="rounded-lg p-3 bg-slate-100 text-slate-900">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-sm text-slate-600">AI正在思考中...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
       <div ref={messagesEndRef} />

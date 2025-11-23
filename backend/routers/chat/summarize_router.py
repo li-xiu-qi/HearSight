@@ -26,8 +26,6 @@ def api_summarize(payload: SummarizeRequest, request: Request) -> SummarizeRespo
     if not segments or not isinstance(segments, list):
         raise HTTPException(status_code=400, detail="segments (list) is required")
 
-    api_key, base_url, model = get_llm_config(payload)
-
     # 从配置或环境读取 CHAT_MAX_WINDOWS（优先级：环境变量 -> 默认 1000000）
     chat_max = int(
         os.environ.get("CHAT_MAX_WINDOWS") or 1000000
@@ -36,9 +34,6 @@ def api_summarize(payload: SummarizeRequest, request: Request) -> SummarizeRespo
     try:
         summaries = summarize_segments(
             segments=segments,
-            api_key=api_key,
-            base_url=base_url,
-            model=model,
             chat_max_windows=chat_max,
             max_tokens=4096,
         )

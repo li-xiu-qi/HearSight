@@ -28,6 +28,11 @@ from backend.config import create_celery_app
 
 def main():
     """启动Celery worker"""
+    # 初始化应用组件
+    from backend.startup import initialize_llm_router, initialize_embedding_router
+    initialize_llm_router()
+    initialize_embedding_router()
+    
     # 从环境变量读取worker配置
     concurrency = int(os.getenv("CELERY_WORKER_CONCURRENCY", "4"))
     loglevel = os.getenv("CELERY_LOG_LEVEL", "info")

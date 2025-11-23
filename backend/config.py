@@ -20,10 +20,11 @@ class Settings(BaseSettings):
     """
 
     # --- Postgres (数据库) ---
-    postgres_user: Optional[str] = None
-    postgres_password: Optional[str] = None
-    postgres_db: Optional[str] = None
-    postgres_port: Optional[int] = None
+    postgres_user: Optional[str] = "hearsight"
+    postgres_password: Optional[str] = "hearsight_pass"
+    postgres_db: Optional[str] = "hearsight"
+    postgres_port: Optional[int] = 5432
+    postgres_host: Optional[str] = "localhost"
 
     # --- 服务端 / 前端 端口 ---
     backend_port: Optional[int] = None

@@ -5,8 +5,7 @@ from __future__ import annotations
 import json
 import os
 from typing import Dict, List, Any
-
-import litellm
+from backend.startup import get_llm_router
 
 # 动态导入配置
 try:
@@ -28,10 +27,8 @@ def _count_tokens_for_segments(segments: List[Segment]) -> int:
     最小实现：仅按文本字段统计 token 数。
     使用统一的 OpenAI token 计算器。
     """
-    calculator = OpenAITokenCalculator()
-    # 仅统计句子文本，避免引入其他结构性字符的误差
-    text = "\n".join(s.get("sentence", "") for s in segments)
-    return calculator.count_tokens(text)
+    from backend.utils.token_utils.calculate_tokens import count_segments_tokens
+    return count_segments_tokens(segments)
 
 
 def _split_segments_by_output_tokens(
@@ -57,7 +54,7 @@ def _split_segments_by_output_tokens(
     for seg in segments:
         sentence = seg.get("sentence", "")
         # 估算总结输出的token数（原文的0.8倍作为总结大小）
-        estimated_tokens = int(len(enc.encode(sentence)) * 0.8) + 50
+        estimated_tokens = int(calculator.count_tokens(sentence) * 0.8) + 50
 
         if current_output_tokens + estimated_tokens > max_tokens and current_batch:
             # 当前批次满了，开始新批次
@@ -170,9 +167,6 @@ def _extract_summaries(response_text: str) -> List[Dict[str, Any]]:
 
 def summarize_segments(
     segments: List[Segment],
-    api_key: str,
-    base_url: str,
-    model: str,
     chat_max_windows: int = 1_000_000,
     max_tokens: int = 4096,
 ) -> List[SummaryItem]:
@@ -180,7 +174,6 @@ def summarize_segments(
 
     参数：
     - segments：句级片段
-    - api_key/base_url/model：复用 chat_client 统一配置
     - chat_max_windows：用于限制输入的近似 token 上限（项目内称为 CHAT_MAX_WINDOWS）
     - max_tokens：每批总结的最大输出token数（默认4096）
 
@@ -199,9 +192,6 @@ def summarize_segments(
         for batch in batches:
             batch_summaries = summarize_segments(
                 batch,
-                api_key=api_key,
-                base_url=base_url,
-                model=model,
                 chat_max_windows=chat_max_windows,
                 max_tokens=max_tokens,
             )
@@ -211,18 +201,17 @@ def summarize_segments(
 
     prompt = _build_prompt(segments)
 
-    # 设置 LiteLLM 环境变量
-    os.environ["OPENAI_API_KEY"] = api_key
-    if base_url:
-        os.environ["OPENAI_API_BASE"] = base_url
+    # 使用全局 LLM Router
+    router = get_llm_router()
 
-    # 使用 LiteLLM 调用
-    topic_and_summary = litellm.completion(
-        model=f"openai/{model}",
+    # 使用 LiteLLM Router 调用
+    response = router.completion(
+        model=settings.llm_model,
         messages=[{"role": "user", "content": prompt}],
         max_tokens=max_tokens,
         temperature=0.6,
-    ).choices[0].message.content.strip()
+    )
+    topic_and_summary = response.choices[0].message.content.strip()
 
     # 初始化返回值
     summaries = []

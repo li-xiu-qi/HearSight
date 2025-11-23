@@ -10,13 +10,14 @@ import sys
 from pathlib import Path
 from typing import List, Dict, Any, TypedDict
 
+import asyncio
 import chromadb
-from openai import OpenAI
 
 # 添加项目根目录到路径，确保导入backend模块
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from backend.config import settings
+from backend.startup import get_embedding_router
 
 
 class DocDetails(TypedDict):
@@ -32,24 +33,29 @@ class KnowledgeBaseService:
 
     def __init__(self):
         """初始化知识库服务"""
-        # 将向量数据库放到app_datas目录
-        app_datas_dir = Path(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))) / "app_datas"
-        chroma_path = app_datas_dir / "chroma_db"
-        chroma_path.mkdir(parents=True, exist_ok=True)
-        self.client = chromadb.PersistentClient(path=str(chroma_path))
-        self.collection = self.client.get_or_create_collection(name="video_transcripts")
-        self.openai_client = OpenAI(
-            api_key=settings.embedding_provider_api_key,
-            base_url=settings.embedding_provider_base_url,
-        )
+        self.client = None
+        self.collection = None
+        self.embedding_router = None
+
+    def _ensure_initialized(self):
+        """确保服务已初始化"""
+        if self.client is None:
+            # 将向量数据库放到app_datas目录
+            app_datas_dir = Path(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))) / "app_datas"
+            chroma_path = app_datas_dir / "chroma_db"
+            chroma_path.mkdir(parents=True, exist_ok=True)
+            self.client = chromadb.PersistentClient(path=str(chroma_path))
+            self.collection = self.client.get_or_create_collection(name="video_transcripts")
+            # 使用全局 embedding router
+            self.embedding_router = get_embedding_router()
 
     def _get_embedding(self, text: str) -> List[float]:
         """获取文本的向量嵌入"""
-        response = self.openai_client.embeddings.create(
+        response = asyncio.run(self.embedding_router.aembedding(
             input=text,
             model=settings.embedding_model
-        )
-        return response.data[0].embedding
+        ))
+        return response.data[0]['embedding']
 
     def add_transcript(self, video_id: str, segments: List[Dict[str, Any]], metadata: Dict[str, Any] = None):
         """添加视频转写句子段到知识库
@@ -61,13 +67,15 @@ class KnowledgeBaseService:
             segments: 句子段列表，每个包含sentence等信息
             metadata: 元数据，必须包含transcript_id
         """
+        self._ensure_initialized()
         if metadata is None:
             metadata = {}
 
         chunks = self._group_segments_into_chunks(segments, chunk_size=2000)
 
         for i, chunk in enumerate(chunks):
-            chunk_text = " ".join([seg["sentence"] for seg in chunk])
+            filename = metadata.get("filename", "未知文件")
+            chunk_text = f"文件名：{filename}\n内容：{' '.join([seg['sentence'] for seg in chunk])}"
             embedding = self._get_embedding(chunk_text)
 
             transcript_id = metadata.get("transcript_id") if metadata else None
@@ -99,6 +107,7 @@ class KnowledgeBaseService:
 
     def _get_metadata_by_id(self, doc_id: str) -> Dict[str, Any] | None:
         """通过 doc_id 从 Chroma 中获取 metadata"""
+        self._ensure_initialized()
         try:
             res = self.collection.get(ids=[doc_id], include=["metadatas", "documents"])
             if res and res.get("metadatas") and len(res.get("metadatas")) > 0:
@@ -120,6 +129,7 @@ class KnowledgeBaseService:
         Returns:
             相似文档列表，包含文本、元数据和相似度
         """
+        self._ensure_initialized()
         query_embedding = self._get_embedding(query)
         where_clause = {"transcript_id": {"$in": transcript_ids}} if transcript_ids else None
         results = self.collection.query(
@@ -232,6 +242,7 @@ class KnowledgeBaseService:
 
     def get_transcript_ids(self) -> List[int]:
         """获取所有 transcript_id（用于标识转写记录）"""
+        self._ensure_initialized()
         results = self.collection.get(include=["metadatas"])
         transcript_ids = set()
         for metadata in results.get("metadatas", []):

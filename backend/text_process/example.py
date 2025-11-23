@@ -131,9 +131,6 @@ def example_summarize_segments():
         # 调用总结功能
         summaries = summarize_segments(
             segments=segments,
-            api_key=api_key,
-            base_url=base_url,
-            model=model,
             max_tokens=1000
         )
 
@@ -185,9 +182,6 @@ async def example_translate_segments():
         # 调用翻译功能
         translations = await translate_segments(
             segments=segments,
-            api_key=api_key,
-            base_url=base_url,
-            model=model,
             target_lang_code="zh",
             source_lang_code="en",
             source_lang_display_name="English",

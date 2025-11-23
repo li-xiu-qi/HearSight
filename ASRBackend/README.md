@@ -39,16 +39,20 @@ python main.py
 
 服务启动后访问 `http://localhost:8003/docs` 查看 API 文档。
 
-## 文档结构
+## 文档索引
 
 项目文档包含以下部分：
 
-快速配置文档介绍环境变量设置和依赖安装。
+### 配置与启动文档
+- [快速配置文档](docs/快速配置.md) - 介绍环境变量设置和依赖安装
+- [快速开始文档](docs/快速开始.md) - 包含本地和云端两种模式的启动步骤
 
-快速开始文档包含本地和云端两种模式的启动步骤。
+### 系统设计文档
+- [设计说明文档](docs/设计说明.md) - 详细说明系统架构、数据流和集成关系
+- [API文档](docs/api.md) - 详细的API接口说明
 
-设计说明文档详细说明系统架构、数据流和集成关系。
-
+### 部署文档
+- [Docker部署指南](docs/docker_deployment.md) - 使用Docker部署ASR Backend的详细说明
 
 ## 运行模式对比
 
@@ -64,10 +68,12 @@ python main.py
 
 ## API 端点
 
-转录接口支持文件上传和 URL 输入两种方式。
+转录接口支持三种方式：
 
 ```bash
-POST /asr/transcribe
+POST /asr/transcribe/bytes    # 文件字节流识别（本地模式）
+POST /asr/transcribe/url      # URL 直接识别（云端模式）
+POST /asr/transcribe/upload   # 文件上传到 Supabase 后识别（云端模式）
 ```
 
 服务信息接口返回当前运行模式和配置信息。
@@ -103,6 +109,7 @@ ASRBackend/
 ├── docs/                             # 文档
 │   ├── 快速配置.md                   # 环境配置指南
 │   ├── 快速开始.md                   # 启动运行指南
+│   ├── docker_deployment.md          # Docker 部署指南
 │   └── 设计说明.md                   # 架构设计文档
 ├── tests/                            # 测试
 ├── requirements.txt                  # 通用依赖
@@ -110,7 +117,9 @@ ASRBackend/
 ├── requirements-cloud.txt            # 云端模式依赖
 ├── Dockerfile                        # 通用 Docker 镜像
 ├── Dockerfile.local                  # 本地模式 Docker 镜像
-└── Dockerfile.cloud                  # 云端模式 Docker 镜像
+├── Dockerfile.cloud                  # 云端模式 Docker 镜像
+├── docker-compose.local.yml          # 本地模式 Docker Compose
+└── docker-compose.cloud.yml          # 云端模式 Docker Compose
 ```
 
 ## 使用示例
@@ -120,33 +129,46 @@ ASRBackend/
 ```python
 import requests
 
-# 文件上传方式
-url = "http://localhost:8003/asr/transcribe"
+# 文件上传方式（本地模式）
+url = "http://localhost:8003/asr/transcribe/bytes"
 with open("audio.mp3", "rb") as f:
     files = {"file": f}
     response = requests.post(url, files=files)
     result = response.json()
     print(result)
 
-# URL 方式
+# URL 方式（云端模式）
+url = "http://localhost:8003/asr/transcribe/url"
 response = requests.post(
     url,
     data={"url": "https://example.com/audio.wav"}
 )
 result = response.json()
 print(result)
+
+# 文件上传到Supabase方式（云端模式）
+url = "http://localhost:8003/asr/transcribe/upload"
+with open("audio.mp3", "rb") as f:
+    files = {"file": f}
+    response = requests.post(url, files=files)
+    result = response.json()
+    print(result)
 ```
 
 ### Shell 调用
 
 ```bash
-# 文件上传
-curl -X POST "http://localhost:8003/asr/transcribe" \
+# 文件上传（本地模式）
+curl -X POST "http://localhost:8003/asr/transcribe/bytes" \
   -F "file=@audio.mp3"
 
-# URL 输入
-curl -X POST "http://localhost:8003/asr/transcribe" \
+# URL 输入（云端模式）
+curl -X POST "http://localhost:8003/asr/transcribe/url" \
   -d "url=https://example.com/audio.wav"
+
+# 文件上传到Supabase（云端模式）
+curl -X POST "http://localhost:8003/asr/transcribe/upload" \
+  -F "file=@audio.mp3"
 
 # 获取服务信息
 curl http://localhost:8003/asr/info
@@ -181,20 +203,28 @@ docker run -p 8003:8003 \
 使用 docker-compose 启动。
 
 ```bash
+# 使用项目根目录下的docker-compose文件
 docker-compose up asr_backend
+
+# 或使用ASRBackend目录下的专属docker-compose文件
+cd ASRBackend
+docker-compose -f docker-compose.cloud.yml up -d  # 云端模式
+docker-compose -f docker-compose.local.yml up -d  # 本地模式
 ```
+
+有关更详细的 Docker 部署说明，请参阅 [Docker 部署指南](docs/docker_deployment.md)。
 
 ## 配置文档
 
-详见 `docs/快速配置.md`，包含完整的环境变量说明和依赖安装指南。
+详见 [快速配置文档](docs/快速配置.md)，包含完整的环境变量说明和依赖安装指南。
 
 ## 启动指南
 
-详见 `docs/快速开始.md`，包含本地和云端模式的详细启动步骤。
+详见 [快速开始文档](docs/快速开始.md)，包含本地和云端模式的详细启动步骤。
 
 ## 架构设计
 
-详见 `docs/设计说明.md`，包含系统架构、数据流和模块说明。
+详见 [设计说明文档](docs/设计说明.md)，包含系统架构、数据流和模块说明。
 
 ## 故障排查
 
@@ -211,4 +241,3 @@ DEBUG=true python main.py
 ```
 
 更多常见问题解决方案和调试技巧，请参考设计文档中的监控和调试章节。
-

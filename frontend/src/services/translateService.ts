@@ -28,25 +28,41 @@ export const translateTranscript = async (
   sourceLangDisplayName?: string,
   targetLangDisplayName?: string
 ): Promise<TranslateResponse> => {
-  const response = await fetch(`/api/transcripts/${transcriptId}/translate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      target_lang_code: targetLanguage,
-      source_lang_code: sourceLanguage,
-      confirmed: true,
-      max_tokens: maxTokens,
-      source_lang_display_name: sourceLangDisplayName,
-      target_lang_display_name: targetLangDisplayName,
-      force_retranslate: forceRetranslate
-    })
+  // 启动异步翻译任务
+  await startTranslate(transcriptId, targetLanguage, maxTokens, forceRetranslate, sourceLanguage, sourceLangDisplayName, targetLangDisplayName)
+
+  // 使用SSE等待翻译完成
+  return new Promise((resolve, reject) => {
+    translateTranscriptStream(
+      transcriptId,
+      targetLanguage,
+      maxTokens,
+      async (event) => {
+        if (event.type === 'complete') {
+          // 获取翻译结果
+          const translations = await getTranslations(transcriptId)
+          if (translations.translations && translations.translations[targetLanguage]) {
+            resolve({
+              status: 'completed',
+              updated_segments: translations.translations[targetLanguage],
+              new_transcript_id: transcriptId,
+              message: '翻译完成'
+            })
+          } else {
+            reject(new Error('无法获取翻译结果'))
+          }
+        } else if (event.type === 'error') {
+          reject(new Error(event.message || '翻译失败'))
+        }
+      },
+      forceRetranslate
+    ).catch(reject)
+
+    // 设置超时（5分钟）
+    setTimeout(() => {
+      reject(new Error('翻译超时'))
+    }, 5 * 60 * 1000)
   })
-  
-  if (!response.ok) {
-    throw new Error(`翻译失败：${response.status}`)
-  }
-  
-  return response.json()
 }
 
 export const startTranslate = async (
@@ -57,7 +73,7 @@ export const startTranslate = async (
   sourceLanguage?: string,
   sourceLangDisplayName?: string,
   targetLangDisplayName?: string
-): Promise<{ status: string; transcript_id: number; total_count: number }> => {
+): Promise<{ status: string; transcript_id: number }> => {
   const response = await fetch(`/api/transcripts/${transcriptId}/translate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -71,29 +87,11 @@ export const startTranslate = async (
       force_retranslate: forceRetranslate
     })
   })
-  
-  if (!response.ok) {
-    throw new Error(`翻译失败：${response.status}`)
-  }
-  
-  return response.json()
-}
 
-export const getTranslateProgress = async (
-  transcriptId: number
-): Promise<{
-  status: string
-  progress: number
-  translated_count: number
-  total_count: number
-  message: string
-}> => {
-  const response = await fetch(`/api/transcripts/${transcriptId}/translate-progress`)
-  
   if (!response.ok) {
-    throw new Error(`获取进度失败：${response.status}`)
+    throw new Error(`启动翻译失败：${response.status}`)
   }
-  
+
   return response.json()
 }
 
@@ -107,44 +105,55 @@ export const translateTranscriptStream = async (
   return new Promise((resolve, reject) => {
     (async () => {
       try {
+        // 启动异步翻译任务
         await startTranslate(transcriptId, targetLanguage, maxTokens, forceRetranslate)
 
-        const pollInterval = setInterval(async () => {
-          try {
-            const progress = await getTranslateProgress(transcriptId)
+        // 连接SSE流
+        const eventSource = new EventSource(`/api/transcripts/${transcriptId}/translate/stream`)
 
-            if (progress.status === 'translating') {
+        eventSource.onmessage = (event) => {
+          try {
+            const data: TranslateProgressEvent = JSON.parse(event.data)
+
+            if (data.type === 'progress') {
               onProgress({
                 type: 'progress',
-                progress: progress.progress,
-                translated_count: progress.translated_count,
-                total_count: progress.total_count
+                progress: data.progress,
+                translated_count: data.translated_count,
+                total_count: data.total_count
               })
-            } else if (progress.status === 'completed') {
+            } else if (data.type === 'complete') {
               onProgress({
                 type: 'complete',
                 status: 'completed',
-                translated_count: progress.translated_count,
-                total_count: progress.total_count,
+                translated_count: data.translated_count,
+                total_count: data.total_count,
                 is_complete: true,
-                message: progress.message
+                message: data.message
               })
-              clearInterval(pollInterval)
+              eventSource.close()
               resolve()
-            } else if (progress.status === 'error') {
+            } else if (data.type === 'error') {
               onProgress({
                 type: 'error',
-                message: progress.message
+                message: data.message
               })
-              clearInterval(pollInterval)
-              reject(new Error(progress.message))
+              eventSource.close()
+              reject(new Error(data.message))
             }
-          } catch (err) {
-            console.error('轮询进度时出错:', err)
-            clearInterval(pollInterval)
-            reject(err)
+          } catch (error) {
+            console.error('SSE消息解析错误:', error)
+            eventSource.close()
+            reject(error)
           }
-        }, 5000)
+        }
+
+        eventSource.onerror = (error) => {
+          console.error('SSE连接错误:', error)
+          eventSource.close()
+          reject(new Error('SSE连接失败'))
+        }
+
       } catch (err) {
         reject(err)
       }

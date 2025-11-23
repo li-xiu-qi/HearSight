@@ -6,6 +6,7 @@ from .download_router import router as download_router
 from .progress_router import router as progress_router
 from .thumbnail_router import router as thumbnail_router
 from .transcript_router import router as transcript_router
+from .translate_router import router as translate_router
 from .upload_router import router as upload_router
 
 __all__ = [
@@ -14,5 +15,6 @@ __all__ = [
     "chat_router",
     "thumbnail_router",
     "progress_router",
+    "translate_router",
     "upload_router",
 ]

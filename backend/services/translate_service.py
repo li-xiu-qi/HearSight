@@ -10,8 +10,8 @@ from typing import Any, Callable, Dict, Optional
 from backend.db.transcript_crud import (get_translations, save_translations,
                                         update_transcript)
 from backend.text_process.translate import translate_segments_async
-
-translate_tasks: Dict[int, Dict[str, Any]] = {}
+from backend.startup import get_db_url
+from backend.routers.progress_router import redis_client
 
 
 async def start_translate_task(
@@ -19,22 +19,45 @@ async def start_translate_task(
     segments: list,
     target_lang_code: str,
     max_tokens: int,
-    api_key: str,
-    base_url: str,
-    model: str,
     source_lang_code: str,
     source_lang_display_name: str,
     target_lang_display_name: str,
-    db_url: str,
     force_retranslate: bool = False,
 ) -> Dict[str, Any]:
     """启动翻译任务"""
     logging.info(
-        f"翻译请求开始 - transcript_id: {transcript_id}, target_lang_code: {target_lang_code}"
+        f"翻译请求开始 - transcript_id: {transcript_id}, target_lang_code: {target_lang_code}, force_retranslate: {force_retranslate}"
     )
 
-    # 初始化任务状态
-    translate_tasks[transcript_id] = {
+    # 如果是强制重新翻译，清除之前的翻译结果
+    if force_retranslate:
+        db_url = get_db_url()
+        try:
+            # 清除数据库中的翻译结果
+            existing_translations = (
+                await asyncio.to_thread(get_translations, db_url, transcript_id) or {}
+            )
+            if target_lang_code in existing_translations:
+                del existing_translations[target_lang_code]
+                await asyncio.to_thread(save_translations, db_url, transcript_id, existing_translations)
+                logging.info(f"清除之前的翻译结果: {target_lang_code}")
+            
+            # 清除segments中的翻译内容
+            for seg in segments:
+                if seg.get("translation") and target_lang_code in seg.get("translation", {}):
+                    del seg["translation"][target_lang_code]
+                    # 如果translation为空，删除整个字段
+                    if not seg["translation"]:
+                        del seg["translation"]
+            
+            # 更新数据库中的segments
+            await asyncio.to_thread(update_transcript, db_url, transcript_id, segments)
+            logging.info(f"清除segments中的翻译内容: {target_lang_code}")
+        except Exception as e:
+            logging.warning(f"清除之前的翻译结果失败: {e}")
+
+    # 初始化任务状态到Redis（重置进度）
+    task_data = {
         "status": "translating",
         "progress": 0,
         "translated_count": 0,
@@ -42,6 +65,7 @@ async def start_translate_task(
         "target_lang_code": target_lang_code,
         "message": "翻译中...",
     }
+    redis_client.set(f"translate_task:{transcript_id}", json.dumps(task_data))
 
     # 启动后台翻译任务
     asyncio.create_task(
@@ -50,13 +74,9 @@ async def start_translate_task(
             segments,
             target_lang_code,
             max_tokens,
-            api_key,
-            base_url,
-            model,
             source_lang_code,
             source_lang_display_name,
             target_lang_display_name,
-            db_url,
             force_retranslate,
         )
     )
@@ -73,23 +93,20 @@ async def _background_translate(
     segments: list,
     target_lang_code: str,
     max_tokens: int,
-    api_key: str,
-    base_url: str,
-    model: str,
     source_lang_code: str,
     source_lang_display_name: str,
     target_lang_display_name: str,
-    db_url: str,
     force_retranslate: bool = False,
 ):
     """后台翻译任务"""
+    db_url = get_db_url()
     try:
         total_count = len(segments)
 
         def progress_callback(translated_count: int, total: int):
             """更新翻译进度"""
             progress = round(translated_count / total * 100) if total > 0 else 0
-            translate_tasks[transcript_id] = {
+            task_data = {
                 "status": "translating",
                 "progress": progress,
                 "translated_count": translated_count,
@@ -97,6 +114,7 @@ async def _background_translate(
                 "target_lang_code": target_lang_code,
                 "message": f"翻译进度：{translated_count}/{total_count}",
             }
+            redis_client.set(f"translate_task:{transcript_id}", json.dumps(task_data))
             logging.info(
                 f"翻译进度 - {translated_count}/{total_count} ({progress:.1f}%)"
             )
@@ -105,9 +123,6 @@ async def _background_translate(
         logging.info(f"开始翻译 {total_count} 个分句")
         translated_segments = await translate_segments_async(
             segments,
-            api_key=api_key,
-            base_url=base_url,
-            model=model,
             target_lang_code=target_lang_code,
             source_lang_code=source_lang_code,
             max_tokens=max_tokens,
@@ -158,7 +173,7 @@ async def _background_translate(
         if success_update_segments and success_save_trans:
             translated_count = len(translations_dict[target_lang_code])
             logging.info(f"最终统计: {translated_count}/{total_count} 个分句已翻译")
-            translate_tasks[transcript_id] = {
+            task_data = {
                 "status": "completed",
                 "progress": 100,
                 "translated_count": translated_count,
@@ -166,9 +181,10 @@ async def _background_translate(
                 "target_lang_code": target_lang_code,
                 "message": f"翻译完成：{translated_count}/{total_count}",
             }
+            redis_client.set(f"translate_task:{transcript_id}", json.dumps(task_data))
             logging.info(f"翻译完成 - {translated_count}/{total_count}")
         else:
-            translate_tasks[transcript_id] = {
+            task_data = {
                 "status": "error",
                 "progress": 0,
                 "translated_count": 0,
@@ -176,11 +192,12 @@ async def _background_translate(
                 "target_lang_code": target_lang_code,
                 "message": "保存到数据库失败",
             }
+            redis_client.set(f"translate_task:{transcript_id}", json.dumps(task_data))
             logging.error(f"保存翻译结果失败")
 
     except Exception as e:
         logging.error(f"翻译出错: {e}")
-        translate_tasks[transcript_id] = {
+        task_data = {
             "status": "error",
             "progress": 0,
             "translated_count": 0,
@@ -188,11 +205,13 @@ async def _background_translate(
             "target_lang_code": target_lang_code,
             "message": str(e),
         }
+        redis_client.set(f"translate_task:{transcript_id}", json.dumps(task_data))
 
 
 def get_translate_progress(transcript_id: int) -> Dict[str, Any]:
     """获取翻译进度"""
-    if transcript_id not in translate_tasks:
+    task_data_json = redis_client.get(f"translate_task:{transcript_id}")
+    if not task_data_json:
         return {
             "status": "idle",
             "progress": 0,
@@ -201,4 +220,13 @@ def get_translate_progress(transcript_id: int) -> Dict[str, Any]:
             "message": "未进行翻译",
         }
 
-    return translate_tasks[transcript_id]
+    try:
+        return json.loads(task_data_json)
+    except json.JSONDecodeError:
+        return {
+            "status": "error",
+            "progress": 0,
+            "translated_count": 0,
+            "total_count": 0,
+            "message": "进度数据格式错误",
+        }

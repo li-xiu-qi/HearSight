@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
-import type { Segment } from "@/types"
+import type { Segment, TranscriptMeta } from "@/types"
 import type { ChatMessage } from "../ChatView"
+import { fetchTranscripts } from "@/services/transcriptService"
 import {
   useScrollHandlers,
   useSegmentHandlers,
@@ -31,10 +32,8 @@ export const useRightPanelController = ({
   const [searchTerm, setSearchTerm] = useState("")
   const [searchResults, setSearchResults] = useState<Segment[]>([])
   const [displaySegments, setDisplaySegments] = useState<Segment[]>(segments)
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
-  const [chatLoading, setChatLoading] = useState(false)
-  const [chatError, setChatError] = useState<string | null>(null)
   const [translateDialogOpen, setTranslateDialogOpen] = useState(false)
+  const [availableTranscripts, setAvailableTranscripts] = useState<TranscriptMeta[]>([])
 
   const {
     segmentsScrollRef,
@@ -82,6 +81,19 @@ export const useRightPanelController = ({
     setDisplaySegments(segments)
   }, [segments])
 
+  // 加载可用的转写记录
+  useEffect(() => {
+    const loadTranscripts = async () => {
+      try {
+        const response = await fetchTranscripts()
+        setAvailableTranscripts(response.items)
+      } catch (error) {
+        console.error('加载转写记录失败:', error)
+      }
+    }
+    loadTranscripts()
+  }, [])
+
   // 当 transcriptId 变化时自动加载已保存的总结
   useEffect(() => {
     if (!transcriptId) {
@@ -121,12 +133,6 @@ export const useRightPanelController = ({
     summariesError,
     triggerSummaryGeneration,
     hasSavedSummaries,
-    chatMessages,
-    setChatMessages,
-    chatLoading,
-    setChatLoading,
-    chatError,
-    setChatError,
     translateDialogOpen,
     setTranslateDialogOpen,
     displayLanguage,
@@ -145,5 +151,6 @@ export const useRightPanelController = ({
     transcriptScrollRef,
     centerActiveSegment,
     handleLoadSavedSummaries,
+    availableTranscripts,
   }
 }

@@ -16,6 +16,7 @@ from backend.routers import (
     progress_router,
     thumbnail_router,
     transcript_router,
+    translate_router,
     upload_router,
 )
 
@@ -56,11 +57,12 @@ def create_app(static_dir: Path, db_url: str | None) -> FastAPI:
     app.state.db_url = db_url
 
     # 注册路由
-    app.include_router(download_router)
-    app.include_router(transcript_router)
-    app.include_router(chat_router)
-    app.include_router(thumbnail_router)
-    app.include_router(progress_router)
-    app.include_router(upload_router)
+    app.include_router(download_router, prefix="/api")
+    app.include_router(transcript_router, prefix="/api")
+    app.include_router(chat_router, prefix="/api")
+    app.include_router(thumbnail_router, prefix="/api")
+    app.include_router(progress_router, prefix="/api")
+    app.include_router(translate_router, prefix="/api")
+    app.include_router(upload_router, prefix="/api")
 
     return app

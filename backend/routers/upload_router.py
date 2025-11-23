@@ -13,6 +13,8 @@ from typing_extensions import TypedDict
 
 from backend.services.upload_service import (create_audio_placeholder,
                                              get_unique_filename)
+from backend.db.transcript_base_crud import update_transcript_audio_path
+from backend.db.job_result_store import update_job_result_paths
 from backend.queues.tasks import process_job_task
 
 
@@ -62,7 +64,7 @@ class RenameFileResponse(TypedDict):
 
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api", tags=["upload"])
+router = APIRouter(tags=["upload"])
 
 SUPPORTED_VIDEO_FORMATS = {".mp4", ".avi", ".mov", ".mkv", ".flv", ".wmv", ".webm"}
 SUPPORTED_AUDIO_FORMATS = {".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".wma"}

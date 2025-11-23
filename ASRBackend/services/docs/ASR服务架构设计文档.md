@@ -11,6 +11,10 @@ ASR（Automatic Speech Recognition）服务是 HearSight 项目中的核心音�
 ASR 服务由以下核心组件构成：
 
 - **ASRService**: 核心服务类，提供三种主要的转录方法
+- **ASRProvider**: 抽象提供者接口，定义了统一的ASR服务接口
+- **LocalASRProvider**: 本地ASR提供者实现，使用FunASR本地模型
+- **CloudASRProvider**: 云端ASR提供者实现，使用DashScope API
+- **ASRProviderFactory**: 提供者工厂类，根据配置创建对应的提供者实例
 - **配置管理**: 基于 Pydantic 的环境变量配置系统
 - **外部服务集成**: DashScope API 和 Supabase 存储服务
 
@@ -29,19 +33,25 @@ graph TB
     A[客户端请求] --> B[ASR Router]
     B --> C[ASR Service]
 
-    C --> D{工作模式判断}
-    D -->|本地模式| E[本地模型处理]
-    D -->|云端模式| F[Supabase 上传]
+    C --> D[ASR Provider Factory]
+    D --> E{工作模式判断}
+    E -->|本地模式| F[Local ASR Provider]
+    E -->|云端模式| G[Cloud ASR Provider]
 
-    F --> G[DashScope API]
-    E --> H[FunASR 本地模型]
+    F --> H[FunASR 本地模型]
+    G --> I[DashScope API]
 
-    G --> I[转录结果]
-    H --> I
+    G --> J[Supabase 上传]
+    J --> I
 
-    I --> J[结果格式化]
-    J --> K[Supabase 清理]
-    K --> L[返回客户端]
+    H --> K[转录结果]
+    I --> K
+
+    K --> L[结果格式化]
+    L --> M[返回客户端]
+    
+    G --> N[Supabase 清理]
+    N --> M
 ```
 
 ## 数据流设计
@@ -53,14 +63,20 @@ sequenceDiagram
     participant Client
     participant Router
     participant ASRService
+    participant ProviderFactory
+    participant Provider
     participant DashScope
 
     Client->>Router: POST /transcribe/url
     Router->>ASRService: transcribe_from_url(url)
-    ASRService->>DashScope: 提交转录任务
-    DashScope-->>ASRService: 任务ID
-    ASRService->>DashScope: 轮询任务状态
-    DashScope-->>ASRService: 转录结果
+    ASRService->>ProviderFactory: get_provider()
+    ProviderFactory->>Provider: CloudASRProvider
+    ASRService->>Provider: transcribe_url(url)
+    Provider->>DashScope: 提交转录任务
+    DashScope-->>Provider: 任务ID
+    Provider->>DashScope: 轮询任务状态
+    DashScope-->>Provider: 转录结果
+    Provider-->>ASRService: 格式化结果
     ASRService-->>Router: 格式化结果
     Router-->>Client: JSON响应
 ```
@@ -72,17 +88,23 @@ sequenceDiagram
     participant Client
     participant Router
     participant ASRService
+    participant ProviderFactory
+    participant Provider
     participant Supabase
     participant DashScope
 
     Client->>Router: POST /transcribe/upload
     Router->>ASRService: transcribe_from_file_with_upload(data, filename)
+    ASRService->>ProviderFactory: get_provider()
+    ProviderFactory->>Provider: CloudASRProvider
     ASRService->>Supabase: 上传音频文件
     Supabase-->>ASRService: 公开URL
-    ASRService->>DashScope: 提交URL转录任务
-    DashScope-->>ASRService: 任务ID
-    ASRService->>DashScope: 轮询任务状态
-    DashScope-->>ASRService: 转录结果
+    ASRService->>Provider: transcribe_url(url)
+    Provider->>DashScope: 提交URL转录任务
+    DashScope-->>Provider: 任务ID
+    Provider->>DashScope: 轮询任务状态
+    DashScope-->>Provider: 转录结果
+    Provider-->>ASRService: 格式化结果
     ASRService->>Supabase: 删除临时文件
     ASRService-->>Router: 格式化结果
     Router-->>Client: JSON响应

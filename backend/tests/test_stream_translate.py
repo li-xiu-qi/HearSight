@@ -30,9 +30,6 @@ async def main():
     
     result = await translate_segments_async(
         segments,
-        api_key=settings.openai_api_key,
-        base_url=settings.openai_base_url,
-        model=settings.openai_chat_model,
         target_language="zh",
         max_tokens=4096,
         source_lang_name="English",

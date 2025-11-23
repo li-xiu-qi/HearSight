@@ -63,6 +63,22 @@ class OpenAITokenCalculator(TokenCalculator):
     def count_tokens(self, text: str) -> int:
         # 对文本进行编码并返回token数量
         return len(self.encoding.encode(text))
+
+
+def count_segments_tokens(segments: List[Dict[str, any]]) -> int:
+    """
+    计算句子片段列表的总token数
+    
+    Args:
+        segments: 句子片段列表，每个片段应包含'sentence'字段
+        
+    Returns:
+        总token数
+    """
+    calculator = OpenAITokenCalculator()
+    # 仅统计句子文本，避免引入其他结构性字符的误差
+    text = "\n".join(s.get("sentence", "") for s in segments)
+    return calculator.count_tokens(text)
 # 测试下moonshotai/Kimi-K2-Instruct
 if __name__ == "__main__":
     calculator = TransformerTokenCalculator(model_name="deepseek-ai/DeepSeek-V3-0324")

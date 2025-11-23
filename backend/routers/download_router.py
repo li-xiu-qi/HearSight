@@ -51,7 +51,7 @@ class DownloadStartedResponse(TypedDict):
 DownloadResponse = Union[DownloadDuplicateResponse, DownloadStartedResponse]
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api", tags=["download"])
+router = APIRouter(tags=["download"])
 
 
 @router.post("/download")

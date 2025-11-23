@@ -38,7 +38,7 @@ class ProgressData(TypedDict, total=False):
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api", tags=["progress"])
+router = APIRouter(tags=["progress"])
 
 # Redis连接，用于存储任务进度
 # 优先使用 Celery 的 result backend（如配置），可通过 settings.celery_result_backend 修改

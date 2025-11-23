@@ -27,6 +27,9 @@ litellm
 # 向量数据库
 chromadb
 
+# ReAct 相关依赖
+fastmcp
+
 black
 isort
 pylint

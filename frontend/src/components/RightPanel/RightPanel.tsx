@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { Segment } from "@/types"
-import ChatView from "./ChatView"
+import SessionBasedChat from "./SessionBasedChat"
 import SegmentsTab from "./SegmentsTab"
 import TranscriptTab from "./TranscriptTab"
 import SummariesTab from "./SummariesTab"
@@ -42,12 +42,6 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
       summariesError,
       triggerSummaryGeneration,
       hasSavedSummaries,
-      chatMessages,
-      setChatMessages,
-      chatLoading,
-      setChatLoading,
-      chatError,
-      setChatError,
       translateDialogOpen,
       setTranslateDialogOpen,
       displayLanguage,
@@ -62,6 +56,7 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
       segmentsScrollRef,
       transcriptScrollRef,
       centerActiveSegment,
+      availableTranscripts,
     } = useRightPanelController({
       segments,
       onActiveSegmentChange,
@@ -161,17 +156,7 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
             </TabsContent>
 
             <TabsContent value="chat" className="h-full m-0 data-[state=inactive]:hidden">
-              <ChatView
-                messages={chatMessages}
-                loading={chatLoading}
-                error={chatError}
-                onMessagesChange={setChatMessages}
-                onLoadingChange={setChatLoading}
-                onErrorChange={setChatError}
-                onSeekTo={onSeekTo}
-                transcriptId={transcriptId}
-                mediaType={mediaType}
-              />
+              <SessionBasedChat availableTranscripts={availableTranscripts} mediaType={mediaType} />
             </TabsContent>
           </div>
         </Tabs>

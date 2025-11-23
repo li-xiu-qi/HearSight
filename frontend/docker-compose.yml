@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hearsight-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-10000}:5173"
+    environment:
+      - BACKEND_HOST=host.docker.internal
+      - BACKEND_PORT=9999
+      - USE_DOCKER=false
+      - VITE_BACKEND_URL=http://host.docker.internal:9999
+      - VITE_USE_DOCKER=false
+    volumes:
+      - .:/app
+      - /app/node_modules

@@ -39,18 +39,31 @@ HearSight ASR Backend 提供语音识别功能的 RESTful API，支持本地和�
 - `file`: 音频文件（支持 .wav, .mp3, .m4a, .flac, .ogg）
 
 **响应**:
+成功响应:
 ```json
 {
+  "status": "success",
+  "text": "识别的完整文本内容",
+  "language": "检测到的语言代码，如zh、en等",
   "segments": [
     {
       "index": 0,
-      "spk_id": "string",
-      "sentence": "string",
+      "spk_id": "说话人ID",
+      "sentence": "识别的句子内容",
       "start_time": 0.0,
       "end_time": 5.0
     }
   ],
-  "text": "string"
+  "filename": "原始文件名"
+}
+```
+
+错误响应:
+```json
+{
+  "status": "error",
+  "error": "错误描述信息",
+  "filename": "原始文件名"
 }
 ```
 
@@ -64,18 +77,33 @@ HearSight ASR Backend 提供语音识别功能的 RESTful API，支持本地和�
 - `url`: 音频文件 URL
 
 **响应**:
+成功响应:
 ```json
 {
+  "status": "success",
+  "text": "识别的完整文本内容",
+  "language": "检测到的语言代码，如zh、en等",
   "segments": [
     {
       "index": 0,
-      "spk_id": "string",
-      "sentence": "string",
+      "spk_id": "说话人ID",
+      "sentence": "识别的句子内容",
       "start_time": 0.0,
       "end_time": 5.0
     }
   ],
-  "text": "string"
+  "filename": "从URL中提取的文件名",
+  "url": "原始请求的URL"
+}
+```
+
+错误响应:
+```json
+{
+  "status": "error",
+  "error": "错误描述信息",
+  "filename": "从URL中提取的文件名",
+  "url": "原始请求的URL"
 }
 ```
 
@@ -89,20 +117,31 @@ HearSight ASR Backend 提供语音识别功能的 RESTful API，支持本地和�
 - `file`: 音频文件（支持 .wav, .mp3, .m4a, .flac, .ogg）
 
 **响应**:
+成功响应:
 ```json
 {
+  "status": "success",
+  "text": "识别的完整文本内容",
+  "language": "检测到的语言代码，如zh、en等",
   "segments": [
     {
       "index": 0,
-      "spk_id": "string",
-      "sentence": "string",
+      "spk_id": "说话人ID",
+      "sentence": "识别的句子内容",
       "start_time": 0.0,
       "end_time": 5.0
     }
   ],
-  "text": "string",
-  "upload_url": "string"
+  "filename": "原始文件名",
+  "upload_url": "上传到Supabase后的公开访问URL"
 }
+```
 
-
+错误响应:
+```json
+{
+  "status": "error",
+  "error": "错误描述信息",
+  "filename": "原始文件名"
+}
 ```

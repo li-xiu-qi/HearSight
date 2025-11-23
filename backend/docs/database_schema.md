@@ -42,15 +42,39 @@ HearSight 系统使用 PostgreSQL 数据库存储任务处理和转写结果信�
 | segments_json | TEXT | NOT NULL | 句子片段数据（JSON格式） |
 | summaries_json | TEXT | NULL | 总结数据（JSON格式） |
 | translations_json | TEXT | NULL | 翻译结果（JSON格式，按语言代码组织） |
-| chat_messages_json | TEXT | NULL | 聊天消息数据（JSON格式） |
 | created_at | TIMESTAMP | NOT NULL DEFAULT now() | 创建时间 |
 | updated_at | TIMESTAMP | NOT NULL DEFAULT now() | 更新时间 |
+
+### 3. chat_sessions 表 - 聊天会话
+
+聊天会话表存储独立的对话会话信息。
+
+| 字段名 | 类型 | 约束 | 说明 |
+|--------|------|------|------|
+| id | SERIAL | PRIMARY KEY | 会话唯一标识 |
+| title | TEXT | NULL | 会话标题（可选，由用户或AI生成） |
+| created_at | TIMESTAMP | NOT NULL DEFAULT now() | 创建时间 |
+| updated_at | TIMESTAMP | NOT NULL DEFAULT now() | 更新时间 |
+
+### 4. chat_messages 表 - 聊天消息记录
+
+聊天消息表存储用户与AI的对话记录。
+
+| 字段名 | 类型 | 约束 | 说明 |
+|--------|------|------|------|
+| id | SERIAL | PRIMARY KEY | 消息唯一标识 |
+| session_id | INTEGER | NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE | 关联的会话ID |
+| message_type | TEXT | NOT NULL CHECK (message_type IN ('user', 'ai')) | 消息类型（'user' 或 'ai'） |
+| content | TEXT | NOT NULL | 消息内容 |
+| timestamp | BIGINT | NOT NULL | 消息时间戳（毫秒） |
+| created_at | TIMESTAMP | NOT NULL DEFAULT now() | 创建时间 |
 
 ## 表间关系
 
 ```mermaid
 erDiagram
     jobs ||--o{ transcripts : "处理结果关联"
+    chat_sessions ||--o{ chat_messages : "消息关联"
 
     jobs {
         integer id PK
@@ -71,9 +95,24 @@ erDiagram
         text segments_json "句子片段JSON"
         text summaries_json "总结数据JSON"
         text translations_json "翻译结果JSON"
-        text chat_messages_json "聊天消息JSON"
         timestamp created_at "创建时间"
         timestamp updated_at "更新时间"
+    }
+
+    chat_sessions {
+        integer id PK
+        text title "会话标题"
+        timestamp created_at "创建时间"
+        timestamp updated_at "更新时间"
+    }
+
+    chat_messages {
+        integer id PK
+        integer session_id FK "关联会话ID"
+        text message_type "消息类型(user/ai)"
+        text content "消息内容"
+        bigint timestamp "消息时间戳"
+        timestamp created_at "创建时间"
     }
 ```
 
@@ -103,7 +142,15 @@ erDiagram
 - **transcripts.translations_json**: 存储翻译结果，按语言代码组织
   - 结构: `{ "zh": [...], "en": [...] }`
   - 每个翻译项包含：index、sentence、translation、start_time、end_time
-- **transcripts.chat_messages_json**: 存储聊天消息数据（用于对话功能）
+
+- **chat_messages表**: 存储用户与AI的对话记录
+  - 通过`session_id`与chat会话关联
+  - 支持消息类型区分（用户消息/AI回复）
+  - 按时间戳排序保证对话顺序
+
+- **chat_sessions表**: 存储独立的chat会话
+  - 每个会话可以关联多个transcripts（动态选择）
+  - 支持会话标题和时间管理
 
 ## 索引设计
 
@@ -115,6 +162,13 @@ erDiagram
 2. **transcripts表索引**:
    - `idx_transcripts_audio_path`: 在 `audio_path` 上创建索引，用于通过音频文件路径快速查找转写记录
    - `idx_transcripts_updated_at`: 在 `updated_at DESC` 上创建索引，用于按更新时间倒序查询转写记录
+
+3. **chat_sessions表索引**:
+   - `idx_chat_sessions_updated_at`: 在 `updated_at DESC` 上创建索引，用于按更新时间倒序查询会话
+
+4. **chat_messages表索引**:
+   - `idx_chat_messages_session_id`: 在 `session_id` 上创建索引，用于快速查找指定会话的聊天消息
+   - `idx_chat_messages_created_at`: 在 `created_at DESC` 上创建索引，用于按创建时间倒序查询消息
 
 ## 业务规则
 
