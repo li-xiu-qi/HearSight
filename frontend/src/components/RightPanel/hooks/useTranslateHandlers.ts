@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
-import { translateTranscriptStream, fetchTranscriptDetail, getTranslations } from '../../../services/api'
+import { translateTranscriptStream, getTranslations } from '../../../services/translateService'
+import { fetchTranscriptDetail } from '../../../services/transcriptService'
 import { toast } from 'sonner'
 import type { TranslateProgress } from '../types'
 import type { Segment } from '../../../types'

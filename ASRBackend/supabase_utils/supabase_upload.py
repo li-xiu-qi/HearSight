@@ -18,6 +18,12 @@ from supabase import create_client, Client
 _supabase_client: Optional[Client] = None
 
 
+def reset_supabase_client():
+    """重置 Supabase 客户端，强制重新登录"""
+    global _supabase_client
+    _supabase_client = None
+
+
 def get_supabase_client() -> Optional[Client]:
     """获取或创建Supabase客户端（带缓存，避免重复登录）"""
     global _supabase_client
@@ -64,15 +70,6 @@ def upload_file_to_supabase(file_path: str, remote_path: Optional[str] = None) -
     Returns:
         (success: bool, result: str, uuid_name: str) - 成功时result为URL，uuid_name为生成的UUID文件名，失败时result为错误信息
     """
-    # 获取客户端
-    client = get_supabase_client()
-    if client is None:
-        return False, "Supabase配置缺失", None
-
-    # 获取配置
-    bucket = settings.supabase_bucket_name
-    folder = settings.supabase_folder_name
-
     # 检查文件是否存在
     if not os.path.exists(file_path):
         return False, f"文件不存在: {file_path}", None
@@ -86,7 +83,7 @@ def upload_file_to_supabase(file_path: str, remote_path: Optional[str] = None) -
 
     # 确定远程路径
     if remote_path is None:
-        remote_path = f"{folder}/{uuid_name}"
+        remote_path = f"{settings.supabase_folder_name}/{uuid_name}"
 
     # 读取文件
     try:
@@ -95,26 +92,50 @@ def upload_file_to_supabase(file_path: str, remote_path: Optional[str] = None) -
     except Exception as e:
         return False, f"读取文件失败: {e}", None
 
-    # 上传
-    try:
-        response = client.storage.from_(bucket).upload(
-            path=remote_path,
-            file=file_data,
-            file_options={"content-type": "application/octet-stream", "upsert": "true"}
-        )
-        public_url = client.storage.from_(bucket).get_public_url(remote_path)
+    # 尝试上传，最多重试一次（如果认证失败）
+    for attempt in range(2):
+        try:
+            # 获取客户端
+            client = get_supabase_client()
+            if client is None:
+                return False, "Supabase配置缺失", None
 
-        # 记录文件名映射
-        # add_filename_mapping(original_file_name, uuid_name, remote_path)  # 转录场景不需要映射
+            bucket = settings.supabase_bucket_name
 
-        print(f"上传成功，公开 URL: {public_url}")
-        print(f"原始文件名: {original_file_name} -> UUID文件名: {uuid_name}")
+            # 上传
+            response = client.storage.from_(bucket).upload(
+                path=remote_path,
+                file=file_data,
+                file_options={"content-type": "application/octet-stream", "upsert": "true"}
+            )
+            public_url = client.storage.from_(bucket).get_public_url(remote_path)
 
-        return True, public_url, uuid_name
-    except Exception as e:
-        error_msg = str(e)
-        print(f"上传失败: {error_msg}")
-        return False, error_msg, None
+            # 记录文件名映射
+            # add_filename_mapping(original_file_name, uuid_name, remote_path)  # 转录场景不需要映射
+
+            print(f"上传成功，公开 URL: {public_url}")
+            print(f"原始文件名: {original_file_name} -> UUID文件名: {uuid_name}")
+
+            return True, public_url, uuid_name
+
+        except Exception as e:
+            error_msg = str(e)
+            print(f"上传失败 (尝试 {attempt + 1}): {error_msg}")
+
+            # 检查是否是认证错误
+            if "jwt expired" in error_msg.lower() or "unauthorized" in error_msg.lower() or "403" in error_msg:
+                if attempt == 0:
+                    print("检测到认证错误，重置客户端并重试...")
+                    reset_supabase_client()
+                    continue
+                else:
+                    return False, f"认证失败，请检查 Supabase 配置: {error_msg}", None
+            else:
+                # 其他错误，不重试
+                return False, error_msg, None
+
+    # 不应该到达这里
+    return False, "上传失败", None
 
 
 def delete_file_from_supabase(uuid_name: str) -> bool:
@@ -126,34 +147,49 @@ def delete_file_from_supabase(uuid_name: str) -> bool:
     Returns:
         bool: 删除是否成功
     """
-    try:
-        # 获取客户端
-        client = get_supabase_client()
-        if not client:
-            print("Supabase 客户端初始化失败")
-            return False
+    # 构建远程路径（uuid_name 已经包含完整的文件名和扩展名）
+    remote_path = f"{settings.supabase_folder_name}/{uuid_name}"
 
-        bucket = settings.supabase_bucket_name
-        folder = settings.supabase_folder_name
+    # 尝试删除，最多重试一次
+    for attempt in range(2):
+        try:
+            # 获取客户端
+            client = get_supabase_client()
+            if not client:
+                print("Supabase 客户端初始化失败")
+                return False
 
-        # 构建远程路径（uuid_name 已经包含完整的文件名和扩展名）
-        remote_path = f"{folder}/{uuid_name}"
+            bucket = settings.supabase_bucket_name
 
-        # 删除文件
-        response = client.storage.from_(bucket).remove([remote_path])
+            # 删除文件
+            response = client.storage.from_(bucket).remove([remote_path])
 
-        if response:
-            print(f"Supabase 文件删除成功: {remote_path}")
+            if response:
+                print(f"Supabase 文件删除成功: {remote_path}")
 
-            # 从映射表中移除记录（转录场景不需要）
-            # remove_filename_mapping(uuid_name)
+                # 从映射表中移除记录（转录场景不需要）
+                # remove_filename_mapping(uuid_name)
 
-            return True
-        else:
-            print(f"Supabase 文件删除失败: {remote_path}")
-            return False
+                return True
+            else:
+                print(f"Supabase 文件删除失败: {remote_path}")
+                return False
 
-    except Exception as e:
-        error_msg = str(e)
-        print(f"删除 Supabase 文件失败: {error_msg}")
-        return False
+        except Exception as e:
+            error_msg = str(e)
+            print(f"删除 Supabase 文件失败 (尝试 {attempt + 1}): {error_msg}")
+
+            # 检查是否是认证错误
+            if "jwt expired" in error_msg.lower() or "unauthorized" in error_msg.lower() or "403" in error_msg:
+                if attempt == 0:
+                    print("检测到认证错误，重置客户端并重试...")
+                    reset_supabase_client()
+                    continue
+                else:
+                    print(f"认证失败，无法删除文件: {error_msg}")
+                    return False
+            else:
+                # 其他错误，不重试
+                return False
+
+    return False

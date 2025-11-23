@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """路由模块统一入口"""
 
-from .chat_router import router as chat_router
+from .chat import router as chat_router
 from .download_router import router as download_router
 from .progress_router import router as progress_router
 from .thumbnail_router import router as thumbnail_router

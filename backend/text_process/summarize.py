@@ -6,7 +6,6 @@ import json
 import os
 from typing import Dict, List, Any
 
-import tiktoken
 import litellm
 
 # 动态导入配置
@@ -21,22 +20,22 @@ except ImportError:
     from backend.config import settings
     from backend.schemas import Segment, SummaryItem
 
+from backend.utils.token_utils.calculate_tokens import OpenAITokenCalculator
 
-def _count_tokens_for_segments(
-    segments: List[Segment], encoding_name: str = "cl100k_base"
-) -> int:
+
+def _count_tokens_for_segments(segments: List[Segment]) -> int:
     """
     最小实现：仅按文本字段统计 token 数。
-    说明：不同模型的编码可能不同，这里采用通用的 cl100k_base 以近似估计。
+    使用统一的 OpenAI token 计算器。
     """
-    enc = tiktoken.get_encoding(encoding_name)
+    calculator = OpenAITokenCalculator()
     # 仅统计句子文本，避免引入其他结构性字符的误差
     text = "\n".join(s.get("sentence", "") for s in segments)
-    return len(enc.encode(text))
+    return calculator.count_tokens(text)
 
 
 def _split_segments_by_output_tokens(
-    segments: List[Segment], max_tokens: int = 4096, encoding_name: str = "cl100k_base"
+    segments: List[Segment], max_tokens: int = 4096
 ) -> List[List[Segment]]:
     """
     根据预估的总结输出token数，将分句分批。
@@ -44,14 +43,13 @@ def _split_segments_by_output_tokens(
     参数:
     - segments: 要分批的分句列表
     - max_tokens: 每批最大输出token数（默认4096）
-    - encoding_name: 编码方式
 
     返回: 分批后的分句列表
     """
     if not segments:
         return []
 
-    enc = tiktoken.get_encoding(encoding_name)
+    calculator = OpenAITokenCalculator()
     batches = []
     current_batch = []
     current_output_tokens = 0

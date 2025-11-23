@@ -51,7 +51,7 @@ function HeaderBar({
         <form onSubmit={onSubmit} className="flex-1 max-w-2xl flex items-center gap-2">
           <Input
             type="text"
-            placeholder="输入 bilibili.com 视频链接"
+            placeholder="输入 B站、YouTube、小宇宙的音视频链接"
             value={inputUrl}
             onChange={(event) => onInputUrlChange(event.target.value)}
             className="flex-1"

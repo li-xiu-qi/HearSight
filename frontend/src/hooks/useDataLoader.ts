@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { fetchTranscripts, fetchTranscriptDetail } from '../services/api'
+import { fetchTranscripts, fetchTranscriptDetail } from '../services/transcriptService'
 import { extractFilename } from '../utils'
 import type { Segment, TranscriptMeta, JobItem } from '../types'
 

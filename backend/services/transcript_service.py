@@ -11,6 +11,28 @@ from backend.db.transcript_crud import (delete_transcript, get_summaries,
                                         get_transcript_by_id, get_translations)
 from backend.db.transcript_query import (count_transcripts,
                                          list_transcripts_meta)
+from backend.services.knowledge_base_service import knowledge_base
+
+
+async def get_transcript_metadata_async(db_url: str, transcript_id: int) -> Dict[str, Any]:
+    """获取转写记录的基本元数据（用于知识库）"""
+    data = await asyncio.to_thread(get_transcript_by_id, db_url, transcript_id)
+    if not data:
+        return None
+
+    # 只返回基本元数据，不包含大数据字段
+    metadata = {
+        "transcript_id": data.get("id"),
+        "audio_path": data.get("audio_path"),
+        "video_path": data.get("video_path"),
+        "media_type": data.get("media_type"),
+        "created_at": data.get("created_at"),
+        "updated_at": data.get("updated_at"),
+        "has_summary": bool(data.get("summaries_json")),
+        "has_translation": bool(data.get("translations_json")),
+        "has_chat_messages": bool(data.get("chat_messages_json"))
+    }
+    return metadata
 
 
 async def list_transcripts_async(
@@ -96,6 +118,16 @@ async def delete_transcript_async(
             return None
 
         logging.info(f"已删除转写记录: {transcript_id}")
+
+        # 第三步：删除向量数据库中的相关向量
+        try:
+            # 使用条件删除：直接按 transcript_id 删除所有相关向量（高效推荐方式）
+            knowledge_base.collection.delete(where={"transcript_id": transcript_id})
+            logging.info(f"已删除向量数据库中 transcript_id={transcript_id} 的所有向量块")
+        except Exception as e:
+            error_msg = f"删除向量数据库失败: {str(e)}"
+            errors.append(error_msg)
+            logging.error(error_msg)
 
         # 返回结果
         message_parts = []

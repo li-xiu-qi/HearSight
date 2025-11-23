@@ -17,7 +17,7 @@ interface RightPanelProps {
   readonly segments: Segment[]
   readonly activeSegIndex: number | null
   readonly autoScroll: boolean
-  readonly onSeekTo: (timeMs: number) => void
+  readonly onSeekTo: (timeMs: number, transcriptId?: number) => void
   readonly onActiveSegmentChange: (index: number) => void
   readonly transcriptId?: number
   readonly mediaType?: string

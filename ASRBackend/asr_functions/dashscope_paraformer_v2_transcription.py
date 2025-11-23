@@ -204,10 +204,22 @@ def transcribe_audio_from_url(
                 return {"status": "error", "error": f"获取结果异常: {str(e)}"}
 
         elif task_status == "FAILED":
+            # 获取详细错误信息，尝试多种可能的字段
+            error_details = (
+                result.get("errors") or
+                result.get("error") or
+                result.get("error_message") or
+                result.get("message") or
+                result.get("failure_reason") or
+                str(result)  # 如果都没有，返回整个result的字符串
+            )
+            print(f"转录任务失败，完整结果: {result}")
+            print(f"转录任务失败，详细错误: {error_details}")
             return {
                 "status": "error",
                 "error": "转录任务失败",
                 "task_status": task_status,
+                "errors": error_details,
             }
 
         time.sleep(interval)

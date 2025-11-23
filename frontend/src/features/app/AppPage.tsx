@@ -54,7 +54,11 @@ function AppPage() {
     videoRef,
   })
 
-  const handleSeekTo = (timeMs: number) => {
+  const handleSeekTo = (timeMs: number, transcriptId?: number) => {
+    if (transcriptId && transcriptId !== activeTranscriptId) {
+      // 切换视频
+      loadTranscriptDetail(transcriptId)
+    }
     if (videoRef.current) {
       videoRef.current.currentTime = timeMs / 1000
     }

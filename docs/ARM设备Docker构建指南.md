@@ -31,15 +31,19 @@ flowchart TD
 
 HearSight项目提供多个docker-compose文件，根据运行环境选择：
 
-- **docker-compose.cloud.yml**：适用于Windows主机，使用build指令构建镜像。
-- **docker-compose.cloud.linux.yml**：适用于Linux主机，使用build指令构建镜像。
-- **docker-compose.cloud.arm.linux.yml**：适用于ARM Linux设备，使用预构建的image指令。
+- **docker-compose.cloud.yml**：适用于Windows主机，使用build指令构建镜像，云端ASR模式。
+- **docker-compose.cloud.linux.yml**：适用于Linux主机，使用build指令构建镜像，云端ASR模式。
+- **docker-compose.cloud.arm.linux.yml**：适用于ARM Linux设备，使用预构建的image指令，云端ASR模式。
+- **docker-compose.local.yml**：适用于Linux主机，使用build指令构建镜像，本地ASR模式（需要CUDA支持）。
 
-根据主机操作系统选择相应文件：
+根据主机操作系统和ASR模式选择相应文件：
 
-- Windows：使用docker-compose.cloud.yml
-- Linux：使用docker-compose.cloud.linux.yml
-- 交叉编译到ARM：使用docker-compose.cloud.arm.linux.yml
+- Windows（云端ASR）：使用docker-compose.cloud.yml
+- Linux（云端ASR）：使用docker-compose.cloud.linux.yml
+- ARM Linux（云端ASR）：使用docker-compose.cloud.arm.linux.yml
+- Linux（本地ASR）：使用docker-compose.local.yml
+
+**重要说明**：对于ARM设备，推荐优先使用云端模式的docker-compose文件（如docker-compose.cloud.arm.linux.yml），因为本地的语音识别docker需要依赖CUDA，而ARM设备上CUDA支持有限或配置复杂。云端模式使用阿里云DashScope API，无需本地GPU资源。
 
 ## 配置环境变量
 

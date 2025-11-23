@@ -24,6 +24,8 @@ requests
 openai
 litellm
 
+# 向量数据库
+chromadb
 
 black
 isort

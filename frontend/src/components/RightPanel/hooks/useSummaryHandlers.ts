@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import type { Segment, Summary } from '../../../types'
-import { generateSummary, saveSummaries, getSummaries } from '../../../services/api'
+import { generateSummary, saveSummaries, getSummaries } from '../../../services/summaryService'
 
 export const useSummaryHandlers = () => {
   const [summaries, setSummaries] = useState<Summary[]>([])

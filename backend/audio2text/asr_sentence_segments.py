@@ -22,6 +22,9 @@ def _get_asr_mode() -> str:
     Returns:
         'local' 或 'cloud'
     """
+    if settings.asr_mode:
+        return settings.asr_mode
+    
     asr_url = settings.asr_backend_url.rstrip("/")
     try:
         response = requests.get(f"{asr_url}/health", timeout=5)

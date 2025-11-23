@@ -15,14 +15,14 @@ import {
 } from "@/components/ui/dialog"
 import type { Summary } from "../../types"
 import { formatTime } from "../../utils"
-import { fetchThumbnail } from "../../services/api"
+import { fetchThumbnail } from "../../services/thumbnailService"
 
 interface SummariesTabProps {
   readonly summaries: Summary[]
   readonly loading: boolean
   readonly error: string | null
   readonly onGenerate: () => void
-  readonly onSeekTo: (timeMs: number) => void
+  readonly onSeekTo: (timeMs: number, transcriptId?: number) => void
   readonly transcriptId?: number
   readonly mediaType?: string
   readonly hasSavedSummaries: boolean

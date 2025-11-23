@@ -4,13 +4,12 @@
 """
 from typing import List
 
-import tiktoken
-
 from backend.schemas import Segment
+from backend.utils.token_utils.calculate_tokens import OpenAITokenCalculator
 
 
 def split_segments_by_output_tokens(
-    segments: List[Segment], max_tokens: int = 4096, encoding_name: str = "cl100k_base"
+    segments: List[Segment], max_tokens: int = 4096
 ) -> List[List[Segment]]:
     """
     根据预估的翻译输出token数和句子数量，将分句分批。
@@ -19,7 +18,6 @@ def split_segments_by_output_tokens(
     参数:
     - segments: 要分批的分句列表
     - max_tokens: 每批最大输出token数（默认4096）
-    - encoding_name: 编码方式
 
     返回: 分批后的分句列表
     """
@@ -36,7 +34,7 @@ def split_segments_by_output_tokens(
         batches.append(batch)
 
     # 如果某个批次过大（token 超限），则进一步拆分
-    enc = tiktoken.get_encoding(encoding_name)
+    calculator = OpenAITokenCalculator()
     final_batches = []
 
     for batch in batches:
@@ -44,7 +42,7 @@ def split_segments_by_output_tokens(
         total_tokens = 0
         for seg in batch:
             sentence = seg.get("sentence", "")
-            estimated_tokens = int(len(enc.encode(sentence)) * 1.5) + 20
+            estimated_tokens = int(calculator.count_tokens(sentence) * 1.5) + 20
             total_tokens += estimated_tokens
 
         # 如果在 token 限制内，直接使用
@@ -63,7 +61,7 @@ def split_segments_by_output_tokens(
 
             for seg in batch:
                 sentence = seg.get("sentence", "")
-                estimated_tokens = int(len(enc.encode(sentence)) * 1.5) + 20
+                estimated_tokens = int(calculator.count_tokens(sentence) * 1.5) + 20
 
                 if current_tokens + estimated_tokens > max_tokens and current_sub_batch:
                     final_batches.append(current_sub_batch)

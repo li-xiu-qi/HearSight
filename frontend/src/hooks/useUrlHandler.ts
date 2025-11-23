@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { message } from '../utils/message'
-import { startDownload } from '../services/api'
+import { startDownload } from '../services/downloadService'
 import { parseUrl } from '../utils'
 import type { ParseResult } from '../types'
 

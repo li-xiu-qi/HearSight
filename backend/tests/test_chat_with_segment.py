@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
 load_dotenv(dotenv_path=env_path)
 
-from backend.text_process.chat_with_segment import _build_prompt, chat_with_segments
+from backend.services.chat_service import chat_service
 from backend.schemas import Segment
 
 def test_build_prompt():
@@ -44,7 +44,7 @@ def test_build_prompt():
     question = "人工智能在哪些领域有应用？"
     
     # 构建提示词
-    prompt = _build_prompt(test_segments, question)
+    prompt = chat_service._build_prompt(test_segments, question)
     
     # 打印提示词
     print("构建的提示词:")
@@ -98,7 +98,7 @@ def test_chat_with_segments():
     
     try:
         # 调用聊天功能
-        response = chat_with_segments(
+        response = chat_service.chat_with_segments(
             segments=test_segments,
             question=question,
             api_key=api_key,

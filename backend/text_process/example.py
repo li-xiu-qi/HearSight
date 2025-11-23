@@ -15,7 +15,7 @@ import sys
 try:
     from config import settings
     from schemas import Segment
-    from text_process.chat_with_segment import chat_with_segments
+    from services.chat_service import chat_service
     from text_process.summarize import summarize_segments
     from text_process.translate import translate_segments_async as translate_segments
 except ImportError:
@@ -25,7 +25,7 @@ except ImportError:
         sys.path.insert(0, backend_dir)
     from config import settings
     from schemas import Segment
-    from text_process.chat_with_segment import chat_with_segments
+    from services.chat_service import chat_service
     from text_process.summarize import summarize_segments
     from text_process.translate import translate_segments_async as translate_segments
 
@@ -70,7 +70,7 @@ def example_chat_with_segments():
 
     try:
         # 调用问答功能
-        response = chat_with_segments(
+        response = chat_service.chat_with_segments(
             segments=segments,
             question=question,
             api_key=api_key,

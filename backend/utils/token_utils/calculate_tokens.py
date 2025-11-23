@@ -25,7 +25,7 @@ _global_tokenizers = {}
 
 class TransformerTokenCalculator(TokenCalculator):
     """
-    基于Transformer模型的token计算器，默认使用Qwen/Qwen3-32B模型
+    基于Transformer模型的token计算器
     # Qwen/Qwen3-32B
     # Qwen/Qwen3-Embedding-0.6B
     # moonshotai/Kimi-K2-Instruct # 这个似乎不可用

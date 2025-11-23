@@ -7,10 +7,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { MoreHorizontal, FileText, RefreshCw } from 'lucide-react'
+import { MoreHorizontal, FileText, RefreshCw } from "lucide-react";
 import type { TranscriptMeta } from '../../types'
 import { extractFilename } from '../../utils'
-import { deleteTranscriptComplete } from '../../services/api'
+import { deleteTranscriptComplete } from '../../services/transcriptService'
 import { message } from '../../utils/message'
 import FileRenameDialog from '../FileRenameDialog'
 

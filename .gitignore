@@ -121,3 +121,5 @@ docs/architecture
 docker-compose-xuanyuan.yml
 backend/media_processing/**/download_results/
 backend/media_processing/**/datas/
+
+.lingma/

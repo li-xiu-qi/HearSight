@@ -49,11 +49,11 @@ class Settings(BaseSettings):
     embedding_rpm: Optional[int] = None
 
     # --- 其他：B站 Cookie 等 ---
-    bilibili_sessdata: Optional[str] = None
     downloads_dir: str = os.path.join(os.path.dirname(os.path.dirname(__file__)), "app_datas", "download_videos")
 
     # --- ASRBackend 服务 ---
     asr_backend_url: str = "http://localhost:8003"
+    asr_mode: Optional[str] = None  # 'local' 或 'cloud'，None表示自动检测
 
     # --- Celery 配置 ---
     celery_broker_url: str = "redis://localhost:6379/0"

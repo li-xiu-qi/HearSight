@@ -13,12 +13,70 @@ from __future__ import annotations
 import os
 import tempfile
 import logging
+import subprocess
 from typing import Any, Dict
 
 from providers import ASRProviderFactory
 from config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def validate_audio_file(file_path: str) -> bool:
+    """验证音频文件是否有效"""
+    try:
+        # 使用 ffprobe 检查音频文件（如果可用）
+        result = subprocess.run(
+            ['ffprobe', '-v', 'quiet', '-print_format', 'json', '-show_format', '-show_streams', file_path],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        if result.returncode == 0:
+            import json
+            info = json.loads(result.stdout)
+            # 检查是否有音频流
+            streams = info.get('streams', [])
+            has_audio = any(stream.get('codec_type') == 'audio' for stream in streams)
+            if has_audio:
+                logger.info(f"音频文件验证通过: {file_path}")
+                return True
+            else:
+                logger.warning(f"文件不包含音频流: {file_path}")
+                return False
+        else:
+            logger.warning(f"ffprobe 验证失败: {file_path}, 错误: {result.stderr}")
+            return False
+    except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError) as e:
+        logger.warning(f"音频文件验证异常: {file_path}, 错误: {e}")
+        # 如果没有 ffprobe，简单检查文件大小和扩展名
+        if os.path.getsize(file_path) > 1000:  # 至少1KB
+            ext = os.path.splitext(file_path)[1].lower()
+            if ext in ['.wav', '.mp3', '.m4a', '.aac', '.ogg', '.flac']:
+                logger.info(f"基本验证通过: {file_path}")
+                return True
+        return False
+
+
+def convert_audio_format(input_path: str, output_path: str, target_format: str = 'wav') -> bool:
+    """转换音频格式"""
+    try:
+        # 使用 ffmpeg 转换音频格式
+        result = subprocess.run(
+            ['ffmpeg', '-i', input_path, '-acodec', 'pcm_s16le', '-ar', '16000', '-ac', '1', output_path],
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+        if result.returncode == 0:
+            logger.info(f"音频格式转换成功: {input_path} -> {output_path}")
+            return True
+        else:
+            logger.error(f"音频格式转换失败: {input_path}, 错误: {result.stderr}")
+            return False
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        logger.error(f"音频格式转换异常: {input_path}, 错误: {e}")
+        return False
 
 
 class ASRService:
@@ -107,7 +165,7 @@ class ASRService:
 
         先将音频文件上传到 Supabase 云存储获得公开 URL，
         然后通过 DashScope 云端 API 进行语音识别。
-        适合需要文件存储和云端处理的场景。
+        自动验证和转换音频格式以提高兼容性。
 
         Args:
             audio_data: 音频文件二进制数据
@@ -117,6 +175,7 @@ class ASRService:
             识别结果字典，包含上传的 URL 信息
         """
         temp_file_path = None
+        converted_file_path = None
         uploaded_uuid = None
         try:
             # 1. 保存临时文件
@@ -124,10 +183,33 @@ class ASRService:
                 temp_file.write(audio_data)
                 temp_file_path = temp_file.name
 
-            # 2. 上传到 Supabase
+            # 验证临时文件
+            if os.path.getsize(temp_file_path) == 0:
+                logger.error(f"上传的文件为空: {filename}")
+                return {
+                    "status": "error",
+                    "error": "上传的文件为空",
+                    "filename": filename,
+                }
+
+            logger.info(f"临时文件大小: {os.path.getsize(temp_file_path)} bytes")
+
+            # 2. 验证音频文件格式
+            file_to_upload = temp_file_path
+            if not validate_audio_file(temp_file_path):
+                logger.warning(f"音频文件验证失败，尝试转换格式: {filename}")
+                # 尝试转换格式
+                converted_file_path = temp_file_path + '_converted.wav'
+                if convert_audio_format(temp_file_path, converted_file_path):
+                    file_to_upload = converted_file_path
+                    filename = os.path.splitext(filename)[0] + '.wav'
+                else:
+                    logger.error(f"音频格式转换失败，使用原始文件: {filename}")
+
+            # 3. 上传到 Supabase
             from supabase_utils.supabase_upload import upload_file_to_supabase
 
-            success, result, uuid_name = upload_file_to_supabase(temp_file_path)
+            success, result, uuid_name = upload_file_to_supabase(file_to_upload)
 
             if not success:
                 logger.error(f"文件上传到 Supabase 失败 - 文件: {filename}, 错误: {result}")
@@ -139,14 +221,14 @@ class ASRService:
 
             uploaded_uuid = uuid_name  # 记录上传的UUID，用于后续清理
 
-            # 3. 获得 URL 后进行识别
+            # 4. 获得 URL 后进行识别
             url = result
             logger.info(f"文件上传成功 - 原始文件: {filename}, 远程路径文件: {uuid_name}, URL: {url}")
 
-            # 4. 调用 URL 识别方法
+            # 5. 调用 URL 识别方法
             transcribe_result = await cls.transcribe_from_url(url)
             
-            # 5. 添加上传信息到结果中
+            # 6. 添加上传信息到结果中
             transcribe_result["upload_url"] = url
 
             return transcribe_result
@@ -159,15 +241,16 @@ class ASRService:
                 "filename": filename,
             }
         finally:
-            # 6. 清理临时文件
-            if temp_file_path and os.path.exists(temp_file_path):
-                try:
-                    os.remove(temp_file_path)
-                    logger.debug(f"临时文件已清理: {temp_file_path}")
-                except Exception as e:
-                    logger.warning(f"清理临时文件失败: {temp_file_path}, 错误: {e}")
+            # 7. 清理临时文件
+            for temp_path in [temp_file_path, converted_file_path]:
+                if temp_path and os.path.exists(temp_path):
+                    try:
+                        os.remove(temp_path)
+                        logger.debug(f"临时文件已清理: {temp_path}")
+                    except Exception as e:
+                        logger.warning(f"清理临时文件失败: {temp_path}, 错误: {e}")
 
-            # 7. 删除 Supabase 上的文件
+            # 8. 删除 Supabase 上的文件
             if uploaded_uuid:
                 try:
                     from supabase_utils.supabase_upload import delete_file_from_supabase
