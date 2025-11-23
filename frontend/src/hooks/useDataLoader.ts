@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { fetchTranscripts, fetchTranscriptDetail } from '../services/transcriptService'
 import { extractFilename } from '../utils'
 import type { Segment, TranscriptMeta, JobItem } from '../types'
@@ -27,6 +27,9 @@ export const useDataLoader = (): UseDataLoaderReturn => {
   const [videoSrc, setVideoSrc] = useState<string | null>(null)
   const [mediaType, setMediaType] = useState<string>('video')
   const [activeTranscriptId, setActiveTranscriptId] = useState<number | null>(null)
+
+  // 跟踪已完成的job ids，避免重复刷新
+  const completedJobIdsRef = useRef<Set<number>>(new Set())
 
   const loadTranscripts = useCallback(async () => {
     try {
@@ -69,16 +72,27 @@ export const useDataLoader = (): UseDataLoaderReturn => {
       try {
         const progress = JSON.parse(evt.data)
         const jobId = progress.job_id
+        const status = progress.status
         setJobs(prev => {
           const idx = prev.findIndex(j => j.id === jobId)
           if (idx >= 0) {
             const newJobs = [...prev]
-            newJobs[idx] = { ...newJobs[idx], status: (progress.status as any) || newJobs[idx].status, progress }
+            const oldStatus = newJobs[idx].status
+            newJobs[idx] = { ...newJobs[idx], status: (status as any) || newJobs[idx].status, progress }
+            
+            // 如果任务从非完成状态变为完成状态，刷新transcripts
+            if ((oldStatus !== 'success' && oldStatus !== 'completed') && 
+                (status === 'success' || status === 'completed') &&
+                !completedJobIdsRef.current.has(jobId)) {
+              completedJobIdsRef.current.add(jobId)
+              loadTranscripts()
+            }
+            
             return newJobs
           }
           // 若 job 不存在，插入新条目
           const url = (progress.url as string) || ''
-          return [{ id: jobId, url, status: (progress.status as any) || 'processing', progress }, ...prev]
+          return [{ id: jobId, url, status: (status as any) || 'processing', progress }, ...prev]
         })
       } catch (err) {
         console.debug('解析SSE事件出错', err)
@@ -90,7 +104,7 @@ export const useDataLoader = (): UseDataLoaderReturn => {
     return () => {
       eventSource.close()
     }
-  }, [])
+  }, [loadTranscripts])
 
   return {
     segments,

@@ -35,7 +35,7 @@ function HeaderBar({
   onOpenUpload,
 }: HeaderBarProps) {
   return (
-    <header className="bg-white border-b border-slate-200 px-4 sticky top-0 z-50 shadow-sm">
+    <header className="bg-white border-b border-slate-200 px-4 sticky top-0 z-50 shadow-sm flex-shrink-0">
       <div className="h-14 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Button
