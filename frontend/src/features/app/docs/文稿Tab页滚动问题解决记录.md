@@ -78,18 +78,3 @@ if (element && scrollContainer) {
 - `frontend/src/components/RightPanel/RightPanel.tsx`：修改自动滚动逻辑
 - `frontend/src/components/RightPanel/hooks/useScrollHandlers.ts`：更新 centerActiveSegment 函数
 
-## 结果
-
-通过以上修改：
-- ✅ 文稿tab页的滚动被正确限制在组件内部
-- ✅ 不再出现页面级别的滚动
-- ✅ 字幕跳转时的自动滚动正常工作
-- ✅ 用户体验得到改善
-
-## 经验总结
-
-1. **组件一致性**：相同功能的组件应该使用相同的实现方式
-2. **滚动隔离**：使用专门的滚动组件可以有效防止滚动事件冒泡
-3. **手动滚动控制**：在复杂布局中，`scrollIntoView()` 可能不是最佳选择
-4. **测试不同场景**：滚动行为需要在不同tab页和交互场景下都进行测试</content>
-<parameter name="filePath">c:\Users\ke\Downloads\HearSight\frontend\src\features\app\docs\文稿Tab页滚动问题解决记录.md

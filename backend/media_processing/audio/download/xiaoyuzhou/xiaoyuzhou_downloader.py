@@ -18,7 +18,7 @@ if backend_dir not in sys.path:
 
 from config import settings
 
-from ....common_interfaces import DownloadResult
+from backend.common_interfaces import DownloadResult
 
 logger = logging.getLogger(__name__)
 

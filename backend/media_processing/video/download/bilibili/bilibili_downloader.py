@@ -22,7 +22,7 @@ if backend_dir not in sys.path:
 
 from config import settings
 
-from ....common_interfaces import DownloadResult
+from backend.common_interfaces import DownloadResult
 
 try:
     from . import bilibili_login_handler
