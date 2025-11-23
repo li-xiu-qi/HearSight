@@ -15,10 +15,9 @@ backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
-from .common_interfaces import DownloadResult
+from backend.common_interfaces import DownloadResult
 from .audio.download.xiaoyuzhou.xiaoyuzhou_downloader import XiaoyuzhouDownloader
 from .video.download.bilibili.bilibili_downloader import BilibiliDownloader
-from .video.download.youtube.youtube_downloader import YoutubeDownloader
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +94,7 @@ class MediaDownloaderFactory:
                 need_login=self.need_login
             )
         elif source_type == 'youtube':
+            from .video.download.youtube.youtube_downloader import YoutubeDownloader
             downloader = YoutubeDownloader(
                 output_dir=self.output_dir,
                 need_login=self.need_login

@@ -6,7 +6,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional
 
-from .common_interfaces import DownloadResult
+from backend.common_interfaces import DownloadResult
 from .audio.local.upload_handler import process_uploaded_audio, SUPPORTED_AUDIO_FORMATS
 from .video.local.upload_handler import process_uploaded_video, SUPPORTED_VIDEO_FORMATS
 

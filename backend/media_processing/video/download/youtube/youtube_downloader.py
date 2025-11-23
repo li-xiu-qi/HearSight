@@ -22,8 +22,6 @@ if backend_dir not in sys.path:
 
 from config import settings
 
-from ....common_interfaces import DownloadResult
-
 try:
     from . import youtube_login_handler
 except ImportError:
@@ -57,7 +55,7 @@ class YoutubeDownloader:
             else:
                 logger.debug("未设置登录且未找到保存的cookie，将作为匿名用户进行下载")
 
-    def download_video(self, url: str, progress_callback: Optional[Callable[[Dict], None]] = None) -> DownloadResult:
+    def download_video(self, url: str, progress_callback: Optional[Callable[[Dict], None]] = None):
         """
         下载YouTube视频
 
@@ -68,6 +66,7 @@ class YoutubeDownloader:
         Returns:
             DownloadResult: 下载结果
         """
+        from backend.common_interfaces import DownloadResult
         try:
             import yt_dlp
 
@@ -77,13 +76,13 @@ class YoutubeDownloader:
             with tempfile.TemporaryDirectory() as temp_dir:
                 ydl_opts = {
                     'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
-                    'format': 'best[ext=mp4]/best[height<=720]/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best',
+                    'format': 'best[ext=mp4]/best',
                     'quiet': False,
                     'no_warnings': False,
                     'socket_timeout': 30,
                     'extractor_retries': 3,
                     'skip_download': False,
-                    'fixup': 'never',
+                    'fixup': 'detect_or_warn',
                     'keepvideo': False,
                 }
 
@@ -169,8 +168,9 @@ class YoutubeDownloader:
                     files.append(filepath)
         return files
 
-    def _move_files_to_output(self, files: List[str], info: Dict) -> DownloadResult:
+    def _move_files_to_output(self, files: List[str], info: Dict):
         """移动文件到输出目录"""
+        from backend.common_interfaces import DownloadResult
         title = info.get('title', 'unknown')
         duration = info.get('duration')
 
@@ -271,7 +271,7 @@ def get_downloader(need_login: bool = False) -> YoutubeDownloader:
         _downloader = YoutubeDownloader(need_login=need_login)
     return _downloader
 
-def download_youtube_video(url: str, progress_callback: Optional[Callable[[Dict], None]] = None, need_login: bool = False) -> DownloadResult:
+def download_youtube_video(url: str, progress_callback: Optional[Callable[[Dict], None]] = None, need_login: bool = False):
     """
     下载YouTube视频的便捷函数
 
@@ -282,5 +282,6 @@ def download_youtube_video(url: str, progress_callback: Optional[Callable[[Dict]
     Returns:
         DownloadResult: 下载结果
     """
+    from backend.common_interfaces import DownloadResult
     downloader = get_downloader(need_login=need_login)
     return downloader.download_video(url, progress_callback)

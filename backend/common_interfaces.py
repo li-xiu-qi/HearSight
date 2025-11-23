@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""媒体处理通用接口定义"""
+"""通用接口定义"""
 
 from __future__ import annotations
 

@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from ...common_interfaces import DownloadResult
+from backend.common_interfaces import DownloadResult
 
 logger = logging.getLogger(__name__)
 
