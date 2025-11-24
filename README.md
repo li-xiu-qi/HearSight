@@ -6,7 +6,9 @@ HearSight 是一个音视频内容智能分析工具。通过集成先进的语�
 
 
 
-![B站视频介绍](https://www.bilibili.com/video/BV1D5UgBYEtC/?vd_source=325d9b8b91626b0afd2ef63a99caf970)
+<div style="text-align: center; margin: auto;">
+    <iframe src="//player.bilibili.com/player.html?isOutside=true&bvid=BV1D5UgBYEtC" width="720" height="405" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
+</div>
 
 项目地址：<https://github.com/li-xiu-qi/HearSight>
 
