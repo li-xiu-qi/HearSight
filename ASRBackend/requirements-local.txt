@@ -18,21 +18,9 @@ funasr>=0.4.0
 # Supabase 支持
 supabase
 
-# 深度学习框架 - 根据您的硬件选择对应版本
-# GPU 版本 (CUDA 12.1):
-# torch==2.1.0+cu121
-# torchaudio==2.1.0+cu121
-# 
-# GPU 版本 (CUDA 11.8):
-# torch==2.1.0+cu118
-# torchaudio==2.1.0+cu118
-#
-# CPU 版本:
-# torch==2.1.0
-# torchaudio==2.1.0
-
-# 请根据实际情况取消注释上面的一行，或运行:
-# pip install torch torchaudio -f https://download.pytorch.org/whl/torch_stable.html
+# 深度学习框架 - 已配置为 CUDA 11.8 版本
+torch==2.1.0+cu118
+torchaudio==2.1.0+cu118
 
 # 语言检测
 langdetect

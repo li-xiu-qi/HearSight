@@ -11,7 +11,7 @@ ENV ASR_MODE=local
 ENV PYTHONPATH=/app
 
 # 配置 pip 使用清华源
-RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip3 config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 复制项目文件
 COPY . .
@@ -26,7 +26,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # 安装 Python 依赖
-RUN pip install  -r requirements-local.txt
+RUN pip3 install -r requirements-local.txt
+
+# 安装带 CUDA 支持的 PyTorch 和 torchaudio
+RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
 
 # 创建必要的目录
 RUN mkdir -p cache
