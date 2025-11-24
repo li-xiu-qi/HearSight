@@ -40,89 +40,7 @@ class ChatService(ChatPromptService, ChatKnowledgeService):
         """初始化聊天服务"""
         pass
 
-    def chat_with_segments_stream(
-        self,
-        question: str,
-        transcript_id: int,
-        chat_max_windows: int = 1_000_000,
-        stream_callback: Optional[callable] = None,
-    ):
-        """
-        基于数据库转录内容进行智能问答（流式版本）。
-
-        Args:
-            question: 用户问题
-            transcript_id: 转录ID
-            chat_max_windows: 最大token限制
-            stream_callback: 流式回调函数，如果提供则使用回调，否则使用yield
-
-        生成器函数，逐个返回带有标记的文本片段。
-        标记格式：[chunk]文本内容[/chunk]
-        """
-        is_from_retrieval = False
-        filename = None
-
-        # 从数据库获取完整转录稿
-        from backend.db.transcript_crud import get_transcript_by_id
-        db_url = None  # connect_db 会使用环境变量
-        try:
-            full_transcript = get_transcript_by_id(db_url, transcript_id)
-        except Exception as e:
-            error_msg = f"[error]Failed to get transcript: {e}[/error]"
-            if stream_callback:
-                stream_callback(error_msg)
-            else:
-                yield error_msg
-            return
-        if not full_transcript or "segments" not in full_transcript:
-            error_msg = "[error]Transcript not found or has no segments[/error]"
-            if stream_callback:
-                stream_callback(error_msg)
-            else:
-                yield error_msg
-            return
-
-        full_segments = full_transcript["segments"]
-        full_tokens = self._count_tokens_for_segments(full_segments)
-        threshold = settings.llm_context_length or 100000
-        
-        # 获取文件名
-        import os
-        video_path = full_transcript.get("video_path")
-        audio_path = full_transcript.get("audio_path")
-        if video_path:
-            filename = os.path.basename(video_path)
-        elif audio_path:
-            filename = os.path.basename(audio_path)
-        
-        if full_tokens <= threshold:
-            # 直接使用完整转录稿
-            segments = full_segments
-            tokens = full_tokens
-        else:
-            # 使用知识库检索相关segments
-            is_from_retrieval = True
-            segments, filename = self._perform_knowledge_retrieval(question, transcript_id)
-            tokens = self._count_tokens_for_segments(segments)
-
-        if tokens > chat_max_windows:
-            error_msg = f"[error]Input tokens {tokens} exceed chat_max_windows {chat_max_windows}[/error]"
-            if stream_callback:
-                stream_callback(error_msg)
-            else:
-                yield error_msg
-            return
-
-        prompt = self._build_prompt(segments, question, is_from_retrieval=is_from_retrieval, filename=filename)
-
-        # 执行流式完成
-        for item in self._perform_streaming_completion(
-            prompt=prompt,
-            stream_callback=stream_callback
-        ):
-            yield item
-
-    def chat_with_multiple_transcripts_stream(
+    def chat_with_transcripts_stream(
         self,
         question: str,
         transcript_ids: List[int],
@@ -134,8 +52,8 @@ class ChatService(ChatPromptService, ChatKnowledgeService):
 
         Args:
             question: 用户问题
+            transcript_ids: 转录ID列表（支持单视频或多视频）
             chat_max_windows: 最大token限制
-            transcript_ids: 多个转录ID列表
             stream_callback: 流式回调函数，如果提供则使用回调，否则使用yield
 
         生成器函数，逐个返回带有标记的文本片段。
@@ -219,7 +137,6 @@ class ChatService(ChatPromptService, ChatKnowledgeService):
                     else:
                         yield chunk_msg
 
-            # print(f"[DEBUG] chat_service: LLM 响应完成")
             # 发送结束标记
             done_msg = "[done][/done]"
             if stream_callback:

@@ -213,7 +213,6 @@ def main():
         return
 
     # 运行同步示例
-    example_chat_with_segments()
     example_summarize_segments()
 
     # 运行异步示例

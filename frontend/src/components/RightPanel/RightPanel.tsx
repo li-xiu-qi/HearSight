@@ -156,7 +156,7 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
             </TabsContent>
 
             <TabsContent value="chat" className="h-full m-0 data-[state=inactive]:hidden">
-              <SessionBasedChat availableTranscripts={availableTranscripts} mediaType={mediaType} />
+              <SessionBasedChat availableTranscripts={availableTranscripts} mediaType={mediaType} currentTranscriptId={transcriptId} onSeekTo={onSeekTo} />
             </TabsContent>
           </div>
         </Tabs>

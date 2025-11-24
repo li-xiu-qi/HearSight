@@ -92,6 +92,7 @@ async def get_thumbnail(
             width=width,
         )
 
+        # Debug log removed to reduce noise. Use server-level debugging if required.
         if thumbnail_data is None:
             raise HTTPException(status_code=500, detail="生成缩略图失败")
 

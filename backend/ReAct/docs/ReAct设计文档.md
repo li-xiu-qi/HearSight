@@ -83,6 +83,99 @@ LLM调用客户端：
 - 集成结果压缩
 - 通过MCP协议暴露为工具服务
 
+## 类层次结构
+
+```mermaid
+classDiagram
+    class BaseAgent {
+        +tools_backend_url
+        +llm_router
+        +llm_model
+        +tool_manager
+        +react_loop
+        +generate_answer()
+        +stream_answer()
+    }
+    
+    class ChatAgent {
+        +memory_manager
+        +generate_answer()
+    }
+    
+    class ReactLoop {
+        +llm_router
+        +llm_model
+        +tool_manager
+        +prompt_builder
+        +action_executor
+        +run()
+    }
+    
+    class ToolManager {
+        +tools_url
+        +config_path
+        +list_available_tools()
+        +get_available_tools()
+        +generate_tool_descriptions()
+    }
+    
+    class ActionExecutor {
+        +llm_router
+        +llm_model
+        +execute_action()
+    }
+    
+    BaseAgent <|-- ChatAgent
+    BaseAgent --> ReactLoop
+    ReactLoop --> ToolManager
+    ReactLoop --> ActionExecutor
+```
+
+## 工具管理流程
+
+工具管理是ReAct框架的关键部分，负责与外部工具的交互：
+
+1. **工具发现**：通过MCP协议连接到工具后端，获取可用工具列表
+2. **工具过滤**：根据配置文件或运行时参数过滤允许使用的工具
+3. **工具描述生成**：为LLM生成工具使用说明
+4. **工具调用**：执行工具并处理结果
+
+```mermaid
+sequenceDiagram
+    participant A as Agent
+    participant TM as ToolManager
+    participant C as FastMCP Client
+    participant T as Tools Server
+    
+    A->>TM: 获取可用工具
+    TM->>C: 连接工具后端
+    C->>T: 获取工具列表
+    T-->>C: 工具列表
+    C-->>TM: 工具列表
+    TM->>TM: 过滤允许工具
+    TM->>TM: 生成工具描述
+    TM-->>A: 可用工具和描述
+```
+
+## 记忆管理机制
+
+ChatAgent集成了MemoryManager来处理对话历史：
+
+1. **记忆监控**：跟踪对话历史长度
+2. **自动总结**：当历史过长时自动进行总结
+3. **上下文重组**：根据总结和最新消息重组上下文
+
+```mermaid
+graph TD
+    A[新消息] --> B{是否需要总结}
+    B -->|是| C[生成总结]
+    B -->|否| D[添加到缓冲区]
+    C --> E[压缩消息缓冲区]
+    E --> F[更新上下文]
+    D --> F
+    F --> G[继续对话]
+```
+
 ## 工作流程
 
 ```mermaid

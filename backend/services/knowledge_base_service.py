@@ -57,13 +57,12 @@ class KnowledgeBaseService:
         ))
         return response.data[0]['embedding']
 
-    def add_transcript(self, video_id: str, segments: List[Dict[str, Any]], metadata: Dict[str, Any] = None):
+    def add_transcript(self, segments: List[Dict[str, Any]], metadata: Dict[str, Any] = None):
         """添加视频转写句子段到知识库
 
         将句子段组装成块，每个块约2000字符，作为一个向量文档。
 
         Args:
-            video_id: 视频唯一标识（可选，已废弃，优先使用metadata中的transcript_id）
             segments: 句子段列表，每个包含sentence等信息
             metadata: 元数据，必须包含transcript_id
         """
@@ -82,7 +81,7 @@ class KnowledgeBaseService:
             if transcript_id:
                 doc_id = f"{transcript_id}_chunk_{i}"
             else:
-                doc_id = f"{video_id}_chunk_{i}"
+                doc_id = f"{transcript_id}_chunk_{i}"
 
             chunk_metadata = {
                 "transcript_id": transcript_id,
@@ -207,6 +206,7 @@ class KnowledgeBaseService:
                         "start_time": s.get("start_time"),
                         "end_time": s.get("end_time"),
                         "spk_id": s.get("spk_id"),
+                        "transcript_id": transcript_id,  # 添加 transcript_id
                     }
                     for s in chosen_chunk
                 ],

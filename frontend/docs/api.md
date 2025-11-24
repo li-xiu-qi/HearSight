@@ -29,14 +29,22 @@ POST /api/download
 **请求体:**
 ```json
 {
-  "url": "string"
+  "url": "string",           // 下载URL（必需）
+  "job_id": "number",        // 任务ID（必需）
+  "sessdata": "string",      // B站SESSDATA（可选）
+  "playlist": "boolean",     // 是否下载播放列表（可选，默认false）
+  "quality": "string",       // 视频质量（可选，默认"best"）
+  "workers": "number"        // 下载线程数（可选，默认1）
 }
 ```
 
 **响应:**
 ```json
 {
-  "job_id": "string"
+  "status": "started",
+  "job_id": "number",
+  "task_id": "string",
+  "message": "string"
 }
 ```
 
@@ -121,37 +129,45 @@ DELETE /api/transcripts/{id}
 #### 创建翻译任务
 
 ```http
-POST /api/translate
+POST /transcripts/{transcript_id}/translate
 ```
 
 **请求体:**
 ```json
 {
-  "transcript_id": "string",
-  "target_language": "string"
+  "target_lang_code": "string",      // 目标语言代码（默认"zh"）
+  "source_lang_code": "string",      // 源语言代码（可选）
+  "confirmed": "boolean",            // 是否确认（默认true）
+  "max_tokens": "number",            // 最大token数（默认4096）
+  "source_lang_display_name": "string", // 源语言显示名称（可选）
+  "target_lang_display_name": "string", // 目标语言显示名称（可选）
+  "force_retranslate": "boolean"     // 强制重新翻译（默认false）
 }
 ```
 
 **响应:**
 ```json
 {
-  "job_id": "string"
+  "status": "string",
+  "transcript_id": "number"
 }
 ```
 
-#### 查询翻译进度
+#### 获取翻译结果
 
 ```http
-GET /api/translate/{job_id}
+GET /transcripts/{transcript_id}/translations
 ```
 
 **响应:**
 ```json
 {
-  "job_id": "string",
-  "status": "string",
-  "progress": "number",
-  "message": "string"
+  "translations": {
+    "language_code": [
+      // 翻译后的片段数组
+    ]
+  },
+  "has_translations": "boolean"
 }
 ```
 

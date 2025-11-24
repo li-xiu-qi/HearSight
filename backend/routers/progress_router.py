@@ -87,14 +87,14 @@ def set_task_progress(job_id: int, progress: ProgressData) -> bool:
         # 记录写入的值，以便调试
         try:
             read_back = redis_client.get(key)
-            logger.info(f"写入Redis进度 key={key}, value={data}, readback={read_back}")
+            logger.debug(f"写入Redis进度 key={key}, value={data}, readback={read_back}")
             # Publish progress update to pubsub channel so SSE / stream-all can push it
             try:
                 redis_client.publish('progress_channel', data)
             except Exception:
                 logger.debug('publish progress_channel failed')
         except Exception:
-            logger.info(f"写入Redis进度 key={key}, value={data} (readback failed)")
+            logger.debug(f"写入Redis进度 key={key}, value={data} (readback failed)")
         return True
     except Exception as e:
         logger.error(f"设置任务进度失败 job_id={job_id}: {e}")

@@ -21,7 +21,6 @@ def handle_knowledge_base_stage(
         metadata = {"transcript_id": transcript_id}
 
         knowledge_base.add_transcript(
-            video_id=str(job_id),
             segments=segments,
             metadata=metadata
         )

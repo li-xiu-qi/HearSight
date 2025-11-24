@@ -5,6 +5,7 @@ import VideoSelector from "./VideoSelector"
 import ChatToolbar from "./ChatToolbar"
 import MessageInput from "./MessageInput"
 import { getChatMessages, saveChatMessages, chatWithTranscriptsSSE } from "@/services/chatService"
+import { fetchThumbnail } from "@/services/thumbnailService"
 import type { ChatMessage, TranscriptMeta } from "@/types"
 
 interface ChatViewProps {
@@ -18,6 +19,7 @@ interface ChatViewProps {
   onSeekTo: (timeMs: number, transcriptId?: number) => void
   availableTranscripts: TranscriptMeta[]
   mediaType?: string
+  currentTranscriptId?: number
 }
 
 export default function ChatView({
@@ -31,17 +33,28 @@ export default function ChatView({
   onSeekTo,
   availableTranscripts,
   mediaType,
+  currentTranscriptId,
 }: ChatViewProps) {
-  const [selectedTranscripts, setSelectedTranscripts] = useState<number[]>([])
+  const [selectedTranscripts, setSelectedTranscripts] = useState<number[]>(
+    currentTranscriptId ? [currentTranscriptId] : []
+  )
   const [inputValue, setInputValue] = useState("")
   const isAudio = mediaType === 'audio'
   const [imageModeEnabled, setImageModeEnabled] = useState(!isAudio)
+  const [frameCache, setFrameCache] = useState<Record<string, string>>({})
   const messagesRef = useRef(messages)
 
-  // 同步messages到ref
+  // 更新 messagesRef 以反映最新的 messages
   useEffect(() => {
     messagesRef.current = messages
   }, [messages])
+
+  // 当currentTranscriptId变化时，更新默认选中
+  useEffect(() => {
+    if (currentTranscriptId && !selectedTranscripts.includes(currentTranscriptId)) {
+      setSelectedTranscripts([currentTranscriptId])
+    }
+  }, [currentTranscriptId, selectedTranscripts])
 
   // 加载消息
   useEffect(() => {
@@ -64,6 +77,69 @@ export default function ChatView({
     loadMessages()
   }, [sessionId, onMessagesChange, onLoadingChange, onErrorChange])
 
+  // 加载消息中的时间戳图片
+  useEffect(() => {
+    if (!imageModeEnabled || (selectedTranscripts.length === 0 && availableTranscripts.length === 0)) return
+
+    const loadThumbnailsForMessages = async () => {
+      const timeStamps: { startTime: number; endTime: number; cacheKey: string; transcriptId: number }[] = []
+
+      // 从消息内容中提取时间戳
+      for (const message of messages) {
+        if (message.type === 'ai') {
+          const timeMatches = message.content.matchAll(/\[([^\]]+?)\s+(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)\]/g)
+          for (const match of timeMatches) {
+            const videoName = match[1].trim()
+            // 时间戳以毫秒为单位（例如 165670.00），直接使用
+            const startTime = Number.parseFloat(match[2])
+            const endTime = Number.parseFloat(match[3])
+            const startTimeSec = Math.floor(startTime / 1000)
+            const endTimeSec = Math.floor(endTime / 1000)
+
+            // 根据videoName找到对应的transcriptId
+            const matchedTranscript = availableTranscripts.find(transcript =>
+              transcript.title === videoName ||
+              transcript.video_path?.includes(videoName) ||
+              transcript.audio_path?.includes(videoName) ||
+              transcript.title?.includes(videoName.replace(/\.[^/.]+$/, '')) ||
+              transcript.video_path?.includes(videoName.replace(/\.[^/.]+$/, '')) ||
+              transcript.audio_path?.includes(videoName.replace(/\.[^/.]+$/, ''))
+            )
+            let transcriptId: number | undefined = undefined
+            if (matchedTranscript) {
+              transcriptId = matchedTranscript.id
+            } else if (selectedTranscripts.length > 0) {
+              transcriptId = selectedTranscripts[0]
+            } else if (availableTranscripts.length > 0) {
+              transcriptId = availableTranscripts[0].id
+            }
+
+            if (transcriptId) {
+              const cacheKey = `${transcriptId}-${startTimeSec}-${endTimeSec}`
+              if (!frameCache[cacheKey]) {
+                timeStamps.push({ startTime, endTime, cacheKey, transcriptId })
+              }
+            }
+          }
+        }
+      }
+
+      // 加载未缓存的截图
+      for (const { startTime, endTime, cacheKey, transcriptId } of timeStamps) {
+        try {
+          const url = await fetchThumbnail(transcriptId, startTime, endTime, 320)
+          if (url) {
+            setFrameCache(prev => ({ ...prev, [cacheKey]: url }))
+          }
+        } catch (error) {
+          console.error('Failed to fetch thumbnail:', error)
+        }
+      }
+    }
+
+    loadThumbnailsForMessages()
+  }, [imageModeEnabled, messages, selectedTranscripts, frameCache])
+
   // 处理发送消息
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !sessionId) return
@@ -79,8 +155,11 @@ export default function ChatView({
     onMessagesChange(updatedMessages)
     setInputValue("")
 
-    // 如果没有选择转录内容，直接保存消息
-    if (selectedTranscripts.length === 0) {
+    // 如果没有选择转录内容，使用所有可用视频
+    const transcriptsToUse = selectedTranscripts.length === 0 ? availableTranscripts.map(t => t.id) : selectedTranscripts
+
+    // 如果仍然没有视频可用，直接保存消息
+    if (transcriptsToUse.length === 0) {
       try {
         const res = await saveChatMessages(sessionId, updatedMessages)
         if (res && res.success) {
@@ -108,7 +187,7 @@ export default function ChatView({
       // 使用SSE流式聊天
       await chatWithTranscriptsSSE(
         inputValue,
-        selectedTranscripts,
+        transcriptsToUse,
         (chunk) => {
           // 处理流式消息块
           const currentMessages = messagesRef.current
@@ -171,10 +250,29 @@ export default function ChatView({
   }
 
   // 处理跳转到时间点
-  const handleSeekTo = (timeMs: number, _videoName?: string) => {
-    // 这里需要根据videoName找到对应的transcriptId
-    // 暂时传递transcriptId为undefined，之后需要实现映射逻辑
-    onSeekTo(timeMs, undefined)
+  const handleSeekTo = (timeMs: number, videoName?: string) => {
+    let transcriptId: number | undefined = undefined
+    if (videoName) {
+      // 根据videoName找到对应的transcriptId
+      const matchedTranscript = availableTranscripts.find(transcript =>
+        transcript.title === videoName ||
+        transcript.video_path?.includes(videoName) ||
+        transcript.audio_path?.includes(videoName) ||
+        transcript.title?.includes(videoName.replace(/\.[^/.]+$/, '')) ||
+        transcript.video_path?.includes(videoName.replace(/\.[^/.]+$/, '')) ||
+        transcript.audio_path?.includes(videoName.replace(/\.[^/.]+$/, ''))
+      )
+      if (matchedTranscript) {
+        transcriptId = matchedTranscript.id
+      }
+    } else if (selectedTranscripts.length > 0) {
+      // 如果没有videoName，使用第一个选中的transcript
+      transcriptId = selectedTranscripts[0]
+    } else if (availableTranscripts.length > 0) {
+      // 回退到第一个可用transcript
+      transcriptId = availableTranscripts[0].id
+    }
+    onSeekTo(timeMs, transcriptId)
   }
 
   return (
@@ -182,7 +280,7 @@ export default function ChatView({
       {/* 工具栏 */}
       <ChatToolbar
         imageModeEnabled={imageModeEnabled}
-        isAudio={false}
+        isAudio={isAudio}
         messagesLength={messages.length}
         onImageModeChange={handleImageModeChange}
         onClearChat={handleClearChat}
@@ -204,8 +302,10 @@ export default function ChatView({
           loading={loading}
           error={error}
           imageModeEnabled={imageModeEnabled}
-          frameCache={{}}
+          frameCache={frameCache}
           onSeekTo={handleSeekTo}
+          availableTranscripts={availableTranscripts}
+          selectedTranscripts={selectedTranscripts}
         />
       </div>
 

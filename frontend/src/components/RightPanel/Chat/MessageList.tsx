@@ -3,7 +3,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Copy, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import type { ChatMessage } from "../../../types";
+import type { ChatMessage, TranscriptMeta } from "../../../types";
 import { formatTime } from "../../../utils";
 import {
   Dialog,
@@ -20,6 +20,8 @@ interface MessageListProps {
   readonly imageModeEnabled: boolean
   readonly frameCache: Record<string, string>
   readonly onSeekTo: (timeMs: number, videoName?: string) => void
+  readonly availableTranscripts: TranscriptMeta[]
+  readonly selectedTranscripts: number[]
 }
 
 export default function MessageList({
@@ -29,6 +31,8 @@ export default function MessageList({
   imageModeEnabled,
   frameCache,
   onSeekTo,
+  availableTranscripts,
+  selectedTranscripts,
 }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -56,11 +60,32 @@ export default function MessageList({
         const videoName = timeMatch[1].trim()
         const startTime = Number.parseFloat(timeMatch[2])
         const endTime = Number.parseFloat(timeMatch[3])
-        // 使用秒作为缓存键，与加载逻辑保持一致
+        // 根据videoName找到对应的transcriptId
+        let transcriptId: number | undefined = undefined
+        const matchedTranscript = availableTranscripts.find(transcript =>
+          transcript.title === videoName ||
+          transcript.video_path?.includes(videoName) ||
+          transcript.audio_path?.includes(videoName) ||
+          transcript.title?.includes(videoName.replace(/\.[^/.]+$/, '')) ||
+          transcript.video_path?.includes(videoName.replace(/\.[^/.]+$/, '')) ||
+          transcript.audio_path?.includes(videoName.replace(/\.[^/.]+$/, ''))
+        )
+        if (matchedTranscript) {
+          transcriptId = matchedTranscript.id
+        } else if (selectedTranscripts.length > 0) {
+          // 回退到第一个选中的transcript
+          transcriptId = selectedTranscripts[0]
+        } else if (availableTranscripts.length > 0) {
+          // 回退到第一个可用transcript
+          transcriptId = availableTranscripts[0].id
+        }
+        // startTime 和 endTime 在消息中通常以毫秒为单位，转换为秒作为缓存键
         const startTimeSec = Math.floor(startTime / 1000)
         const endTimeSec = Math.floor(endTime / 1000)
-        const cacheKey = `${startTimeSec}-${endTimeSec}`
+        const cacheKey = transcriptId ? `${transcriptId}-${startTimeSec}-${endTimeSec}` : `${startTimeSec}-${endTimeSec}`
         const cachedImage = frameCache[cacheKey]
+        const isDataUrl = typeof cachedImage === 'string' && (cachedImage.startsWith('data:image/') || cachedImage.startsWith('http'))
+        // Debug info removed; rely on Summaries/Chat logs if needed
 
         return (
           <div key={`time-${index}-${startTime}-${endTime}`} className="flex flex-col gap-2 my-2">

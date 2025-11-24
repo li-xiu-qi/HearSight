@@ -43,7 +43,6 @@ def main():
     for transcript in sample_transcripts:
         try:
             knowledge_base.add_transcript(
-                video_id=None,
                 segments=transcript["segments"],
                 metadata=transcript["metadata"]
             )

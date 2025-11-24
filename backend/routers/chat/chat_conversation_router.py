@@ -43,23 +43,12 @@ def api_chat_with_transcripts_stream(payload: ChatRequest, request: Request):
     )
 
     try:
-        # 根据transcript_ids的数量决定使用单视频还是多视频逻辑
-        if len(transcript_ids) > 1:
-            # 多视频流式chat
-            generator = chat_service.chat_with_multiple_transcripts_stream(
-                question=question,
-                transcript_ids=transcript_ids,
-                chat_max_windows=chat_max,
-            )
-        elif len(transcript_ids) == 1:
-            # 单视频流式chat
-            generator = chat_service.chat_with_segments_stream(
-                question=question,
-                transcript_id=transcript_ids[0],
-                chat_max_windows=chat_max,
-            )
-        else:
-            raise HTTPException(status_code=400, detail="Invalid transcript_ids")
+        # 使用多视频流式chat逻辑（支持单视频和多视频）
+        generator = chat_service.chat_with_transcripts_stream(
+            question=question,
+            transcript_ids=transcript_ids,
+            chat_max_windows=chat_max,
+        )
 
         return StreamingResponse(
             generator,
@@ -149,10 +138,8 @@ async def api_stream_chat_response(task_id: int, request: Request):
                     # 验证JSON格式
                     try:
                         json.loads(data)  # 验证是否为有效JSON
-                        print(f"[SSE] 发送数据: {data}")
                         yield f"data: {data}\n\n"
                     except json.JSONDecodeError as e:
-                        print(f"[SSE] 无效JSON数据: {data}, 错误: {e}")
                         continue
                 await asyncio.sleep(0.1)
         finally:

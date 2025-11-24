@@ -49,8 +49,6 @@ def handle_streaming_chat_stage(
         def stream_callback(chunk: str):
             nonlocal full_answer
             
-            print(f"[DEBUG] stream_callback 收到 chunk: {repr(chunk)}")
-            
             # 检查是否是错误消息
             if chunk.startswith("[error]") and chunk.endswith("[/error]"):
                 # 提取错误信息
@@ -86,35 +84,18 @@ def handle_streaming_chat_stage(
             )
             update_task_progress(set_task_progress, progress_redis_client, job_id, progress_info)
 
-        # 根据transcript_ids的数量决定使用单视频还是多视频逻辑
-        if len(transcript_ids) > 1:
-            print(f"[DEBUG] 调用多视频 chat_service，transcript_ids={transcript_ids}")
-            # 多视频流式chat
-            generator = chat_service.chat_with_multiple_transcripts_stream(
-                question=question,
-                transcript_ids=transcript_ids,
-                chat_max_windows=chat_max_windows,
-                stream_callback=stream_callback
-            )
-        elif len(transcript_ids) == 1:
-            print(f"[DEBUG] 调用单视频 chat_service，transcript_id={transcript_ids[0]}")
-            # 单视频流式chat
-            generator = chat_service.chat_with_segments_stream(
-                question=question,
-                transcript_id=transcript_ids[0],
-                chat_max_windows=chat_max_windows,
-                stream_callback=stream_callback
-            )
-        else:
-            raise ValueError("Invalid transcript_ids")
+        # 使用多视频流式chat逻辑（支持单视频和多视频）
+        generator = chat_service.chat_with_transcripts_stream(
+            question=question,
+            transcript_ids=transcript_ids,
+            chat_max_windows=chat_max_windows,
+            stream_callback=stream_callback
+        )
 
         # 消费生成器以确保执行完成
         for _ in generator:
             pass
 
-        print(f"[DEBUG] chat_service 调用完成，full_answer 长度: {len(full_answer)}")
-
-        print(f"[DEBUG] 发送完成事件，final_answer={repr(full_answer)}")
         # 发送完成事件
         complete_data = {"final_answer": full_answer}
         progress_redis_client.publish(f"chat_stream:{job_id}", json.dumps({

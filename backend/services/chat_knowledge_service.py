@@ -25,10 +25,32 @@ class ChatKnowledgeService:
         返回：
         - (相关片段列表, 来源文件名)
         """
-        # 使用异步任务执行检索（暂时同步等待结果）
-        from backend.queues.tasks.process_job_task import knowledge_retrieval_task
-        task = knowledge_retrieval_task.delay(question, transcript_id)
-        return task.get(timeout=30)  # 等待30秒
+        # 直接执行检索，避免在任务中调用任务
+        search_results = knowledge_base.search_similar(query=question, n_results=5, transcript_ids=[transcript_id])
+        
+        all_segments = []
+        for result in search_results:
+            doc_id = result.get("doc_id")
+            if doc_id:
+                # 获取文档详情，包括segments
+                doc_details = knowledge_base.get_doc_details(doc_id, None)  # db_url暂时设为None，需要传递
+                
+                if doc_details and doc_details.get("sentences"):
+                    all_segments.extend(doc_details["sentences"])
+        
+        
+        # 获取文件名
+        transcript = get_transcript_by_id(None, transcript_id)
+        filename = "未知文件"
+        if transcript:
+            video_path = transcript.get("video_path")
+            audio_path = transcript.get("audio_path")
+            if video_path:
+                filename = os.path.basename(video_path)
+            elif audio_path:
+                filename = os.path.basename(audio_path)
+        
+        return all_segments, filename
 
     def _count_tokens_for_segments(self, segments: List[Segment]) -> int:
         """

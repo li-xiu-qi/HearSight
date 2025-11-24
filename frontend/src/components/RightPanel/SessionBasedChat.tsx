@@ -7,9 +7,11 @@ import type { ChatMessage, TranscriptMeta } from "../../types"
 interface SessionBasedChatProps {
   availableTranscripts: TranscriptMeta[]
   mediaType?: string
+  currentTranscriptId?: number
+  onSeekTo: (timeMs: number, transcriptId?: number) => void
 }
 
-export default function SessionBasedChat({ availableTranscripts, mediaType }: SessionBasedChatProps) {
+export default function SessionBasedChat({ availableTranscripts, mediaType, currentTranscriptId, onSeekTo }: SessionBasedChatProps) {
   const [currentSessionId, setCurrentSessionId] = useState<number | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [loading, setLoading] = useState(false)
@@ -53,8 +55,7 @@ export default function SessionBasedChat({ availableTranscripts, mediaType }: Se
 
   // 处理跳转到时间点
   const handleSeekTo = (timeMs: number, transcriptId?: number) => {
-    // 这里可以触发播放器跳转
-    console.log('Seek to:', timeMs, 'in transcript:', transcriptId)
+    onSeekTo(timeMs, transcriptId)
   }
 
   return (
@@ -96,6 +97,7 @@ export default function SessionBasedChat({ availableTranscripts, mediaType }: Se
             onSeekTo={handleSeekTo}
             availableTranscripts={availableTranscripts}
             mediaType={mediaType}
+            currentTranscriptId={currentTranscriptId}
           />
         ) : (
           <div className="h-full flex items-center justify-center text-gray-500">

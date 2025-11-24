@@ -44,10 +44,10 @@ class KnowledgeRetrievalTool:
 
             # 对每个transcript_id执行检索
             for transcript_id in transcript_ids:
-                # 使用异步任务执行检索
-                from backend.queues.tasks.process_job_task import knowledge_retrieval_task
-                task = knowledge_retrieval_task.delay(question, transcript_id)
-                segments, filename = task.get(timeout=30)  # 等待30秒
+                # 直接调用知识检索服务，避免在任务中调用任务
+                from backend.services.chat_knowledge_service import ChatKnowledgeService
+                service = ChatKnowledgeService()
+                segments, filename = service._perform_knowledge_retrieval(question, transcript_id)
 
                 if segments:
                     all_segments.extend(segments)
