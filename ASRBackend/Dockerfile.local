@@ -16,6 +16,9 @@ RUN pip3 config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 # 复制项目文件
 COPY . .
 
+# 配置清华源加速 apt 安装
+RUN sed -i 's|deb.debian.org|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list.d/debian.sources
+
 # 安装系统依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -29,7 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip3 install -r requirements-local.txt
 
 # 安装带 CUDA 支持的 PyTorch 和 torchaudio
-RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 # 创建必要的目录
 RUN mkdir -p cache
