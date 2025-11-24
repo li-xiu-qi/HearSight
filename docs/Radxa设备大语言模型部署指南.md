@@ -3,11 +3,11 @@
 
 ## 概述
 
-本文档介绍在Radxa设备上部署大型语言模型（LLM）的工具和方法，主要包括Llama.cpp和Ollama。
+本文档介绍在Radxa设备（如Orion O6）上部署大型语言模型（LLM）的工具和方法，主要包括Llama.cpp和Ollama。这些工具支持本地运行开源LLM，提供隐私保护、低延迟和高性能的推理能力。HearSight项目可以利用这些本地部署的模型，实现边缘化智能视频内容分析，避免云端依赖，提升数据隐私性和响应速度。
 
 ## Llama.cpp
 
-Llama.cpp的主要目标是在各种硬件（本地和云端）上实现LLM推理，只需最少的设置，同时提供最先进的性能。
+Llama.cpp的主要目标是在各种硬件（本地和云端）上实现LLM推理，只需最少的设置，同时提供最先进的性能。它支持多种量化格式，以平衡模型大小和推理质量。
 
 ### 量化格式对比
 
@@ -79,9 +79,18 @@ radxa@orion-o6:~/llama.cpp/build/bin$ ./llama-bench -m ~/DeepSeek-R1-Distill-Qwe
 
 测试结果显示，在8线程配置下，预填充速度达到64.60 tokens/秒，生成速度达到36.29 tokens/秒。
 
+### 与HearSight集成
+
+HearSight可以通过Llama.cpp本地运行LLM，实现视频内容分析的边缘部署。配置步骤：
+
+1. 下载并编译Llama.cpp。
+2. 拉取合适的量化模型（如Q4_K_M格式）。
+3. 在HearSight后端配置中设置本地LLM端点，确保模型路径和参数正确。
+4. 启动HearSight服务，利用本地模型进行内容总结和问答，提升隐私性和响应速度。
+
 ## Ollama
 
-Ollama是一个在本地运行和管理大型语言模型（LLM）的工具。它使您能够轻松地在本地设备上拉取、运行和管理各种AI模型（如LLaMA、Mistral和Gemma），而无需复杂的环境配置。
+Ollama是一个在本地运行和管理大型语言模型（LLM）的工具。它使您能够轻松地在本地设备上拉取、运行和管理各种AI模型（如LLaMA、Mistral和Gemma），而无需复杂的环境配置。特别适合Radxa设备，提供简化的模型管理界面。
 
 ### 安装Ollama
 
@@ -139,9 +148,27 @@ ollama stop deepseek-r1:1.5b
 ollama rm deepseek-r1:1.5b
 ```
 
+### 与HearSight的Ollama集成
+
+HearSight支持通过Ollama本地部署LLM，用于智能内容分析。集成步骤：
+
+1. 安装并启动Ollama服务。
+2. 拉取适合的模型（如deepseek-r1:1.5b）。
+3. 在HearSight配置文件中设置Ollama API端点（默认<http://localhost:11434>）。
+4. 配置模型名称，确保HearSight调用本地模型进行视频摘要和问答。
+5. 启动HearSight，享受离线、低延迟的AI服务。
+
+## 注意事项
+
+- **硬件要求**：Radxa Orion O6具备足够的计算资源，但对于大型模型（如7B+参数），建议使用量化版本以优化性能。
+- **网络依赖**：初次拉取模型需要网络连接，后续可离线运行。
+- **隐私保护**：本地部署确保数据不离开设备，提升安全性。
+- **性能调优**：根据设备配置调整线程数和量化级别，以平衡速度和质量。
+
 ## 参考
 
 - Llama.cpp官方文档：<https://github.com/ggml-org/llama.cpp>
 - 使用Llama.cpp在Radxa上运行LLM：<https://docs.radxa.com/en/orion/o6/app-development/artificial-intelligence/llama_cpp>
 - Ollama官方文档：<https://github.com/ollama/ollama>
 - 使用Ollama在Radxa上运行LLM：<https://docs.radxa.com/en/orion/o6/app-development/artificial-intelligence/ollama>
+- HearSight项目：<https://github.com/li-xiu-qi/HearSight>
