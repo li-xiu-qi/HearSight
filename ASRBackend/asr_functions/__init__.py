@@ -1,24 +1,11 @@
-"""ASR Functions 模块初始化"""
+"""ASR functions package initializer.
 
-from .asr_sentence_segments import process
-from .dashscope_paraformer_v2_transcription import (
-    MODEL_NAME,
-    async_transcribe_audio,
-    get_transcription_status,
-    initialize_dashscope_client,
-    transcribe_audio_from_url,
-)
-from .segment_normalizer import extract_text, normalize_segments
-from .utils import detect_language
+Avoid importing heavy/local-specific modules at package import time so
+that submodule-level imports (e.g. asr_functions.asr_sentence_segments)
+do not accidentally trigger imports for all implementations (local/cloud).
+Modules should import submodules directly, e.g.:
+    from asr_functions.asr_sentence_segments import process
+or rely on providers to import the appropriate submodule lazily.
+"""
 
-__all__ = [
-    "process",
-    "detect_language",
-    "normalize_segments",
-    "extract_text",
-    "initialize_dashscope_client",
-    "async_transcribe_audio",
-    "get_transcription_status",
-    "transcribe_audio_from_url",
-    "MODEL_NAME",
-]
+__all__ = []
