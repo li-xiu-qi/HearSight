@@ -4,9 +4,12 @@
 
 HearSight 是一个音视频内容智能分析工具。通过集成先进的语音识别、自然语言处理和大语言模型技术，HearSight 能够自动将视频和音频转化为结构化的文本内容，并在此基础上进行多维度的智能分析和交互。无论您是进行学术研究、内容创作还是知识管理，HearSight 都能帮助您深度挖掘音视频内容的价值。
 
+[B站视频介绍](https://www.bilibili.com/video/BV1D5UgBYEtC/?vd_source=325d9b8b91626b0afd2ef63a99caf970)
+
 <div style="text-align: center; margin: auto;">
     <iframe src="//player.bilibili.com/player.html?isOutside=true&aid=115602047899223&bvid=BV1D5UgBYEtC&cid=34218837346&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
 </div>
+
 
 项目地址：<https://github.com/li-xiu-qi/HearSight>
 
