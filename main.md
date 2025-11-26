@@ -1,6 +1,10 @@
-# 文档导航
+# HearSight项目教程——多模态音频内容分析
 
-本教程notebook涵盖HearSight项目的完整指南，以下是主要章节索引：
+一、项目背景
+
+在数字化时代，音视频内容已成为信息传播的主要载体。然而，用户在消费这些内容时，往往面临提取关键信息困难、跨语言理解障碍、内容搜索不便等问题。HearSight项目应运而生，旨在通过AI技术自动化分析音视频内容，帮助用户快速获取结构化文本、生成摘要、进行智能问答，从而提升内容消费效率和知识管理能力。
+
+---
 
 ## 目录
 
@@ -58,22 +62,6 @@
     - 交叉构建
 
 11. [总结](#总结)
-# HearSight 项目教程
-
-本notebook基于HearSight项目的README.md和docs中的快速开始指南，提供详细的教程。
-
-![HearSight logo](https://oss-liuchengtu.hudunsoft.com/userimg/33/3374fce0ebc0d82f093c6c7361b84fcc.png)
-
-HearSight 是一个音视频内容智能分析工具。通过集成先进的语音识别、自然语言处理和大语言模型技术，HearSight 能够自动将视频和音频转化为结构化的文本内容，并在此基础上进行多维度的智能分析和交互。
-
-[B站视频介绍](https://www.bilibili.com/video/BV1D5UgBYEtC/?vd_source=325d9b8b91626b0afd2ef63a99caf970)
-
-<div style="text-align: center; margin: auto;">
-    <iframe src="//player.bilibili.com/player.html?isOutside=true&aid=115602047899223&bvid=BV1D5UgBYEtC&cid=34218837346&p=1" width="560" height="315" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
-</div>
-
-项目地址：<https://github.com/li-xiu-qi/HearSight>
-
 ## 项目介绍
 
 HearSight 采用现代化的微服务架构设计。后端基于 FastAPI 构建高性能 RESTful API，通过 PostgreSQL 实现数据的持久化和查询优化，通过 Celery 构建任务队列处理异步任务；前端采用 React 18 + TypeScript + Tailwind CSS 提供交互流畅的用户界面。整体支持 Docker 容器化部署，开箱即用。
