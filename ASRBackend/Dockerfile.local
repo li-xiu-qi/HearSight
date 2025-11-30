@@ -29,10 +29,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # 安装 Python 依赖
+RUN pip3 install --upgrade pip
+
+# 先安装 requirements（使用清华源），再安装大型 PyTorch wheel（指定 PyTorch 官方索引）
 RUN pip3 install -r requirements-local.txt
 
-# 安装带 CUDA 支持的 PyTorch 和 torchaudio
-RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# 安装带 CUDA 支持的 PyTorch 和 torchaudio，增加超时并使用 no-cache-dir，添加 trusted-host
+# 建议在非 GPU 环境下使用 "+cpu" 版本以减小下载体积。如需 GPU，保留 cu118，并可考虑 pin 具体版本。
+RUN pip3 install --no-cache-dir --prefer-binary \
+    torch torchvision torchaudio \
+    --index-url https://download.pytorch.org/whl/cu118 \
+    --trusted-host download.pytorch.org
 
 # 创建必要的目录
 RUN mkdir -p cache
