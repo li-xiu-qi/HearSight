@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef } from 'react'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { Library, ListChecks, PanelLeftClose, PanelLeftOpen, PanelRightOpen } from 'lucide-react'
 import { useLayoutStore } from '@/stores/layoutStore'
@@ -21,7 +22,7 @@ interface AppLayoutProps {
   onToggleRight: () => void
 }
 
-/** 活动条图标按钮：44px 触控区，选中态用主色底丸，角标承载进行中任务数 */
+/** 竖条图标按钮：44px 触控区，选中态主色底丸，角标承载计数 */
 function RailButton({
   active,
   title,
@@ -56,13 +57,16 @@ function RailButton({
 }
 
 /**
- * 三栏工作台 + 活动条。高度由 AppPage 的 h-dvh 统一分配，本层只做 flex-1/min-h-0。
+ * 三栏工作台 + 双侧竖条。高度由 AppPage 的 h-dvh 统一分配，本层只做 flex-1/min-h-0。
  *
- * 左栏宽度控制收敛到活动条：置顶一枚显式收起/展开开关，下方两个图标
- * 切换 素材库/任务（同时负责在收起态点开）。活动条常驻 48px，所以收起态
- * 永远有可见入口，不需要屏幕边缘浮动按钮。右栏保持「面板内按钮收起 +
- * 边缘按钮展开」。分隔条只做拖拽调宽，不挂点击控件（库的拖拽判定会吞掉
- * 点击，见记忆观察）。
+ * 布局语义：
+ * - 左竖条常驻：置顶一枚收起/展开开关，下方两个图标切 素材库/任务。
+ *   常驻所以收起态永远有可见入口，不需要屏幕边缘浮动按钮。
+ * - 右竖条仅在右栏收起时出现：同样置顶一枚展开开关，与左竖条对称。
+ * - 三栏宽度拖拽：面板必须带稳定 id（库对条件渲染面板的要求）；布局只在
+ *   拖动结束或结构变化时原子写入 store，拖动过程中不反馈——2026-09-20 修复：
+ *   旧实现把每帧布局拆成三次单面板写入、每次还做归一化，拖右栏会牵连左栏。
+ * - 分隔条只做拖拽调宽，不挂点击控件（库的拖拽判定会吞掉点击）。
  */
 function AppLayout({
   leftPanel,
@@ -76,14 +80,20 @@ function AppLayout({
   onSelectLeftView,
   onToggleRight,
 }: AppLayoutProps) {
-  const {
-    panelSizes,
-    setPanelSize,
-  } = useLayoutStore()
+  const { panelSizes, setPanelSizes } = useLayoutStore()
+
+  // 拖动中的布局只进 ref，松手才落库；isDragging 兜底结构变化（面板显隐）时立即落库
+  const latestLayout = useRef(panelSizes)
+  const isDragging = useRef(false)
+
+  const commitLayout = (left: number, center: number, right: number) => {
+    latestLayout.current = { left, center, right }
+    if (!isDragging.current) setPanelSizes(latestLayout.current)
+  }
 
   return (
     <div className="flex-1 min-h-0 relative flex">
-      {/* 活动条：常驻，左栏的导航与宽度控制都在这里 */}
+      {/* 左竖条：常驻 */}
       <nav
         aria-label="侧栏导航"
         className="w-12 flex-shrink-0 bg-sidebar border-r border-sidebar-border flex flex-col items-center py-3 gap-1"
@@ -118,15 +128,15 @@ function AppLayout({
         className="h-full flex-1 min-w-0"
         onLayout={(sizes) => {
           if (sizes.length === 3) {
-            setPanelSize('left', sizes[0])
-            setPanelSize('center', sizes[1])
-            setPanelSize('right', sizes[2])
+            commitLayout(sizes[0], sizes[1], sizes[2])
           }
         }}
       >
         {leftPanelVisible && (
           <>
             <ResizablePanel
+              id="left"
+              order={1}
               defaultSize={panelSizes.left}
               minSize={15}
               maxSize={40}
@@ -135,11 +145,20 @@ function AppLayout({
                 {leftPanel}
               </div>
             </ResizablePanel>
-            <ResizableHandle withHandle title="拖动调整宽度" />
+            <ResizableHandle
+              withHandle
+              title="拖动调整宽度"
+              onDragging={(dragging) => {
+                isDragging.current = dragging
+                if (!dragging) setPanelSizes(latestLayout.current)
+              }}
+            />
           </>
         )}
 
         <ResizablePanel
+          id="center"
+          order={2}
           defaultSize={panelSizes.center}
           minSize={30}
         >
@@ -150,8 +169,17 @@ function AppLayout({
 
         {rightPanelVisible && (
           <>
-            <ResizableHandle withHandle title="拖动调整宽度" />
+            <ResizableHandle
+              withHandle
+              title="拖动调整宽度"
+              onDragging={(dragging) => {
+                isDragging.current = dragging
+                if (!dragging) setPanelSizes(latestLayout.current)
+              }}
+            />
             <ResizablePanel
+              id="right"
+              order={3}
               defaultSize={panelSizes.right}
               minSize={15}
               maxSize={40}
@@ -164,16 +192,16 @@ function AppLayout({
         )}
       </ResizablePanelGroup>
 
-      {/* 右栏收起态的边缘展开按钮（左栏由活动条负责，不需要边缘按钮） */}
+      {/* 右竖条：仅右栏收起时出现，与左竖条对称（置顶展开开关） */}
       {!rightPanelVisible && (
-        <button
-          type="button"
-          title="展开文稿面板"
-          onClick={onToggleRight}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-30 h-20 w-7 flex items-center justify-center rounded-l-md border border-r-0 border-border bg-card text-muted-foreground shadow-sm hover:bg-muted hover:text-foreground transition-colors"
+        <nav
+          aria-label="文稿面板入口"
+          className="absolute right-0 top-0 bottom-0 z-30 w-12 bg-sidebar border-l border-sidebar-border flex flex-col items-center pt-3"
         >
-          <PanelRightOpen className="h-3.5 w-3.5" />
-        </button>
+          <RailButton active={false} title="展开文稿面板" onClick={onToggleRight}>
+            <PanelRightOpen className="h-5 w-5" />
+          </RailButton>
+        </nav>
       )}
     </div>
   )
