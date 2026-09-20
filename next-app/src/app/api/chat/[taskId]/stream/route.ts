@@ -16,23 +16,33 @@ export async function GET(
   const taskId = Number((await params).taskId)
   const encoder = new TextEncoder()
 
+  // closed / unwrap / controller 提升到 start 之外：ReadableStream 的 cancel()
+  // 与 start() 是平级方法，start 内定义的 close 在 cancel 里不可见（第一版修复
+  // 因此吃过 ReferenceError）。客户端断开时 cancel 必须能关流并摘掉等待者，
+  // 否则 agent 循环每推一个事件就唤醒 pump 往死控制器里写。
+  let closed = false
+  let unwrap: (() => void) | null = null
+  let controllerRef: ReadableStreamDefaultController | null = null
+  let timer: ReturnType<typeof setTimeout> | null = null
+
+  const close = () => {
+    if (closed) return
+    closed = true
+    if (timer !== null) clearTimeout(timer)
+    unwrap?.()
+    unwrap = null
+    try {
+      controllerRef?.close()
+    } catch {
+      /* already closed */
+    }
+  }
+
   const stream = new ReadableStream({
-    async start(controller) {
+    start(controller) {
+      controllerRef = controller
       let sent = 0
       let sentSteps = 0
-      let unwrap: (() => void) | null = null
-      let closed = false
-
-      const close = () => {
-        if (closed) return
-        closed = true
-        unwrap?.()
-        try {
-          controller.close()
-        } catch {
-          /* already closed */
-        }
-      }
 
       const pumpInner = () => {
         const state = getChatTask(taskId)
@@ -65,12 +75,8 @@ export async function GET(
         }
       }
 
-      /**
-       * 受保护的泵：客户端断开后 cancel() 已置 closed 并摘掉等待者，这道判断是
-       * 双保险，防 30 分钟定时器或竞态下的迟到事件往已关闭的控制器里写；
-       * try/catch 保证控制器失效时安静收流，不向上抛进 agent 循环的事件回调
-       * （实测抛上去会变成 uncaughtException）。
-       */
+      // 受保护的泵：closed 判断防迟到事件，try/catch 保证控制器失效时安静收流，
+      // 不向上抛进 agent 循环的事件回调（抛上去会变成 uncaughtException）。
       const pump = () => {
         if (closed) return
         try {
@@ -82,7 +88,7 @@ export async function GET(
 
       unwrap = waitChatTask(taskId, pump)
       pump()
-      setTimeout(close, 30 * 60 * 1000)
+      timer = setTimeout(close, 30 * 60 * 1000)
     },
     cancel() {
       // 客户端断开：立刻摘掉等待者并关流。原先这里是空实现，等待者留在总线里，
