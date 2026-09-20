@@ -180,20 +180,20 @@ export default function ChatSessionManager({
               key={session.id}
               className={`group relative p-3 rounded-lg cursor-pointer transition-colors ${
                 currentSessionId === session.id
-                  ? 'bg-blue-50 border border-blue-200'
-                  : 'hover:bg-gray-50'
+                  ? 'bg-primary/10 border border-primary/30'
+                  : 'hover:bg-muted'
               }`}
               onClick={() => onSessionSelect(session.id)}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <MessageSquare className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                    <span className="text-sm font-medium text-gray-900 truncate">
+                    <MessageSquare className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-sm font-medium text-foreground truncate">
                       {session.title || `会话 ${session.id}`}
                     </span>
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-muted-foreground">
                     {formatTime(session.updated_at)}
                   </div>
                 </div>
@@ -211,7 +211,7 @@ export default function ChatSessionManager({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                    className="h-6 w-6 p-0 text-destructive hover:text-destructive"
                     onClick={(e) => handleDeleteSession(session.id, e)}
                   >
                     <Trash2 className="w-3 h-3" />
@@ -222,7 +222,7 @@ export default function ChatSessionManager({
           ))}
 
           {sessions.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">暂无会话</p>
               <p className="text-xs">点击上方按钮创建新会话</p>

@@ -137,7 +137,7 @@ function AppPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
+    <div className="h-screen flex flex-col bg-muted overflow-hidden">
       <HeaderBar
         inputUrl={inputUrl}
         submitting={submitting}

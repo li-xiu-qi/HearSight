@@ -49,7 +49,7 @@ function AppLayout({
               onCollapse={() => setPanelSize('left', 0)}
               onExpand={() => setPanelSize('left', panelSizes.left)}
             >
-              <div className="h-[90vh] border-r border-slate-200 bg-white overflow-hidden">
+              <div className="h-[90vh] border-r border-border bg-card overflow-hidden">
                 {leftPanel}
               </div>
             </ResizablePanel>
@@ -78,7 +78,7 @@ function AppLayout({
               onCollapse={() => setPanelSize('right', 0)}
               onExpand={() => setPanelSize('right', panelSizes.right)}
             >
-              <div className="h-full border-l border-slate-200 bg-white overflow-hidden">
+              <div className="h-full border-l border-border bg-card overflow-hidden">
                 {rightPanel}
               </div>
             </ResizablePanel>

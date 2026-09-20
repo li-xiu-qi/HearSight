@@ -39,7 +39,7 @@ export default function TabToolbar({
   }
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 border-b bg-slate-50 flex-shrink-0">
+    <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted flex-shrink-0">
       <Button
         variant="ghost"
         size="sm"

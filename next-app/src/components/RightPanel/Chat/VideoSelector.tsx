@@ -63,12 +63,12 @@ export default function VideoSelector({
             ))}
           </SelectContent>
         </Select>
-        <div className="text-sm text-slate-500">
+        <div className="text-sm text-muted-foreground">
           ({selectedTranscriptIds.length}/{availableTranscripts.length})
         </div>
       </div>
       {selectedTranscriptIds.length === 0 && (
-        <p className="text-sm text-slate-500">未选择视频，将在全部视频范围内进行问答</p>
+        <p className="text-sm text-muted-foreground">未选择视频，将在全部视频范围内进行问答</p>
       )}
       {selectedTranscriptIds.length > 0 && (
         <div className="flex flex-wrap gap-1">
@@ -77,12 +77,12 @@ export default function VideoSelector({
             return transcript ? (
               <div 
                 key={id} 
-                className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded flex items-center"
+                className="bg-primary/10 text-primary text-xs px-2 py-1 rounded flex items-center"
               >
                 <span className="max-w-[120px] truncate">{getFileName(transcript)}</span>
                 <button 
                   onClick={() => onSelectionChange(selectedTranscriptIds.filter(selId => selId !== id))}
-                  className="ml-1 hover:bg-blue-200 rounded-full w-4 h-4 flex items-center justify-center"
+                  className="ml-1 hover:bg-primary/20 rounded-full w-4 h-4 flex items-center justify-center"
                 >
                   ×
                 </button>

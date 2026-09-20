@@ -42,25 +42,25 @@ function ProgressCard({ filename, progress }: ProgressCardProps) {
     switch (progress.status) {
       case 'in-progress':
       case 'ready':
-        return <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+        return <Loader2 className="h-4 w-4 animate-spin text-primary" />
       case 'completed':
       case 'success':
-        return <CheckCircle2 className="h-4 w-4 text-green-600" />
+        return <CheckCircle2 className="h-4 w-4 text-success" />
       case 'failed':
-        return <XCircle className="h-4 w-4 text-red-600" />
+        return <XCircle className="h-4 w-4 text-destructive" />
       default:
-        return <Loader2 className="h-4 w-4 text-slate-400" />
+        return <Loader2 className="h-4 w-4 text-muted-foreground" />
     }
   }
 
   return (
-    <div className="p-3 rounded-lg border border-slate-200 bg-white space-y-2">
+    <div className="p-3 rounded-lg border border-border bg-card space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium text-slate-900 line-clamp-1" title={filename}>
+          <div className="text-sm font-medium text-foreground line-clamp-1" title={filename}>
             {filename}
           </div>
-          <div className="text-xs text-slate-500 mt-1">
+          <div className="text-xs text-muted-foreground mt-1">
             {stageLabel}
           </div>
         </div>
@@ -70,14 +70,14 @@ function ProgressCard({ filename, progress }: ProgressCardProps) {
       </div>
 
       {/* 进度条 */}
-      <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+      <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
         <div
-          className="h-full bg-blue-600 rounded-full transition-all duration-300"
+          className="h-full bg-primary rounded-full transition-all duration-300"
           style={{ width: `${Math.min(progress.progress_percent, 100)}%` }}
         />
       </div>
 
-      <div className="text-xs text-slate-600 space-y-1">
+      <div className="text-xs text-muted-foreground space-y-1">
         <div className="flex justify-between">
           <span>进度：{progress.progress_percent.toFixed(1)}%</span>
           {progress.current_bytes !== undefined && progress.total_bytes !== undefined && progress.total_bytes > 0 && (
@@ -91,10 +91,10 @@ function ProgressCard({ filename, progress }: ProgressCardProps) {
           </div>
         )}
         {progress.message && (
-          <div className="text-slate-600 mt-1">{progress.message}</div>
+          <div className="text-muted-foreground mt-1">{progress.message}</div>
         )}
         {progress.error && (
-          <div className="text-red-600">{progress.error}</div>
+          <div className="text-destructive">{progress.error}</div>
         )}
       </div>
     </div>

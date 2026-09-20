@@ -15,39 +15,39 @@ function TasksTab({ jobs }: TasksTabProps) {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'downloading':
-        return <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
+        return <Loader2 className="h-3 w-3 animate-spin text-primary" />
       case 'processing':
-        return <Loader2 className="h-3 w-3 animate-spin text-purple-600" />
+        return <Loader2 className="h-3 w-3 animate-spin text-primary" />
       case 'success':
-        return <CheckCircle2 className="h-3 w-3 text-green-600" />
+        return <CheckCircle2 className="h-3 w-3 text-success" />
       case 'failed':
-        return <XCircle className="h-3 w-3 text-red-600" />
+        return <XCircle className="h-3 w-3 text-destructive" />
       default:
-        return <Clock className="h-3 w-3 text-slate-400" />
+        return <Clock className="h-3 w-3 text-muted-foreground" />
     }
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'downloading':
-        return 'bg-blue-100 text-blue-700'
+        return 'bg-primary/10 text-primary'
       case 'processing':
-        return 'bg-purple-100 text-purple-700'
+        return 'bg-primary/10 text-primary'
       case 'success':
-        return 'bg-green-100 text-green-700'
+        return 'bg-success/10 text-success'
       case 'failed':
-        return 'bg-red-100 text-red-700'
+        return 'bg-destructive/10 text-destructive'
       default:
-        return 'bg-slate-100 text-slate-600'
+        return 'bg-muted text-muted-foreground'
     }
   }
 
   if (jobs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-8">
-        <Clock className="h-12 w-12 text-slate-300 mb-4" />
-        <div className="text-base font-medium text-slate-700 mb-2">暂无处理任务</div>
-        <div className="text-sm text-slate-500">
+        <Clock className="h-12 w-12 text-muted-foreground mb-4" />
+        <div className="text-base font-medium text-foreground mb-2">暂无处理任务</div>
+        <div className="text-sm text-muted-foreground">
           当前没有正在处理的媒体内容。提交视频或音频URL后，处理进度会显示在这里。
         </div>
       </div>
@@ -60,16 +60,16 @@ function TasksTab({ jobs }: TasksTabProps) {
         {jobs.map((job) => (
           <div
             key={job.id}
-            className="border rounded-lg p-3 bg-white shadow-sm hover:shadow-md transition-shadow"
+            className="border rounded-lg p-3 bg-card shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center space-x-2 flex-1 min-w-0">
                 {getStatusIcon(job.status)}
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-slate-900 truncate">
+                  <div className="text-sm font-medium text-foreground truncate">
                     {extractFilename(job.url) || job.url}
                   </div>
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-muted-foreground">
                     ID: {job.id}
                   </div>
                 </div>
@@ -87,7 +87,7 @@ function TasksTab({ jobs }: TasksTabProps) {
             )}
 
             {job.error && (
-              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+              <div className="mt-2 p-2 bg-destructive/10 border border-destructive/30 rounded text-xs text-destructive">
                 {job.error}
               </div>
             )}

@@ -93,7 +93,7 @@ export default function MessageList({
           <div key={`time-${index}-${startTime}-${endTime}`} className="flex flex-col gap-2 my-2">
             <button
               onClick={() => onSeekTo(startTime, videoName || undefined)}
-              className="text-blue-600 hover:text-blue-800 underline text-sm self-start"
+              className="text-primary hover:text-primary underline text-sm self-start"
             >
               {videoName ? `${videoName} ` : ""}{formatTime(startTime)} - {formatTime(endTime)}
             </button>
@@ -121,7 +121,7 @@ export default function MessageList({
                     </DialogContent>
                   </Dialog>
                 ) : (
-                  <div className="w-full max-w-md h-40 sm:h-48 bg-gray-200 rounded flex items-center justify-center">
+                  <div className="w-full max-w-md h-40 sm:h-48 bg-muted rounded flex items-center justify-center">
                     <Loader2 className="h-4 w-4 animate-spin" />
                   </div>
                 )}
@@ -137,13 +137,13 @@ export default function MessageList({
   return (
     <ScrollArea className="flex-1 min-h-0 h-full p-3">
       {error && (
-        <div className="mx-3 mt-3 mb-0 p-3 bg-red-50 text-red-700 text-sm rounded border border-red-200 flex-shrink-0">
+        <div className="mx-3 mt-3 mb-0 p-3 bg-destructive/10 text-destructive text-sm rounded border border-destructive/30 flex-shrink-0">
           {error}
         </div>
       )}
 
       {messages.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-full text-center p-8 text-slate-500">
+        <div className="flex flex-col items-center justify-center h-full text-center p-8 text-muted-foreground">
           <p className="text-base mb-2">欢迎使用视频内容问答功能</p>
           <p className="text-sm">请输入您的问题，AI 将基于当前媒体文件内容为您解答</p>
         </div>
@@ -167,8 +167,8 @@ export default function MessageList({
                 <div
                   className={`rounded-lg p-3 ${
                     message.type === "user"
-                      ? "bg-blue-500 text-white ml-auto"
-                      : "bg-slate-100 text-slate-900"
+                      ? "bg-primary text-white ml-auto"
+                      : "bg-muted text-foreground"
                   }`}
                 >
                   <div className="text-sm">
@@ -184,7 +184,7 @@ export default function MessageList({
                     onClick={() => handleCopyMessage(message.content, message.type)}
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0 text-slate-400 hover:text-slate-600"
+                    className="h-6 w-6 p-0 text-muted-foreground hover:text-muted-foreground"
                   >
                     <Copy className="h-3 w-3" />
                   </Button>
@@ -207,10 +207,10 @@ export default function MessageList({
                 className="flex-shrink-0 w-8 h-8 rounded-full object-cover"
               />
               <div className="flex flex-col gap-0.5 flex-1">
-                <div className="rounded-lg p-3 bg-slate-100 text-slate-900">
+                <div className="rounded-lg p-3 bg-muted text-foreground">
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm text-slate-600">AI正在思考中...</span>
+                    <span className="text-sm text-muted-foreground">AI正在思考中...</span>
                   </div>
                 </div>
               </div>

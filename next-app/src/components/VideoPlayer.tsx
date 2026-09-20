@@ -20,7 +20,7 @@ const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({ videoSrc, 
         <CardTitle className="text-lg flex items-center justify-between">
           <span>{playerTitle}</span>
           {videoSrc && (
-            <span className="text-xs font-normal text-green-600 bg-green-50 px-2 py-1 rounded">
+            <span className="text-xs font-normal text-success bg-success/10 px-2 py-1 rounded">
               可播放
             </span>
           )}
@@ -42,11 +42,11 @@ const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({ videoSrc, 
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center p-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-              <Play className="h-8 w-8 text-slate-400" />
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+              <Play className="h-8 w-8 text-muted-foreground" />
             </div>
-            <div className="text-base font-medium text-slate-700 mb-2">暂无视频</div>
-            <div className="text-sm text-slate-500">
+            <div className="text-base font-medium text-foreground mb-2">暂无视频</div>
+            <div className="text-sm text-muted-foreground">
               选择左侧的处理记录，或在上方输入新的视频URL来开始分析
             </div>
           </div>

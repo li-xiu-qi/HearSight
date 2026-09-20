@@ -6,30 +6,30 @@ export const useStatusHelpers = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'downloading':
-        return <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
+        return <Loader2 className="h-3 w-3 animate-spin text-primary" />
       case 'processing':
-        return <Loader2 className="h-3 w-3 animate-spin text-purple-600" />
+        return <Loader2 className="h-3 w-3 animate-spin text-primary" />
       case 'success':
-        return <CheckCircle2 className="h-3 w-3 text-green-600" />
+        return <CheckCircle2 className="h-3 w-3 text-success" />
       case 'failed':
-        return <XCircle className="h-3 w-3 text-red-600" />
+        return <XCircle className="h-3 w-3 text-destructive" />
       default:
-        return <Clock className="h-3 w-3 text-slate-400" />
+        return <Clock className="h-3 w-3 text-muted-foreground" />
     }
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'downloading':
-        return 'bg-blue-100 text-blue-700'
+        return 'bg-primary/10 text-primary'
       case 'processing':
-        return 'bg-purple-100 text-purple-700'
+        return 'bg-primary/10 text-primary'
       case 'success':
-        return 'bg-green-100 text-green-700'
+        return 'bg-success/10 text-success'
       case 'failed':
-        return 'bg-red-100 text-red-700'
+        return 'bg-destructive/10 text-destructive'
       default:
-        return 'bg-slate-100 text-slate-600'
+        return 'bg-muted text-muted-foreground'
     }
   }
 

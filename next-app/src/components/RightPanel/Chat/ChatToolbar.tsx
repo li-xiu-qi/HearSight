@@ -31,7 +31,7 @@ export default function ChatToolbar({
         />
         <Label
           htmlFor="image-mode"
-          className={`text-sm cursor-pointer ${isAudio ? 'text-slate-400' : ''}`}
+          className={`text-sm cursor-pointer ${isAudio ? 'text-muted-foreground' : ''}`}
           title={isAudio ? '音频文件不支持图文展示' : ''}
         >
           图文展示

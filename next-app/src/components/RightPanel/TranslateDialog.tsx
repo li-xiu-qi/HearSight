@@ -100,18 +100,18 @@ export default function TranslateDialog({
 
         {step === 'detecting' && (
           <div className="flex justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         )}
 
         {step === 'selecting' && detection && (
           <div className="space-y-4 py-4">
-            <div className="rounded-lg bg-blue-50 p-4">
-              <p className="text-sm font-medium text-blue-900">{detection.suggestion}</p>
+            <div className="rounded-lg bg-primary/10 p-4">
+              <p className="text-sm font-medium text-primary">{detection.suggestion}</p>
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">选择目标语言</label>
+              <label className="text-sm font-medium text-foreground">选择目标语言</label>
               <Select value={targetLanguage} onValueChange={setTargetLanguage}>
                 <SelectTrigger>
                   <SelectValue />
@@ -126,27 +126,27 @@ export default function TranslateDialog({
               </Select>
             </div>
             
-            <div className="flex items-center space-x-2 rounded-lg bg-orange-50 p-4">
+            <div className="flex items-center space-x-2 rounded-lg bg-warning/10 p-4">
               <input
                 type="checkbox"
                 id="force-retranslate"
                 checked={forceRetranslate}
                 onChange={(e) => setForceRetranslate(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-orange-600"
+                className="h-4 w-4 rounded border-border text-warning"
               />
-              <label htmlFor="force-retranslate" className="text-sm font-medium text-orange-900 cursor-pointer">
+              <label htmlFor="force-retranslate" className="text-sm font-medium text-warning cursor-pointer">
                 强制重新翻译
               </label>
             </div>
             {forceRetranslate && (
-              <p className="text-xs text-orange-700">
+              <p className="text-xs text-warning">
                 即使已有翻译内容，也会重新翻译所有分句。
               </p>
             )}
             
             {error && (
-              <div className="rounded-lg bg-red-50 p-4">
-                <p className="text-sm text-red-700">{error}</p>
+              <div className="rounded-lg bg-destructive/10 p-4">
+                <p className="text-sm text-destructive">{error}</p>
               </div>
             )}
           </div>

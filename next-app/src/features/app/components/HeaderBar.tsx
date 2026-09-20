@@ -37,7 +37,7 @@ function HeaderBar({
   onOpenUpload,
 }: HeaderBarProps) {
   return (
-    <header className="bg-white border-b border-slate-200 px-4 sticky top-0 z-50 shadow-sm flex-shrink-0">
+    <header className="bg-card border-b border-border px-4 sticky top-0 z-50 shadow-sm flex-shrink-0">
       <div className="h-14 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Button
@@ -48,7 +48,7 @@ function HeaderBar({
           >
             {leftPanelVisible ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </Button>
-          <h3 className="text-lg font-semibold text-slate-900">HearSight</h3>
+          <h3 className="text-lg font-semibold text-foreground">HearSight</h3>
         </div>
         <form onSubmit={onSubmit} className="flex-1 max-w-2xl flex items-center gap-2">
           <Input
@@ -110,7 +110,7 @@ function HeaderBar({
       </div>
       {urlError && (
         <div className="pb-2">
-          <p className="text-xs text-red-600">{urlError}</p>
+          <p className="text-xs text-destructive">{urlError}</p>
         </div>
       )}
     </header>

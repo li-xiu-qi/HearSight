@@ -31,9 +31,9 @@ function TranscriptsTab({
   if (transcripts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-8">
-        <FileText className="h-12 w-12 text-slate-300 mb-4" />
-        <div className="text-base font-medium text-slate-700 mb-2">暂无处理记录</div>
-        <div className="text-sm text-slate-500">
+        <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+        <div className="text-base font-medium text-foreground mb-2">暂无处理记录</div>
+        <div className="text-sm text-muted-foreground">
           您还没有处理过任何视频。在上方输入视频URL开始分析吧！
         </div>
       </div>
@@ -53,8 +53,8 @@ function TranscriptsTab({
               className={`
                 w-full text-left p-3 rounded-lg border transition-all cursor-pointer
                 ${isActive 
-                  ? 'bg-blue-50 border-blue-200 shadow-sm text-blue-900' 
-                  : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-900'
+                  ? 'bg-primary/10 border-primary/30 shadow-sm text-primary' 
+                  : 'bg-card border-border hover:bg-muted hover:border-border text-foreground'
                 }
               `}
               onClick={() => onLoadTranscript(item.id)}
@@ -72,13 +72,13 @@ function TranscriptsTab({
                   <div 
                     className={`
                       text-sm font-medium line-clamp-2
-                      ${isActive ? 'text-blue-900' : 'text-slate-900'}
+                      ${isActive ? 'text-primary' : 'text-foreground'}
                     `}
                     title={basename}
                   >
                     {basename}
                   </div>
-                  <div className="text-xs text-slate-500 mt-1 line-clamp-1">
+                  <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
                     ID {item.id} · {item.segment_count} 段 · {item.created_at}
                   </div>
                 </div>
@@ -108,7 +108,7 @@ function TranscriptsTab({
                         />
                       </div>
                       <DropdownMenuItem
-                        className="text-red-600"
+                        className="text-destructive"
                         onClick={(e) => {
                           e.stopPropagation()
                           onDeleteTranscript(item.id)

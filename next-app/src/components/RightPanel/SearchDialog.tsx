@@ -55,7 +55,7 @@ export default function SearchDialog({
           </div>
           <ScrollArea className="h-80">
             {results.length === 0 ? (
-              <div className="text-center py-10 text-sm text-slate-500">
+              <div className="text-center py-10 text-sm text-muted-foreground">
                 {searchTerm ? "未找到结果" : "请输入关键词"}
               </div>
             ) : (
@@ -76,9 +76,9 @@ export default function SearchDialog({
                       type="button"
                       aria-label={`跳转到 ${formatTime(seg.start_time)}`}
                       onClick={() => onSelect(seg)}
-                      className="w-full text-left p-2 hover:bg-slate-50 cursor-pointer rounded text-sm"
+                      className="w-full text-left p-2 hover:bg-muted cursor-pointer rounded text-sm"
                     >
-                      <div className="text-xs text-slate-500 mb-1">
+                      <div className="text-xs text-muted-foreground mb-1">
                         {formatTime(seg.start_time)}
                       </div>
                       <div>{displayContent}</div>

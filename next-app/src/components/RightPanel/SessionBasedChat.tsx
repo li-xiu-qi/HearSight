@@ -63,12 +63,12 @@ export default function SessionBasedChat({ availableTranscripts, mediaType, curr
   return (
     <div className="h-full flex">
       {/* 会话管理面板 */}
-      <div className={`border-r bg-white transition-all duration-300 ${isCollapsed ? 'w-10' : 'w-80'}`}>
+      <div className={`border-r bg-card transition-all duration-300 ${isCollapsed ? 'w-10' : 'w-80'}`}>
         {/* 折叠/展开按钮 */}
         <div className="p-2 border-b flex justify-end">
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1 rounded hover:bg-gray-100"
+            className="p-1 rounded hover:bg-muted"
             title={isCollapsed ? "展开会话面板" : "折叠会话面板"}
           >
             {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -102,7 +102,7 @@ export default function SessionBasedChat({ availableTranscripts, mediaType, curr
             currentTranscriptId={currentTranscriptId}
           />
         ) : (
-          <div className="h-full flex items-center justify-center text-gray-500">
+          <div className="h-full flex items-center justify-center text-muted-foreground">
             <div className="text-center">
               <div className="w-16 h-16 mx-auto mb-4 opacity-50">
                 💬

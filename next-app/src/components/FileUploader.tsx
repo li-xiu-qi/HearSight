@@ -116,7 +116,7 @@ const FileUploader = ({ onUploadSuccess, onUploadError }: FileUploaderProps) => 
       <CardContent className="p-4">
         <div
           className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-            dragActive ? 'border-primary bg-primary/5' : 'border-slate-300 hover:border-slate-400'
+            dragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-border'
           }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -126,13 +126,13 @@ const FileUploader = ({ onUploadSuccess, onUploadError }: FileUploaderProps) => 
           {!file ? (
             <div className="space-y-3">
               <div className="flex justify-center">
-                <Upload className="h-10 w-10 text-slate-400" />
+                <Upload className="h-10 w-10 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-sm text-slate-700 font-medium mb-1">
+                <p className="text-sm text-foreground font-medium mb-1">
                   拖拽文件到此处或点击选择
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   支持视频格式: MP4, AVI, MOV, MKV等<br />
                   支持音频格式: MP3, WAV, M4A, AAC等
                 </p>
@@ -158,14 +158,14 @@ const FileUploader = ({ onUploadSuccess, onUploadError }: FileUploaderProps) => 
             <div className="space-y-3">
               <div className="flex items-center justify-center">
                 {isVideoFile(file.name) ? (
-                  <FileVideo className="h-10 w-10 text-blue-500" />
+                  <FileVideo className="h-10 w-10 text-primary" />
                 ) : (
-                  <FileAudio className="h-10 w-10 text-purple-500" />
+                  <FileAudio className="h-10 w-10 text-primary" />
                 )}
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-700 mb-1">{file.name}</p>
-                <p className="text-xs text-slate-500">{formatFileSize(file.size)}</p>
+                <p className="text-sm font-medium text-foreground mb-1">{file.name}</p>
+                <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
               </div>
               <div className="flex justify-center gap-2">
                 <Button

@@ -24,26 +24,26 @@ export default function TranslateProgressPanel({
   onRetry,
 }: Readonly<TranslateProgressPanelProps>) {
   return (
-    <div className="fixed bottom-4 right-4 w-80 rounded-lg border border-slate-200 bg-white shadow-lg">
+    <div className="fixed bottom-4 right-4 w-80 rounded-lg border border-border bg-card shadow-lg">
       <div className="flex items-start gap-3 p-4">
         <div className="flex-shrink-0 mt-0.5">
           {state.status === 'detecting' && (
-            <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
           )}
           {state.status === 'translating' && (
-            <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
           )}
           {state.status === 'done' && (
-            <CheckCircle className="h-5 w-5 text-green-600" />
+            <CheckCircle className="h-5 w-5 text-success" />
           )}
           {state.status === 'error' && (
-            <AlertCircle className="h-5 w-5 text-red-600" />
+            <AlertCircle className="h-5 w-5 text-destructive" />
           )}
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 mb-1">
-            <h3 className="text-sm font-semibold text-slate-900">
+            <h3 className="text-sm font-semibold text-foreground">
               {state.status === 'detecting' && '检测语言中'}
               {state.status === 'translating' && '翻译中'}
               {state.status === 'done' && '翻译完成'}
@@ -51,24 +51,24 @@ export default function TranslateProgressPanel({
             </h3>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-600 transition-colors"
+              className="text-muted-foreground hover:text-muted-foreground transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          <p className="text-xs text-slate-600 mb-2">{state.message}</p>
+          <p className="text-xs text-muted-foreground mb-2">{state.message}</p>
 
           {state.detectionInfo && (
-            <div className="mb-2 rounded bg-blue-50 p-2 text-xs text-blue-700">
+            <div className="mb-2 rounded bg-primary/10 p-2 text-xs text-primary">
               {state.detectionInfo}
             </div>
           )}
 
           {(state.status === 'detecting' || state.status === 'translating') && (
-            <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+            <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
               <div
-                className="bg-blue-600 h-full transition-all duration-300"
+                className="bg-primary h-full transition-all duration-300"
                 style={{ width: `${state.progress}%` }}
               />
             </div>
@@ -86,7 +86,7 @@ export default function TranslateProgressPanel({
           )}
 
           {state.status === 'done' && state.newTranscriptId && (
-            <p className="text-xs text-slate-500 mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               已创建新文稿 (ID: {state.newTranscriptId})
             </p>
           )}

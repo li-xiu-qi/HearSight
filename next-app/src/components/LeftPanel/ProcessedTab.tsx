@@ -71,13 +71,13 @@ function ProcessedTab({
     <div className="h-full flex flex-col">
       {/* 顶部标题栏和刷新按钮，始终显示 */}
       <div className="flex items-center justify-between mb-3 flex-shrink-0 px-4 pt-4">
-        <div className="text-sm font-medium text-slate-700">已处理记录</div>
+        <div className="text-sm font-medium text-foreground">已处理记录</div>
         <Button
           variant="ghost"
           size="sm"
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="h-7 w-7 p-0 hover:bg-slate-100"
+          className="h-7 w-7 p-0 hover:bg-muted"
           title="刷新列表"
         >
           <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -87,9 +87,9 @@ function ProcessedTab({
       {/* 列表内容或空状态 */}
       {transcripts.length === 0 ? (
         <div className="flex flex-col items-center justify-center flex-1 text-center p-8">
-          <FileText className="h-12 w-12 text-slate-300 mb-4" />
-          <div className="text-base font-medium text-slate-700 mb-2">暂无处理记录</div>
-          <div className="text-sm text-slate-500">
+          <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+          <div className="text-base font-medium text-foreground mb-2">暂无处理记录</div>
+          <div className="text-sm text-muted-foreground">
             您还没有处理过任何视频。在上方输入视频URL开始分析吧！
           </div>
         </div>
@@ -106,8 +106,8 @@ function ProcessedTab({
                   className={`
                     w-full text-left p-3 rounded-lg border transition-all cursor-pointer
                     ${isActive 
-                      ? 'bg-blue-50 border-blue-200 shadow-sm text-blue-900' 
-                      : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-900'
+                      ? 'bg-primary/10 border-primary/30 shadow-sm text-primary' 
+                      : 'bg-card border-border hover:bg-muted hover:border-border text-foreground'
                     }
                   `}
                   onClick={() => onLoadTranscript(item.id)}
@@ -123,13 +123,13 @@ function ProcessedTab({
                       <div 
                         className={`
                           text-sm font-medium line-clamp-2
-                          ${isActive ? 'text-blue-900' : 'text-slate-900'}
+                          ${isActive ? 'text-primary' : 'text-foreground'}
                         `}
                         title={basename}
                       >
                         {basename}
                       </div>
-                      <div className="text-xs text-slate-500 mt-1 line-clamp-1">
+                      <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
                         {formatDate(item.created_at)}
                       </div>
                     </div>
@@ -154,7 +154,7 @@ function ProcessedTab({
                             />
                           </div>
                           <DropdownMenuItem
-                            className="text-red-600"
+                            className="text-destructive"
                             onClick={(e) => {
                               e.stopPropagation()
                               handleDeleteTranscript(item.id)

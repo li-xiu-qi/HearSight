@@ -139,7 +139,7 @@ export default function SummariesTab({
             />
             <Label 
               htmlFor="image-mode-summaries" 
-              className={`text-sm cursor-pointer ${isAudio ? 'text-slate-400' : ''}`}
+              className={`text-sm cursor-pointer ${isAudio ? 'text-muted-foreground' : ''}`}
               title={isAudio ? '音频文件不支持图文展示' : ''}
             >
               图文展示
@@ -149,13 +149,13 @@ export default function SummariesTab({
       </div>
       <ScrollArea className="flex-1 min-h-0">
         {error && (
-          <div className="m-3 p-3 bg-red-50 text-red-700 text-sm rounded">
+          <div className="m-3 p-3 bg-destructive/10 text-destructive text-sm rounded">
             {error}
           </div>
         )}
         {loading && summaries.length === 0 && (
           <div className="flex items-center justify-center h-40">
-            <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         )}
         {!loading && summaries.length > 0 && (
@@ -166,7 +166,7 @@ export default function SummariesTab({
                 return (
                   <Card key={`${sum.start_time}-${sum.end_time}`} className="p-3">
                     <h4 className="font-semibold text-sm mb-2">{sum.topic}</h4>
-                    <p className="text-sm text-slate-700 mb-2">{sum.summary}</p>
+                    <p className="text-sm text-foreground mb-2">{sum.summary}</p>
                   </Card>
                 )
               }
@@ -179,7 +179,7 @@ export default function SummariesTab({
               return (
                 <Card key={`${sum.start_time}-${sum.end_time}`} className="p-3">
                   <h4 className="font-semibold text-sm mb-2">{sum.topic}</h4>
-                  <p className="text-sm text-slate-700 mb-2">{sum.summary}</p>
+                  <p className="text-sm text-foreground mb-2">{sum.summary}</p>
                   <div className="flex items-start gap-2">
                     {imageModeEnabled && (
                       <div className="flex-shrink-0">
@@ -205,7 +205,7 @@ export default function SummariesTab({
                             </DialogContent>
                           </Dialog>
                         ) : (
-                          <div className="w-20 h-12 bg-gray-200 rounded flex items-center justify-center">
+                          <div className="w-20 h-12 bg-muted rounded flex items-center justify-center">
                             <Loader2 className="h-3 w-3 animate-spin" />
                           </div>
                         )}
@@ -214,7 +214,7 @@ export default function SummariesTab({
                     <button
                       type="button"
                       onClick={() => onSeekTo(sum.start_time!)}
-                      className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                      className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
                     >
                       <PlayCircle className="h-3 w-3" />
                       {formatTime(sum.start_time)} ~ {formatTime(sum.end_time)}

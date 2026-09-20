@@ -73,7 +73,7 @@ const FileRenameDialog = ({ oldFilename, onRenameSuccess }: FileRenameDialogProp
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <button className="w-full text-left px-2 py-1.5 flex items-center gap-2 hover:bg-slate-50 rounded">
+        <button className="w-full text-left px-2 py-1.5 flex items-center gap-2 hover:bg-muted rounded">
           <Pencil className="h-4 w-4" />
           <span>重命名</span>
         </button>
@@ -85,13 +85,13 @@ const FileRenameDialog = ({ oldFilename, onRenameSuccess }: FileRenameDialogProp
         <div className="py-4">
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-2 block">
+              <label className="text-sm font-medium text-foreground mb-2 block">
                 原文件名
               </label>
-              <Input value={oldFilename} disabled className="bg-slate-50" />
+              <Input value={oldFilename} disabled className="bg-muted" />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-2 block">
+              <label className="text-sm font-medium text-foreground mb-2 block">
                 新文件名
               </label>
               <Input
@@ -100,7 +100,7 @@ const FileRenameDialog = ({ oldFilename, onRenameSuccess }: FileRenameDialogProp
                 placeholder="请输入新文件名"
                 disabled={renaming}
               />
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 注意：不能更改文件扩展名
               </p>
             </div>
