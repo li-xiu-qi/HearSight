@@ -3,9 +3,12 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { PATHS } from '@/lib/paths'
 
-/** 媒体文件服务：/static/<basename> → app_datas/download_videos/<basename> */
+/**
+ * 媒体文件服务：/static/<basename>（rewrite 指来）→ data/download_videos/<basename>
+ * 支持 Range（视频 seek 必需，不实现时浏览器每次 seek 整文件重下）
+ */
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ path: string[] }> },
 ) {
   const { path: segs } = await params
@@ -36,10 +39,36 @@ export async function GET(
     '.jpeg': 'image/jpeg',
     '.png': 'image/png',
   }
+  const contentType = MIME[ext] || 'application/octet-stream'
+
+  // Range: bytes=start-end（end 省略表示到文件尾；非法头忽略走 200）
+  const range = req.headers.get('range')
+  const m = /^bytes=(\d+)-(\d*)$/.exec(range || '')
+  if (m) {
+    const start = Number(m[1])
+    const end = m[2] ? Math.min(Number(m[2]), stat.size - 1) : stat.size - 1
+    if (start > end || start >= stat.size) {
+      return new NextResponse('Range Not Satisfiable', {
+        status: 416,
+        headers: { 'Content-Range': `bytes */${stat.size}` },
+      })
+    }
+    const stream = fs.createReadStream(filePath, { start, end })
+    return new NextResponse(stream as unknown as ReadableStream, {
+      status: 206,
+      headers: {
+        'Content-Type': contentType,
+        'Content-Length': String(end - start + 1),
+        'Content-Range': `bytes ${start}-${end}/${stat.size}`,
+        'Accept-Ranges': 'bytes',
+      },
+    })
+  }
+
   const stream = fs.createReadStream(filePath)
   return new NextResponse(stream as unknown as ReadableStream, {
     headers: {
-      'Content-Type': MIME[ext] || 'application/octet-stream',
+      'Content-Type': contentType,
       'Content-Length': String(stat.size),
       'Accept-Ranges': 'bytes',
     },

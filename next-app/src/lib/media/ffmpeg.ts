@@ -71,9 +71,14 @@ export async function generateThumbnail(
   }
 }
 
-/** 抽音轨：-vn -c:a libvorbis（FunASR 对 ogg 支持最好，mp3/m4a 依赖 soundfile） */
+/**
+ * 抽音轨：16k 单声道 PCM wav。
+ * 输出后缀必须与编码匹配：曾用 libvorbis 配 .wav 输出名，ffmpeg 不报错但写出
+ * 「Vorbis-in-WAV」（fmt 标签非 PCM），FunASR 按 wav 解析直接拒绝。
+ * 16k 单声道是 FunASR 各模型的本地采样率，免二次重采样。
+ */
 export async function extractAudio(input: string, output: string): Promise<void> {
-  await run(ffmpegBin(), ['-i', input, '-vn', '-c:a', 'libvorbis', '-q:a', '4', '-y', output], {
+  await run(ffmpegBin(), ['-i', input, '-vn', '-ac', '1', '-ar', '16000', '-c:a', 'pcm_s16le', '-y', output], {
     timeout: 600000,
   })
 }
