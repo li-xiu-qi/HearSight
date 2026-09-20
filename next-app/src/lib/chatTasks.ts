@@ -30,14 +30,30 @@ export function pushChatChunk(taskId: number, chunk: string): void {
   const state = chatTasks.get(taskId)
   if (!state) return
   state.chunks.push(chunk)
-  for (const fn of chatBus.get(taskId) ?? []) fn()
+  notify(taskId)
 }
 
 export function pushChatStep(taskId: number, step: string): void {
   const state = chatTasks.get(taskId)
   if (!state) return
   state.steps.push(step)
-  for (const fn of chatBus.get(taskId) ?? []) fn()
+  notify(taskId)
+}
+
+/**
+ * 广播给等待者。单个等待者抛异常（典型：SSE 消费者往已关闭的流控制器
+ * enqueue）不能中断广播，也不能向上抛进生产者——那会让 agent 循环的
+ * 事件回调炸出 uncaughtException。实测过一次：客户端断开后 pump 仍被
+ * 触发，异常沿 onStep 一路回传到 ACP stdout 处理器。
+ */
+function notify(taskId: number): void {
+  for (const fn of [...(chatBus.get(taskId) ?? [])]) {
+    try {
+      fn()
+    } catch {
+      /* 单个订阅者失效不影响其他订阅者与生产者 */
+    }
+  }
 }
 
 export function finishChatTask(taskId: number, result: { finalAnswer?: string; error?: string }): void {
@@ -46,7 +62,7 @@ export function finishChatTask(taskId: number, result: { finalAnswer?: string; e
   state.done = true
   state.finalAnswer = result.finalAnswer
   state.error = result.error
-  for (const fn of chatBus.get(taskId) ?? []) fn()
+  notify(taskId)
 }
 
 export function waitChatTask(taskId: number, fn: () => void): () => void {

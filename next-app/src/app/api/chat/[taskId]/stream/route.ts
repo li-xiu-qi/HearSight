@@ -34,7 +34,7 @@ export async function GET(
         }
       }
 
-      const pump = () => {
+      const pumpInner = () => {
         const state = getChatTask(taskId)
         if (!state) {
           controller.enqueue(
@@ -65,12 +65,29 @@ export async function GET(
         }
       }
 
+      /**
+       * 受保护的泵：客户端断开后 cancel() 已置 closed 并摘掉等待者，这道判断是
+       * 双保险，防 30 分钟定时器或竞态下的迟到事件往已关闭的控制器里写；
+       * try/catch 保证控制器失效时安静收流，不向上抛进 agent 循环的事件回调
+       * （实测抛上去会变成 uncaughtException）。
+       */
+      const pump = () => {
+        if (closed) return
+        try {
+          pumpInner()
+        } catch {
+          close()
+        }
+      }
+
       unwrap = waitChatTask(taskId, pump)
       pump()
       setTimeout(close, 30 * 60 * 1000)
     },
     cancel() {
-      /* 客户端断开 */
+      // 客户端断开：立刻摘掉等待者并关流。原先这里是空实现，等待者留在总线里，
+      // agent 循环每推一个事件就唤醒它往死控制器里写一次。
+      close()
     },
   })
 
