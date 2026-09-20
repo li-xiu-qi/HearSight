@@ -172,7 +172,9 @@ async function callTool(name, args) {
       const segs = Array.isArray(detail?.segments) ? detail.segments : []
       if (segs.length === 0) return toolText(`transcript_id=${tid} 没有片段。`)
       const durationMs = Number(segs[segs.length - 1].end_time)
-      const step = Math.max(1, Math.ceil(segs.length / 120))
+      // 采样上限 40 行：大纲是给模型建结构感的，不是全文搬运。长稿全量返回会把
+      // agent 上下文撑爆（本地推理窗口 8K，曾因此第 4 轮请求 400 空答案收场）。
+      const step = Math.max(1, Math.ceil(segs.length / 40))
       const sampled = segs.filter((_, i) => i % step === 0)
       const head =
         `《${detail.title ?? tid}》(transcript_id=${tid}) ${detail.media_type}\n` +

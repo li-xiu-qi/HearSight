@@ -70,12 +70,25 @@ export function createAgentWorkspace(key: string): AgentWorkspace {
 
   const llm = llmEndpoint()
 
+  // [models.<model>] 别名段：-thinking 让历史里的思考块在回灌时被剥离。思考模型
+  // （如本地 Qwen 系）每轮 reasoning 数百到上千 token，多轮工具循环里原样回灌
+  // 会迅速吃满本地推理窗口（8192），曾实测第 4 轮即 400。思考本身是服务端行为，
+  // 剥不剥回灌不影响本轮生成。
+  const modelAliasSection = llm.model && /^[A-Za-z0-9_.-]+$/.test(llm.model) ? `\n[models.${llm.model}]\ncapabilities = ["-thinking"]\n` : ''
+
   const configToml = [
     '# 由 HearSight 自动生成，请勿手改（重新生成会覆盖）',
     'provider = "openai"',
     `base_url = "${llm.baseUrl}"`,
     `model = "${llm.model}"`,
     `enabled_tools = [${AGENT_TOOL_WHITELIST.map((t) => `"${t}"`).join(', ')}]`,
+    // 上下文预算按本地推理窗口（默认 8192）留足余量：达到 85% 即触发循环内压缩，
+    // 避免多轮工具循环把请求撑爆（实测不配此项第 4 轮必 400）。
+    'max_context_size = 6000',
+    // 输出预算封顶：思考型模型不封顶会把预算烧在 reasoning 上，正文零输出
+    // （实测 finish=length 且 content 为空）。4096 够思考 + 中长回答。
+    'max_tokens = 4096',
+    modelAliasSection,
     '',
   ].join('\n')
   fs.writeFileSync(path.join(stepDir, 'config.toml'), configToml, 'utf8')
