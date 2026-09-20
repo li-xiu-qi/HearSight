@@ -58,10 +58,11 @@ function RailButton({
 /**
  * 三栏工作台 + 活动条。高度由 AppPage 的 h-dvh 统一分配，本层只做 flex-1/min-h-0。
  *
- * 左栏宽度控制收敛到活动条：顶部两个图标切换 素材库/任务（同时负责在收起态
- * 点开），底部一枚显式收起/展开开关。活动条常驻 48px，所以收起态永远有可见
- * 入口，不需要屏幕边缘浮动按钮。右栏保持「面板内按钮收起 + 边缘按钮展开」。
- * 分隔条只做拖拽调宽，不挂点击控件（库的拖拽判定会吞掉点击，见记忆观察）。
+ * 左栏宽度控制收敛到活动条：置顶一枚显式收起/展开开关，下方两个图标
+ * 切换 素材库/任务（同时负责在收起态点开）。活动条常驻 48px，所以收起态
+ * 永远有可见入口，不需要屏幕边缘浮动按钮。右栏保持「面板内按钮收起 +
+ * 边缘按钮展开」。分隔条只做拖拽调宽，不挂点击控件（库的拖拽判定会吞掉
+ * 点击，见记忆观察）。
  */
 function AppLayout({
   leftPanel,
@@ -87,6 +88,14 @@ function AppLayout({
         aria-label="侧栏导航"
         className="w-12 flex-shrink-0 bg-sidebar border-r border-sidebar-border flex flex-col items-center py-3 gap-1"
       >
+        {/* 收起/展开开关置顶：它控制整条侧栏的显隐，是最结构化的操作 */}
+        <RailButton
+          active={false}
+          title={leftPanelVisible ? '收起侧栏' : '展开侧栏'}
+          onClick={onToggleLeft}
+        >
+          {leftPanelVisible ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeftOpen className="h-5 w-5" />}
+        </RailButton>
         <RailButton
           active={leftView === 'library'}
           title={leftPanelVisible && leftView === 'library' ? '素材库（再次点击收起）' : '素材库'}
@@ -102,14 +111,6 @@ function AppLayout({
         >
           <ListChecks className="h-5 w-5" />
         </RailButton>
-        <RailButton
-          active={false}
-          title={leftPanelVisible ? '收起侧栏' : '展开侧栏'}
-          onClick={onToggleLeft}
-        >
-          {leftPanelVisible ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeftOpen className="h-5 w-5" />}
-        </RailButton>
-        <div className="mt-auto" />
       </nav>
 
       <ResizablePanelGroup
