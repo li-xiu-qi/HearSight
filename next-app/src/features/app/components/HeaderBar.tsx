@@ -3,52 +3,38 @@
 import type { FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Loader2, Home, Menu, Upload, X } from "lucide-react"
+import { Loader2, Home, Upload, X } from "lucide-react"
 
 interface HeaderBarProps {
   readonly inputUrl: string
   readonly submitting: boolean
-  readonly leftPanelVisible: boolean
   readonly urlError: string | null
   readonly onSubmit: (event: FormEvent<HTMLFormElement>) => void
   readonly onInputUrlChange: (value: string) => void
   readonly onClear: () => void
-  readonly onToggleLeftPanel: () => void
   readonly onNavigateHome: () => void
   readonly onOpenUpload: () => void
 }
 
 /**
- * 顶栏只保留三组：侧栏开关+标识 / 链接导入 / 上传与首页。
- * 自动滚动开关已迁至右栏工具栏（贴近它控制的阅读区）。
+ * 顶栏只保留三组：标识 / 链接导入 / 上传与首页。
+ * 侧栏收起展开由侧栏顶部按钮与屏幕边缘按钮负责（见 AppLayout / LeftPanel / RightPanel），
+ * 顶栏不再放汉堡开关。
  */
 function HeaderBar({
   inputUrl,
   submitting,
-  leftPanelVisible,
   urlError,
   onSubmit,
   onInputUrlChange,
   onClear,
-  onToggleLeftPanel,
   onNavigateHome,
   onOpenUpload,
 }: HeaderBarProps) {
   return (
     <header className="bg-card border-b border-border px-4 flex-shrink-0">
       <div className="h-14 flex items-center gap-3">
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleLeftPanel}
-            className="lg:hidden px-2"
-            title={leftPanelVisible ? "收起侧栏" : "展开侧栏"}
-          >
-            {leftPanelVisible ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-          </Button>
-          <span className="text-base font-semibold text-foreground tracking-tight hidden sm:block">HearSight</span>
-        </div>
+        <span className="text-base font-semibold text-foreground tracking-tight hidden sm:block flex-shrink-0">HearSight</span>
 
         <form onSubmit={onSubmit} className="flex-1 max-w-2xl flex items-center gap-2">
           <div className="relative flex-1">

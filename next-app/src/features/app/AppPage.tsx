@@ -141,7 +141,6 @@ function AppPage() {
       <HeaderBar
         inputUrl={inputUrl}
         submitting={submitting}
-        leftPanelVisible={leftPanelVisible}
         urlError={urlError}
         onSubmit={onSubmit}
         onInputUrlChange={setInputUrl}
@@ -149,13 +148,14 @@ function AppPage() {
           handleUrlClear()
           setInputUrl("")
         }}
-        onToggleLeftPanel={() => setLeftPanelVisible((value) => !value)}
         onNavigateHome={() => navigate.push("/")}
         onOpenUpload={() => setUploadDialogOpen(true)}
       />
       <AppLayout
         leftPanelVisible={leftPanelVisible}
         rightPanelVisible={rightPanelVisible}
+        onExpandLeft={() => setLeftPanelVisible(true)}
+        onExpandRight={() => setRightPanelVisible(true)}
         leftPanel={
           <LeftPanel
             transcripts={transcripts}
@@ -163,6 +163,7 @@ function AppPage() {
             activeTranscriptId={activeTranscriptId}
             onLoadTranscript={loadTranscriptDetail}
             onTranscriptsUpdate={loadTranscripts}
+            onCollapse={() => setLeftPanelVisible(false)}
           />
         }
         centerPanel={
@@ -180,6 +181,7 @@ function AppPage() {
             activeSegIndex={activeSegIndex}
             autoScroll={autoScroll}
             onAutoScrollChange={setAutoScroll}
+            onCollapse={() => setRightPanelVisible(false)}
             onSeekTo={handleSeekTo}
             onActiveSegmentChange={setActiveSegIndex}
             transcriptId={activeTranscriptId ?? undefined}

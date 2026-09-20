@@ -1,6 +1,7 @@
 'use client'
 
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
+import { PanelLeftOpen, PanelRightOpen } from 'lucide-react'
 import { useLayoutStore } from '@/stores/layoutStore'
 import type { ReactNode } from 'react'
 
@@ -10,20 +11,23 @@ interface AppLayoutProps {
   rightPanel: ReactNode
   leftPanelVisible: boolean
   rightPanelVisible: boolean
+  onExpandLeft: () => void
+  onExpandRight: () => void
 }
 
 /**
- * 三栏工作台。高度由 AppPage 的 h-dvh 统一分配，本层只做 flex-1/min-h-0，
- * 不再出现 [90vh] 魔法数（旧实现里 AppLayout 与 RightPanel 各写一份 90vh，
- * 与 header 叠加后底部被截或留白）。
- * 底色分工：左右栏 bg-sidebar（暖纸深一档），中栏 bg-card，形成空间分区。
+ * 三栏工作台。高度由 AppPage 的 h-dvh 统一分配，本层只做 flex-1/min-h-0。
+ * 侧栏收起后不留残影：面板整体卸载，屏幕边缘浮出展开按钮（edge tab），
+ * 点它或拖拽中栏都能把侧栏找回来。底色分工：左右栏 sidebar，中栏 card。
  */
 function AppLayout({
   leftPanel,
   centerPanel,
   rightPanel,
   leftPanelVisible,
-  rightPanelVisible
+  rightPanelVisible,
+  onExpandLeft,
+  onExpandRight,
 }: AppLayoutProps) {
   const {
     panelSizes,
@@ -31,7 +35,7 @@ function AppLayout({
   } = useLayoutStore()
 
   return (
-    <div className="flex-1 min-h-0">
+    <div className="flex-1 min-h-0 relative">
       <ResizablePanelGroup
         direction="horizontal"
         className="h-full"
@@ -90,6 +94,28 @@ function AppLayout({
           </>
         )}
       </ResizablePanelGroup>
+
+      {/* 收起状态的边缘展开按钮：贴屏幕两侧、垂直居中、低调不抢内容 */}
+      {!leftPanelVisible && (
+        <button
+          type="button"
+          title="展开侧栏"
+          onClick={onExpandLeft}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-30 h-16 w-6 flex items-center justify-center rounded-r-md border border-l-0 border-border bg-card text-muted-foreground shadow-sm hover:bg-muted hover:text-foreground transition-colors"
+        >
+          <PanelLeftOpen className="h-3.5 w-3.5" />
+        </button>
+      )}
+      {!rightPanelVisible && (
+        <button
+          type="button"
+          title="展开文稿面板"
+          onClick={onExpandRight}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-30 h-16 w-6 flex items-center justify-center rounded-l-md border border-r-0 border-border bg-card text-muted-foreground shadow-sm hover:bg-muted hover:text-foreground transition-colors"
+        >
+          <PanelRightOpen className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
   )
 }
