@@ -14,11 +14,9 @@ HearSight 是一个音视频内容智能分析工具。通过集成先进的语�
 
 ## 🛠 技术架构
 
-HearSight 采用现代化的微服务架构设计。后端基于 FastAPI 构建高性能 RESTful API，通过 PostgreSQL 实现数据的持久化和查询优化，通过 Celery 构建任务队列处理异步任务；前端采用 React 18 + TypeScript + Tailwind CSS 提供交互流畅的用户界面。整体支持 Docker 容器化部署，开箱即用。
+HearSight 采用本地优先的单体全栈架构。Web 层是 Next.js 全栈应用（TypeScript 前后端同仓，API 路由即后端），数据落在本地 SQLite，任务进度通过服务端事件推送，不依赖消息队列与外部缓存；AI 能力拆为三个可替换的本地服务：语音识别（本地模型，输出句级毫秒时间戳与说话人分离）、向量检索（本地 Embedding 服务加 SQLite 向量表）、大语言模型（OpenAI 兼容协议，默认指向本机推理服务，改三个环境变量即可切换外部 API）。媒体处理（抽音轨、抽关键帧、链接下载）由服务端直接调用本地 ffmpeg 与 yt-dlp。
 
-![架构图](https://oss-liuchengtu.hudunsoft.com/userimg/b5/b54f2ca20885a98aa90ec0557b8354e1.png)
-
-![微服务技术架构概览](https://oss-liuchengtu.hudunsoft.com/userimg/c8/c8ae4f200c345d26e5ec0d4fe3bc169b.png)
+一台带 NVIDIA GPU 的 Linux 机器即可跑通全链路；也可以只起 Web 层，把 AI 服务指向别处。
 
 ## ✨ 核心能力
 
@@ -68,7 +66,20 @@ API 接口文档请参考 [API 文档导航](docs/api_文档导航.md)。
 
 ## 🚀 快速开始
 
-详细的快速开始指南请参考 [快速开始](docs/快速开始.md)。
+本地模式要求：Node.js 20+、Python 3.10+、ffmpeg、yt-dlp，以及带 NVIDIA GPU 的 Linux 机器（语音识别、向量、推理三个服务都跑在本地）。
+
+```bash
+# 1. 安装依赖并构建（--include=dev 不能省，否则跳过类型检查）
+cd next-app && npm install --include=dev && npm run build && cd ..
+
+# 2. 按需准备环境变量（缺省全部指向本机回环，零配置可跑）
+cp next-app/.env.production.example next-app/.env.production
+
+# 3. 启动 Web 层（默认端口 9187；三个 AI 服务需另行启动）
+bash scripts/start-local.sh
+```
+
+环境变量逐项说明见 `next-app/.env.production.example`。
 
 ## 🎯 适用场景
 
