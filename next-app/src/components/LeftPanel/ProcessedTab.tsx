@@ -70,45 +70,45 @@ function ProcessedTab({
   return (
     <div className="h-full flex flex-col">
       {/* 顶部标题栏和刷新按钮，始终显示 */}
-      <div className="flex items-center justify-between mb-3 flex-shrink-0 px-4 pt-4">
-        <div className="text-sm font-medium text-foreground">已处理记录</div>
+      <div className="flex items-center justify-between px-4 pt-4 pb-2 flex-shrink-0">
+        <div className="text-xs font-medium text-muted-foreground tracking-wide">已处理记录</div>
         <Button
           variant="ghost"
           size="sm"
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="h-7 w-7 p-0 hover:bg-muted"
+          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
           title="刷新列表"
         >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
         </Button>
       </div>
-      
+
       {/* 列表内容或空状态 */}
       {transcripts.length === 0 ? (
-        <div className="flex flex-col items-center justify-center flex-1 text-center p-8">
-          <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-          <div className="text-base font-medium text-foreground mb-2">暂无处理记录</div>
-          <div className="text-sm text-muted-foreground">
-            您还没有处理过任何视频。在上方输入视频URL开始分析吧！
+        <div className="flex flex-col items-center justify-center flex-1 text-center px-8">
+          <FileText className="h-10 w-10 text-muted-foreground mb-3" />
+          <div className="text-sm font-medium text-foreground mb-1">暂无处理记录</div>
+          <div className="text-xs text-muted-foreground leading-5">
+            在顶栏粘贴链接或上传文件，分析完成后会出现在这里
           </div>
         </div>
       ) : (
         <ScrollArea className="h-full flex-1">
-          <div className="space-y-2 px-4">
+          <div className="px-1.5 pb-2">
             {transcripts.map((item) => {
               const basename = extractFilename(item.video_path || item.audio_path || '')
               const isActive = activeTranscriptId === item.id
-              
+
               return (
                 <div
                   key={item.id}
                   className={`
-                    w-full text-left p-3 rounded-lg border transition-all cursor-pointer
-                    ${isActive 
-                      ? 'bg-primary/10 border-primary/30 shadow-sm text-primary' 
-                      : 'bg-card border-border hover:bg-muted hover:border-border text-foreground'
-                    }
+                    group w-full text-left pl-3 pr-2 py-2.5 cursor-pointer
+                    border-l-2 transition-colors
+                    ${isActive
+                      ? 'border-primary bg-primary/[0.06]'
+                      : 'border-transparent hover:bg-muted'}
                   `}
                   onClick={() => onLoadTranscript(item.id)}
                   onKeyDown={(e) => {
@@ -117,29 +117,36 @@ function ProcessedTab({
                       onLoadTranscript(item.id)
                     }
                   }}
+                  role="button"
+                  tabIndex={0}
                 >
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start justify-between gap-1">
                     <div className="flex-1 min-w-0">
-                      <div 
+                      <div
                         className={`
-                          text-sm font-medium line-clamp-2
-                          ${isActive ? 'text-primary' : 'text-foreground'}
+                          text-sm line-clamp-2 leading-5
+                          ${isActive ? 'text-primary font-medium' : 'text-foreground'}
                         `}
                         title={basename}
                       >
                         {basename}
                       </div>
-                      <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                      <div className="text-[11px] font-mono text-muted-foreground mt-1 line-clamp-1">
                         {formatDate(item.created_at)}
                       </div>
                     </div>
-                    <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                    <div
+                      className={`${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-7 w-7 p-0"
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                            title="更多操作"
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>

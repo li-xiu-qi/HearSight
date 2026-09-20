@@ -137,11 +137,10 @@ function AppPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-muted overflow-hidden">
+    <div className="h-dvh flex flex-col bg-muted overflow-hidden">
       <HeaderBar
         inputUrl={inputUrl}
         submitting={submitting}
-        autoScroll={autoScroll}
         leftPanelVisible={leftPanelVisible}
         urlError={urlError}
         onSubmit={onSubmit}
@@ -150,7 +149,6 @@ function AppPage() {
           handleUrlClear()
           setInputUrl("")
         }}
-        onAutoScrollChange={setAutoScroll}
         onToggleLeftPanel={() => setLeftPanelVisible((value) => !value)}
         onNavigateHome={() => navigate.push("/")}
         onOpenUpload={() => setUploadDialogOpen(true)}
@@ -181,6 +179,7 @@ function AppPage() {
             segments={segments}
             activeSegIndex={activeSegIndex}
             autoScroll={autoScroll}
+            onAutoScrollChange={setAutoScroll}
             onSeekTo={handleSeekTo}
             onActiveSegmentChange={setActiveSegIndex}
             transcriptId={activeTranscriptId ?? undefined}

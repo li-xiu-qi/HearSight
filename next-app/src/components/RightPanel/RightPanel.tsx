@@ -19,6 +19,7 @@ interface RightPanelProps {
   readonly segments: Segment[]
   readonly activeSegIndex: number | null
   readonly autoScroll: boolean
+  readonly onAutoScrollChange?: (value: boolean) => void
   readonly onSeekTo: (timeMs: number, transcriptId?: number) => void
   readonly onActiveSegmentChange: (index: number) => void
   readonly transcriptId?: number
@@ -27,7 +28,7 @@ interface RightPanelProps {
 }
 
 const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
-  ({ segments, activeSegIndex, autoScroll, onSeekTo, onActiveSegmentChange, transcriptId, mediaType, onTranslateComplete }, ref) => {
+  ({ segments, activeSegIndex, autoScroll, onAutoScrollChange, onSeekTo, onActiveSegmentChange, transcriptId, mediaType, onTranslateComplete }, ref) => {
     const {
       activeTab,
       setActiveTab,
@@ -99,11 +100,11 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
     }, [activeSegIndex, autoScroll, activeTab, transcriptScrollRef])
 
     return (
-      <div className="h-[90vh] flex flex-col overflow-hidden">
+      <div className="h-full min-h-0 flex flex-col overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col gap-0 overflow-hidden">
-          <div className="flex-shrink-0">
-            <TabsList className="w-full justify-start rounded-none border-b">
-              <TabsTrigger value="segments">字幕分句</TabsTrigger>
+          <div className="flex-shrink-0 px-3 pt-3">
+            <TabsList className="w-full justify-start">
+              <TabsTrigger value="segments">字幕</TabsTrigger>
               <TabsTrigger value="transcript">文稿</TabsTrigger>
               <TabsTrigger value="summaries">总结</TabsTrigger>
               <TabsTrigger value="chat">问答</TabsTrigger>
@@ -120,6 +121,8 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
               availableLanguages={availableLanguages}
               onLanguageChange={switchLanguage}
               getLanguageName={getLanguageName}
+              autoScroll={autoScroll}
+              onAutoScrollChange={onAutoScrollChange}
             />
           )}
 
