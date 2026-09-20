@@ -44,23 +44,33 @@ function TasksTab({ jobs }: TasksTabProps) {
 
   if (jobs.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-8">
-        <Clock className="h-12 w-12 text-muted-foreground mb-4" />
-        <div className="text-base font-medium text-foreground mb-2">暂无处理任务</div>
-        <div className="text-sm text-muted-foreground">
-          当前没有正在处理的媒体内容。提交视频或音频URL后，处理进度会显示在这里。
+      <div className="h-full flex flex-col">
+        <div className="flex items-center justify-between px-4 pt-4 pb-2 flex-shrink-0">
+          <div className="text-xs font-medium text-muted-foreground tracking-wide">处理任务</div>
+        </div>
+        <div className="flex flex-col items-center justify-center flex-1 text-center px-8">
+          <Clock className="h-10 w-10 text-muted-foreground mb-3" />
+          <div className="text-sm font-medium text-foreground mb-1">暂无处理任务</div>
+          <div className="text-xs text-muted-foreground leading-5">
+            提交链接或上传文件后，处理进度会显示在这里
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <ScrollArea className="h-full">
-      <div className="space-y-3 p-1">
+    <div className="h-full flex flex-col">
+      <div className="flex items-center justify-between px-4 pt-4 pb-2 flex-shrink-0">
+        <div className="text-xs font-medium text-muted-foreground tracking-wide">处理任务</div>
+        <div className="text-xs text-muted-foreground">{jobs.length} 条</div>
+      </div>
+      <ScrollArea className="h-full flex-1">
+        <div className="space-y-3 px-3 pb-2">
         {jobs.map((job) => (
           <div
             key={job.id}
-            className="border rounded-lg p-3 bg-card shadow-sm hover:shadow-md transition-shadow"
+            className="border border-border rounded-lg p-3 bg-card shadow-xs"
           >
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center space-x-2 flex-1 min-w-0">
@@ -93,8 +103,9 @@ function TasksTab({ jobs }: TasksTabProps) {
             )}
           </div>
         ))}
-      </div>
-    </ScrollArea>
+        </div>
+      </ScrollArea>
+    </div>
   )
 }
 

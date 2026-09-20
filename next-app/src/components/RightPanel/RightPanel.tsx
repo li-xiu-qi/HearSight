@@ -106,6 +106,12 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
       <div className="h-full min-h-0 flex flex-col overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col gap-0 overflow-hidden">
           <div className="flex-shrink-0 px-3 pt-3 flex items-center gap-2">
+            <TabsList className="flex-1 justify-start">
+              <TabsTrigger value="segments">字幕</TabsTrigger>
+              <TabsTrigger value="transcript">文稿</TabsTrigger>
+              <TabsTrigger value="summaries">总结</TabsTrigger>
+              <TabsTrigger value="chat">问答</TabsTrigger>
+            </TabsList>
             {onCollapse && (
               <Button
                 variant="outline"
@@ -117,12 +123,6 @@ const RightPanel = forwardRef<ScrollElement, RightPanelProps>(
                 <PanelRightClose className="h-4 w-4" />
               </Button>
             )}
-            <TabsList className="flex-1 justify-start">
-              <TabsTrigger value="segments">字幕</TabsTrigger>
-              <TabsTrigger value="transcript">文稿</TabsTrigger>
-              <TabsTrigger value="summaries">总结</TabsTrigger>
-              <TabsTrigger value="chat">问答</TabsTrigger>
-            </TabsList>
           </div>
 
           {(activeTab === "segments" || activeTab === "transcript") && (

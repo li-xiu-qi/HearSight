@@ -8,7 +8,7 @@ import VideoPlayer from "@/components/VideoPlayer"
 import RightPanel from "@/components/RightPanel"
 import { useUrlHandler, useDataLoader, useVideoSync } from "@/hooks"
 import { getPendingUrl } from "@/utils/pendingUrl"
-import AppLayout from "./components/AppLayout"
+import AppLayout, { type LeftView } from "./components/AppLayout"
 import HeaderBar from "./components/HeaderBar"
 import UploadDialog from "./components/UploadDialog"
 import { message } from "@/utils/message"
@@ -19,6 +19,7 @@ function AppPage() {
   const [autoScroll, setAutoScroll] = useState(true)
   const [leftPanelVisible, setLeftPanelVisible] = useState(globalThis.innerWidth > 768)
   const [rightPanelVisible, setRightPanelVisible] = useState(globalThis.innerWidth > 768)
+  const [leftView, setLeftView] = useState<LeftView>('library')
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -136,6 +137,18 @@ function AppPage() {
     message.error(error)
   }
 
+  // 活动条图标：切换到该视图并确保侧栏可见；点的已是当前视图则收起
+  const handleSelectLeftView = (view: LeftView) => {
+    if (leftView === view && leftPanelVisible) {
+      setLeftPanelVisible(false)
+    } else {
+      setLeftView(view)
+      setLeftPanelVisible(true)
+    }
+  }
+
+  const runningJobCount = jobs.filter(j => j.status === 'processing' || j.status === 'pending').length
+
   return (
     <div className="h-dvh flex flex-col bg-muted overflow-hidden">
       <HeaderBar
@@ -154,16 +167,19 @@ function AppPage() {
       <AppLayout
         leftPanelVisible={leftPanelVisible}
         rightPanelVisible={rightPanelVisible}
+        leftView={leftView}
+        runningJobCount={runningJobCount}
         onToggleLeft={() => setLeftPanelVisible((value) => !value)}
+        onSelectLeftView={handleSelectLeftView}
         onToggleRight={() => setRightPanelVisible((value) => !value)}
         leftPanel={
           <LeftPanel
+            view={leftView}
             transcripts={transcripts}
             jobs={jobs}
             activeTranscriptId={activeTranscriptId}
             onLoadTranscript={loadTranscriptDetail}
             onTranscriptsUpdate={loadTranscripts}
-            onCollapse={() => setLeftPanelVisible(false)}
           />
         }
         centerPanel={
