@@ -43,6 +43,9 @@ export default function ChatView({
   const [inputValue, setInputValue] = useState("")
   const isAudio = mediaType === 'audio'
   const [imageModeEnabled, setImageModeEnabled] = useState(!isAudio)
+  const [agentMode, setAgentMode] = useState(false)
+  /** agent 模式的实时步骤提示（完成/失败即清） */
+  const [activeSteps, setActiveSteps] = useState<string[]>([])
   const [frameCache, setFrameCache] = useState<Record<string, string>>({})
   const messagesRef = useRef(messages)
 
@@ -156,6 +159,7 @@ export default function ChatView({
     const updatedMessages = [...messages, userMessage]
     onMessagesChange(updatedMessages)
     setInputValue("")
+    setActiveSteps([])
 
     // 如果没有选择转录内容，使用所有可用视频
     const transcriptsToUse = selectedTranscripts.length === 0 ? availableTranscripts.map(t => t.id) : selectedTranscripts
@@ -191,6 +195,11 @@ export default function ChatView({
         inputValue,
         transcriptsToUse,
         (chunk) => {
+          // agent 步骤提示与正文分流
+          if (chunk.step) {
+            setActiveSteps(prev => [...prev, chunk.step!])
+            return
+          }
           // 处理流式消息块
           const currentMessages = messagesRef.current
           const updatedMessages = currentMessages.map(msg =>
@@ -202,6 +211,7 @@ export default function ChatView({
         },
         (finalAnswer) => {
           // 完成时更新最终答案
+          setActiveSteps([])
           const currentMessages = messagesRef.current
           const updatedMessages = currentMessages.map(msg =>
             msg.id === aiMessageId
@@ -217,15 +227,18 @@ export default function ChatView({
         },
         (error) => {
           // 处理错误
+          setActiveSteps([])
           onErrorChange(error)
           toast.error(`聊天失败: ${error}`)
           // 移除失败的AI消息
           const currentMessages = messagesRef.current
           const updatedMessages = currentMessages.filter(msg => msg.id !== aiMessageId)
           onMessagesChange(updatedMessages)
-        }
+        },
+        { mode: agentMode ? 'agent' : 'rag', sessionId }
       )
     } catch (err) {
+      setActiveSteps([])
       onErrorChange(err instanceof Error ? err.message : '发送消息失败')
       toast.error('发送消息失败')
       // 移除失败的AI消息
@@ -284,7 +297,9 @@ export default function ChatView({
         imageModeEnabled={imageModeEnabled}
         isAudio={isAudio}
         messagesLength={messages.length}
+        agentMode={agentMode}
         onImageModeChange={handleImageModeChange}
+        onAgentModeChange={setAgentMode}
         onClearChat={handleClearChat}
       />
 
@@ -310,6 +325,23 @@ export default function ChatView({
           selectedTranscripts={selectedTranscripts}
         />
       </div>
+
+      {/* agent 步骤提示：进行中时浮在输入区上方，完成即消失 */}
+      {loading && activeSteps.length > 0 && (
+        <div className="mx-4 mb-2 rounded-md border bg-muted/50 px-3 py-2">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-primary" />
+            Agent 工作中
+          </div>
+          <ul className="mt-1 space-y-0.5">
+            {activeSteps.slice(-6).map((step, i) => (
+              <li key={`${i}-${step}`} className="truncate text-xs text-muted-foreground">
+                {step}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* 消息输入 */}
       <div className="border-t">

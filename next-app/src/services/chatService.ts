@@ -90,6 +90,8 @@ export const chatWithTranscriptsStream = async (
 export interface SSEStreamChunk {
   chunk?: string
   type?: string
+  /** agent 模式的步骤提示（检索/加载协议等），与 chunk 互斥出现 */
+  step?: string
   event?: 'complete' | 'error'
   data?: {
     final_answer?: string
@@ -102,10 +104,11 @@ export const chatWithTranscriptsSSE = async (
   transcriptIds: number[],
   onMessage: (chunk: SSEStreamChunk) => void,
   onComplete: (finalAnswer: string) => void,
-  onError: (error: string) => void
+  onError: (error: string) => void,
+  opts?: { mode?: 'rag' | 'agent'; sessionId?: number }
 ): Promise<EventSource> => {
   // 首先创建流式聊天任务
-  const taskResponse = await startStreamingChatTask(question, transcriptIds)
+  const taskResponse = await startStreamingChatTask(question, transcriptIds, opts)
   
   // 连接SSE流
   const eventSource = new EventSource(`/api/chat/${taskResponse.task_id}/stream`)
@@ -143,11 +146,17 @@ export interface ChatTaskResponse {
   status: string
 }
 
-export const startStreamingChatTask = async (question: string, transcriptIds: number[]): Promise<ChatTaskResponse> => {
+export const startStreamingChatTask = async (
+  question: string,
+  transcriptIds: number[],
+  opts?: { mode?: 'rag' | 'agent'; sessionId?: number }
+): Promise<ChatTaskResponse> => {
   const requestBody: any = { question }
   if (transcriptIds && transcriptIds.length > 0) {
     requestBody.transcript_ids = transcriptIds
   }
+  if (opts?.mode) requestBody.mode = opts.mode
+  if (opts?.sessionId !== undefined) requestBody.session_id = opts.sessionId
   
   const response = await fetch('/api/chat/streaming', {
     method: 'POST',

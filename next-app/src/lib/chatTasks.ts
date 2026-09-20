@@ -6,6 +6,8 @@
 
 export interface ChatTaskState {
   chunks: string[]
+  /** agent 模式的步骤提示（检索/加载协议等），与 chunks 并行累积 */
+  steps: string[]
   done: boolean
   error?: string
   finalAnswer?: string
@@ -15,7 +17,7 @@ const chatTasks = new Map<number, ChatTaskState>()
 const chatBus = new Map<number, Set<() => void>>()
 
 export function initChatTask(taskId: number): ChatTaskState {
-  const state: ChatTaskState = { chunks: [], done: false }
+  const state: ChatTaskState = { chunks: [], steps: [], done: false }
   chatTasks.set(taskId, state)
   return state
 }
@@ -28,6 +30,13 @@ export function pushChatChunk(taskId: number, chunk: string): void {
   const state = chatTasks.get(taskId)
   if (!state) return
   state.chunks.push(chunk)
+  for (const fn of chatBus.get(taskId) ?? []) fn()
+}
+
+export function pushChatStep(taskId: number, step: string): void {
+  const state = chatTasks.get(taskId)
+  if (!state) return
+  state.steps.push(step)
   for (const fn of chatBus.get(taskId) ?? []) fn()
 }
 
