@@ -31,6 +31,7 @@ function ResizablePanel({
 function ResizableHandle({
   withHandle,
   className,
+  children,
   ...props
 }: React.ComponentProps<typeof ResizablePrimitive.PanelResizeHandle> & {
   withHandle?: boolean
@@ -44,11 +45,13 @@ function ResizableHandle({
       )}
       {...props}
     >
-      {withHandle && (
-        <div className="bg-border z-10 flex h-4 w-3 items-center justify-center rounded-xs border">
-          <GripVerticalIcon className="size-2.5" />
-        </div>
-      )}
+      {/* 显式子元素优先（调用方自定义控件，如收起胶囊）；否则回退默认握把 */}
+      {children ??
+        (withHandle && (
+          <div className="bg-border z-10 flex h-4 w-3 items-center justify-center rounded-xs border">
+            <GripVerticalIcon className="size-2.5" />
+          </div>
+        ))}
     </ResizablePrimitive.PanelResizeHandle>
   )
 }
