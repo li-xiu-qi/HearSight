@@ -31,7 +31,12 @@ const STEP_BIN = process.env.HEARSIGHT_STEP_BIN || 'step'
 
 /** 工具名 → 人类可读的步骤标签 */
 function stepLabel(name: string, input: unknown): string {
-  const q = (v: unknown) => (typeof v === 'string' && v.trim() !== '' ? v.trim() : '')
+  // 字符串与数字都收：MCP schema 里 index/id 是 number，只认 string 会把序号丢成 "#-"
+  const q = (v: unknown) => {
+    if (typeof v === 'string') return v.trim()
+    if (typeof v === 'number' && Number.isFinite(v)) return String(v)
+    return ''
+  }
   const args = (input ?? {}) as Record<string, unknown>
   switch (name) {
     case 'skill':
