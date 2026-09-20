@@ -163,6 +163,7 @@ function AppPage() {
             activeTranscriptId={activeTranscriptId}
             onLoadTranscript={loadTranscriptDetail}
             onTranscriptsUpdate={loadTranscripts}
+            onCollapse={() => setLeftPanelVisible(false)}
           />
         }
         centerPanel={
@@ -180,6 +181,7 @@ function AppPage() {
             activeSegIndex={activeSegIndex}
             autoScroll={autoScroll}
             onAutoScrollChange={setAutoScroll}
+            onCollapse={() => setRightPanelVisible(false)}
             onSeekTo={handleSeekTo}
             onActiveSegmentChange={setActiveSegIndex}
             transcriptId={activeTranscriptId ?? undefined}

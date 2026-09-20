@@ -1,7 +1,7 @@
 'use client'
 
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
-import { ChevronLeft, ChevronRight, PanelLeftOpen, PanelRightOpen } from 'lucide-react'
+import { PanelLeftOpen, PanelRightOpen } from 'lucide-react'
 import { useLayoutStore } from '@/stores/layoutStore'
 import type { ReactNode } from 'react'
 
@@ -18,11 +18,10 @@ interface AppLayoutProps {
 /**
  * 三栏工作台。高度由 AppPage 的 h-dvh 统一分配，本层只做 flex-1/min-h-0。
  *
- * 侧栏开关放在中间分隔条上（最容易被看到的位置）：分隔条中央是一枚 48×20 的
- * 胶囊按钮，点击收起对应侧栏。注意不开启库自带的 collapsible——拖到边缘折叠
- * 会让面板 0 宽但 React 可见状态不变，边缘展开按钮不渲染，用户被卡死
- * （2026-09-20 实测踩坑）。收起只走点击这一条路，minSize 挡住拖拽下限，
-  * 状态与渲染永远同步；指针未移动才触发 onClick（点击/拖动区分由库完成）。
+ * 侧栏收起开关放在各自面板的外侧顶角（左栏右上、右栏左上），是与拖拽
+ * 完全分离的独立按钮，不挂在分隔条上——2026-09-20 实测：挂在
+ * ResizableHandle 上的点击控件会被库的拖拽判定吞掉（指针抖动 1-2px 即
+ * didMove，onClick 不触发），此路不通。分隔条只负责拖拽调宽。
  * 侧栏收起后分隔条随面板卸载，改由屏幕边缘的展开按钮负责点开。
  */
 function AppLayout({
@@ -63,15 +62,7 @@ function AppLayout({
                 {leftPanel}
               </div>
             </ResizablePanel>
-            <ResizableHandle
-              onClick={onToggleLeft}
-              title="点击收起侧栏 · 拖动调整宽度"
-              className="cursor-pointer"
-            >
-              <div className="z-10 flex h-12 w-5 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:border-primary/40 hover:text-primary">
-                <ChevronLeft className="h-3.5 w-3.5" />
-              </div>
-            </ResizableHandle>
+            <ResizableHandle withHandle title="拖动调整宽度" />
           </>
         )}
 
@@ -86,15 +77,7 @@ function AppLayout({
 
         {rightPanelVisible && (
           <>
-            <ResizableHandle
-              onClick={onToggleRight}
-              title="点击收起面板 · 拖动调整宽度"
-              className="cursor-pointer"
-            >
-              <div className="z-10 flex h-12 w-5 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:border-primary/40 hover:text-primary">
-                <ChevronRight className="h-3.5 w-3.5" />
-              </div>
-            </ResizableHandle>
+            <ResizableHandle withHandle title="拖动调整宽度" />
             <ResizablePanel
               defaultSize={panelSizes.right}
               minSize={15}
