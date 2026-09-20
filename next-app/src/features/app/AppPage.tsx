@@ -154,8 +154,8 @@ function AppPage() {
       <AppLayout
         leftPanelVisible={leftPanelVisible}
         rightPanelVisible={rightPanelVisible}
-        onExpandLeft={() => setLeftPanelVisible(true)}
-        onExpandRight={() => setRightPanelVisible(true)}
+        onToggleLeft={() => setLeftPanelVisible((value) => !value)}
+        onToggleRight={() => setRightPanelVisible((value) => !value)}
         leftPanel={
           <LeftPanel
             transcripts={transcripts}
@@ -163,7 +163,6 @@ function AppPage() {
             activeTranscriptId={activeTranscriptId}
             onLoadTranscript={loadTranscriptDetail}
             onTranscriptsUpdate={loadTranscripts}
-            onCollapse={() => setLeftPanelVisible(false)}
           />
         }
         centerPanel={
@@ -181,7 +180,6 @@ function AppPage() {
             activeSegIndex={activeSegIndex}
             autoScroll={autoScroll}
             onAutoScrollChange={setAutoScroll}
-            onCollapse={() => setRightPanelVisible(false)}
             onSeekTo={handleSeekTo}
             onActiveSegmentChange={setActiveSegIndex}
             transcriptId={activeTranscriptId ?? undefined}

@@ -1,8 +1,6 @@
 'use client'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
-import { PanelLeftClose } from 'lucide-react'
 import type { TranscriptMeta, JobItem } from '../../types'
 import ProcessedTab from './ProcessedTab'
 import TasksTab from './TasksTab'
@@ -13,12 +11,11 @@ interface LeftPanelProps {
   readonly activeTranscriptId: number | null
   readonly onLoadTranscript: (id: number) => void
   readonly onTranscriptsUpdate: () => void
-  readonly onCollapse: () => void
 }
 
 /**
- * 左栏：素材库 + 任务。tab 用 segmented 控件形态，trigger 上带计数；
- * 右上角收起按钮把面板让给阅读区（收起后从屏幕边缘按钮找回）。
+ * 左栏：素材库 + 任务。tab 用 segmented 控件形态，trigger 上带计数。
+ * 收起开关在左侧分隔条中央（见 AppLayout），此处不放第二个入口。
  */
 function LeftPanel({
   transcripts,
@@ -26,14 +23,13 @@ function LeftPanel({
   activeTranscriptId,
   onLoadTranscript,
   onTranscriptsUpdate,
-  onCollapse,
 }: LeftPanelProps) {
   const runningJobs = jobs.filter(j => j.status === 'processing' || j.status === 'pending').length
 
   return (
     <Tabs defaultValue="processed" className="h-full flex flex-col gap-0">
-      <div className="px-3 pt-3 flex-shrink-0 flex items-center gap-2">
-        <TabsList className="flex-1">
+      <div className="px-3 pt-3 flex-shrink-0">
+        <TabsList className="w-full">
           <TabsTrigger value="processed" className="flex-1 gap-1.5">
             素材库
             {transcripts.length > 0 && (
@@ -47,15 +43,6 @@ function LeftPanel({
             )}
           </TabsTrigger>
         </TabsList>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onCollapse}
-          className="h-8 w-8 p-0 flex-shrink-0 text-muted-foreground hover:text-foreground"
-          title="收起侧栏"
-        >
-          <PanelLeftClose className="h-4 w-4" />
-        </Button>
       </div>
 
       <TabsContent value="processed" className="flex-1 m-0 min-h-0 data-[state=inactive]:hidden">

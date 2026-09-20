@@ -1,7 +1,7 @@
 'use client'
 
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
-import { PanelLeftOpen, PanelRightOpen } from 'lucide-react'
+import { ChevronLeft, ChevronRight, PanelLeftOpen, PanelRightOpen } from 'lucide-react'
 import { useLayoutStore } from '@/stores/layoutStore'
 import type { ReactNode } from 'react'
 
@@ -11,14 +11,17 @@ interface AppLayoutProps {
   rightPanel: ReactNode
   leftPanelVisible: boolean
   rightPanelVisible: boolean
-  onExpandLeft: () => void
-  onExpandRight: () => void
+  onToggleLeft: () => void
+  onToggleRight: () => void
 }
 
 /**
  * 三栏工作台。高度由 AppPage 的 h-dvh 统一分配，本层只做 flex-1/min-h-0。
- * 侧栏收起后不留残影：面板整体卸载，屏幕边缘浮出展开按钮（edge tab），
- * 点它或拖拽中栏都能把侧栏找回来。底色分工：左右栏 sidebar，中栏 card。
+ *
+ * 侧栏开关放在中间分隔条上（最容易被看到的位置）：分隔条中央是一枚 48×20 的
+ * 胶囊按钮，点击收起对应侧栏；左右拖动仍是调宽——点击与拖动的区分由
+ * react-resizable-panels 内部完成（指针未移动才触发 onClick）。
+ * 侧栏收起后分隔条随面板卸载，改由屏幕边缘的展开按钮负责点开。
  */
 function AppLayout({
   leftPanel,
@@ -26,8 +29,8 @@ function AppLayout({
   rightPanel,
   leftPanelVisible,
   rightPanelVisible,
-  onExpandLeft,
-  onExpandRight,
+  onToggleLeft,
+  onToggleRight,
 }: AppLayoutProps) {
   const {
     panelSizes,
@@ -62,7 +65,15 @@ function AppLayout({
                 {leftPanel}
               </div>
             </ResizablePanel>
-            <ResizableHandle withHandle />
+            <ResizableHandle
+              onClick={onToggleLeft}
+              title="点击收起侧栏 · 拖动调整宽度"
+              className="cursor-pointer"
+            >
+              <div className="z-10 flex h-12 w-5 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:border-primary/40 hover:text-primary">
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </div>
+            </ResizableHandle>
           </>
         )}
 
@@ -77,7 +88,15 @@ function AppLayout({
 
         {rightPanelVisible && (
           <>
-            <ResizableHandle withHandle />
+            <ResizableHandle
+              onClick={onToggleRight}
+              title="点击收起面板 · 拖动调整宽度"
+              className="cursor-pointer"
+            >
+              <div className="z-10 flex h-12 w-5 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:border-primary/40 hover:text-primary">
+                <ChevronRight className="h-3.5 w-3.5" />
+              </div>
+            </ResizableHandle>
             <ResizablePanel
               defaultSize={panelSizes.right}
               minSize={15}
@@ -95,12 +114,12 @@ function AppLayout({
         )}
       </ResizablePanelGroup>
 
-      {/* 收起状态的边缘展开按钮：贴屏幕两侧、垂直居中、低调不抢内容 */}
+      {/* 收起状态的边缘展开按钮：贴屏幕两侧、垂直居中 */}
       {!leftPanelVisible && (
         <button
           type="button"
           title="展开侧栏"
-          onClick={onExpandLeft}
+          onClick={onToggleLeft}
           className="absolute left-0 top-1/2 -translate-y-1/2 z-30 h-16 w-6 flex items-center justify-center rounded-r-md border border-l-0 border-border bg-card text-muted-foreground shadow-sm hover:bg-muted hover:text-foreground transition-colors"
         >
           <PanelLeftOpen className="h-3.5 w-3.5" />
@@ -110,7 +129,7 @@ function AppLayout({
         <button
           type="button"
           title="展开文稿面板"
-          onClick={onExpandRight}
+          onClick={onToggleRight}
           className="absolute right-0 top-1/2 -translate-y-1/2 z-30 h-16 w-6 flex items-center justify-center rounded-l-md border border-r-0 border-border bg-card text-muted-foreground shadow-sm hover:bg-muted hover:text-foreground transition-colors"
         >
           <PanelRightOpen className="h-3.5 w-3.5" />
