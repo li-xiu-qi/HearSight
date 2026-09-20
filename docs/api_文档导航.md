@@ -15,9 +15,10 @@
 - 进度推送：`api/progress/task/[jobId]/route.ts`、`api/progress/download/[jobId]/route.ts`、`api/progress/stream-all/route.ts`
 - 摘要与翻译：`api/summarize/route.ts`、`api/transcripts/[id]/summaries/route.ts`、`api/transcripts/[id]/translate/route.ts`、`api/transcripts/[id]/translate/stream/route.ts`
 - 问答：`api/chat/stream/route.ts`、`api/chat/streaming/route.ts`、`api/chat/[taskId]/stream/route.ts`、`api/chat-sessions/route.ts`、`api/transcripts/[id]/chat-messages/route.ts`
+- 检索：`api/search/route.ts`（语义检索相关片段，Agent 模式经 MCP 工具调用，也可直接使用）
 - 媒体下载与静态资源：`api/download/route.ts`、`api/static/[...path]/route.ts`、`api/thumbnails/[id]/route.ts`
 
-注意流式问答用的是自定义行协议（`[chunk]...[/chunk]` / `[done][/done]` / `[error]...[/error]`），不是标准 SSE。
+注意流式问答用的是自定义行协议（`[chunk]...[/chunk]` / `[done][/done]` / `[error]...[/error]`），不是标准 SSE；SSE 路（`api/chat/[taskId]/stream`）另支持 `{"step": "...", "type": "step"}` 步骤帧，供 Agent 模式展示检索过程。
 
 ## ASR Backend API 文档
 
