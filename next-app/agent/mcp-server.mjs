@@ -67,13 +67,13 @@ const TOOLS = [
   {
     name: 'read_segments',
     description:
-      '按片段序号区间精读某篇转写（含毫秒时间戳）。search_transcripts 命中后需要看上下文时用。区间上限 60 段，超出请分段读。',
+      '按片段序号区间精读某篇转写（含毫秒时间戳）。search_transcripts 命中后需要看上下文时用。单次上限 30 段，超出请分段读。',
     inputSchema: {
       type: 'object',
       properties: {
         transcript_id: { type: 'number', description: '转写 id' },
         start_index: { type: 'number', description: '起始片段序号（含）' },
-        end_index: { type: 'number', description: '结束片段序号（含）' },
+        end_index: { type: 'number', description: '结束片段序号（含，与起点相差不超过 30）' },
       },
       required: ['transcript_id', 'start_index', 'end_index'],
     },
@@ -109,14 +109,29 @@ const postJson = (body) => ({
 
 function toIds(v) {
   if (!Array.isArray(v)) return undefined
-  const ids = v.map((n) => Number(n)).filter((n) => Number.isFinite(n))
+  // 模型常把 id 包成对象（实测 [{"id":4}]），Number(对象) 得 NaN 会被静默丢弃，
+  // 退化成检索全部转写。两种形状都收。
+  const ids = v
+    .map((n) => (n !== null && typeof n === 'object' ? Number(n.id) : Number(n)))
+    .filter((n) => Number.isFinite(n))
   return ids.length > 0 ? ids : undefined
 }
 
+/**
+ * 检索返回的字符预算。命中块按相关度排序后逐段拼入，超预算即停并提示用
+ * read_segments 精读。不设上限时单次检索可把整篇转写稿搬进上下文（实测 1 万字符），
+ * 本地 8K 窗口下第三轮请求直接溢出，模型烧光输出预算、正文零输出。
+ */
+const SEARCH_MAX_CHARS = 1600
+/** 单句超长时截断（ASR 病态长句会把预算吃光）。 */
+const SEG_MAX_CHARS = 300
+/** read_segments 单次区间段数上限：30 段约 3K 字符，与 8K 窗口相容。 */
+const READ_SEGMENTS_MAX = 30
+
 function fmtSeg(seg) {
-  return `[${seg.index}] ${Number(seg.start_time).toFixed(2)}-${Number(seg.end_time).toFixed(2)} ${String(
-    seg.sentence ?? '',
-  ).trim()}`
+  const text = String(seg.sentence ?? '').trim()
+  const shown = text.length > SEG_MAX_CHARS ? text.slice(0, SEG_MAX_CHARS) + '…' : text
+  return `[${seg.index}] ${Number(seg.start_time).toFixed(2)}-${Number(seg.end_time).toFixed(2)} ${shown}`
 }
 
 async function callTool(name, args) {
@@ -140,10 +155,32 @@ async function callTool(name, args) {
       const data = await api('/search', postJson(body))
       const results = Array.isArray(data?.results) ? data.results : []
       if (results.length === 0) return toolText('未检索到相关内容。')
-      const blocks = results.map(
-        (r) => `《${r.filename}》(transcript_id=${r.transcript_id})\n` + r.segments.map(fmtSeg).join('\n'),
-      )
-      return toolText(blocks.join('\n\n'))
+      // 字符预算内逐段拼入，超预算即停：本地推理窗口只有 8K，整稿回灌会让
+      // 后续轮次请求溢出、模型只思考不输出（realqwen8 实测第三轮空答案）。
+      let used = 0
+      let truncated = false
+      const blocks = []
+      for (const r of results) {
+        const lines = []
+        for (const seg of r.segments ?? []) {
+          const line = fmtSeg(seg)
+          if (used + line.length > SEARCH_MAX_CHARS) {
+            truncated = true
+            break
+          }
+          lines.push(line)
+          used += line.length
+        }
+        if (lines.length > 0) {
+          blocks.push(`《${r.filename}》(transcript_id=${r.transcript_id})\n` + lines.join('\n'))
+        }
+        if (truncated) break
+      }
+      if (blocks.length === 0) return toolText('未检索到相关内容。')
+      const hint = truncated
+        ? `\n（已达本次返回上限，未展示部分用 read_segments 按序号区间精读）`
+        : ''
+      return toolText(blocks.join('\n\n') + hint)
     }
 
     case 'read_segments': {
@@ -153,7 +190,7 @@ async function callTool(name, args) {
       if (!Number.isFinite(tid) || !Number.isFinite(start) || !Number.isFinite(end)) {
         return toolError('read_segments 需要 transcript_id / start_index / end_index 三个数字参数')
       }
-      if (end - start > 60) return toolError('区间超过 60 段，请缩小范围分段读')
+      if (end - start >= READ_SEGMENTS_MAX) return toolError(`区间超过 ${READ_SEGMENTS_MAX} 段，请缩小范围分段读`)
       const detail = await api(`/transcripts/${tid}`)
       const segs = Array.isArray(detail?.segments) ? detail.segments : []
       const picked = segs.filter((s) => s.index >= start && s.index <= end)

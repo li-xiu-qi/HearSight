@@ -13,7 +13,7 @@ when_to_use: 用户提问涉及转写稿内容检索、引用、总结、对比�
 | 工具 | 用途 |
 |------|------|
 | `mcp__hearsight__search_transcripts` | 语义检索与问题最相关的片段（含毫秒时间戳）。内容问题的主要依据来源 |
-| `mcp__hearsight__read_segments` | 按片段序号区间精读（单次最多 60 段）。search 命中后需要上下文时用 |
+| `mcp__hearsight__read_segments` | 按片段序号区间精读（单次最多 30 段）。search 命中后需要上下文时用 |
 | `mcp__hearsight__transcript_outline` | 全文结构（时长、片段总数、按时间采样的代表句）。问题涉及全文结构或时间线时用 |
 | `mcp__hearsight__list_transcripts` | 列出全部转写（id、标题、片段数） |
 
